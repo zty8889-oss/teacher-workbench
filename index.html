@@ -758,6 +758,23 @@ textarea.input { resize: vertical; min-height: 60px; }
         </div>
       </div>
 
+      <!-- ====== 重置确认弹窗（双重保护） ====== -->
+      <div v-if="showResetConfirm" class="modal-overlay" @click.self="showResetConfirm=false">
+        <div class="modal">
+          <div class="modal-header">⚠️ 危险操作</div>
+          <div class="modal-body">
+            <p style="color:var(--danger); font-size:14px; font-weight:600; margin-bottom:10px">确定要重置所有数据吗？此操作不可恢复！</p>
+            <p style="font-size:13px; color:var(--text-secondary); margin-bottom:14px">请输入 <strong style="color:var(--danger); font-size:16px">确认重置</strong> 后点击确认</p>
+            <input v-model="resetConfirmText" class="input" placeholder="请输入：确认重置" style="font-size:16px; text-align:center">
+            <p v-if="resetConfirmText && resetConfirmText !== '确认重置'" style="font-size:12px; color:var(--danger); margin-top:8px">请输入正确的文字</p>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-cancel" @click="showResetConfirm=false; resetConfirmText=''">取消</button>
+            <button class="btn-danger" :disabled="resetConfirmText !== '确认重置'" :style="{opacity: resetConfirmText === '确认重置' ? 1 : 0.5}" @click="confirmReset">确认重置</button>
+          </div>
+        </div>
+      </div>
+
       <div class="profile-about">
         <p>教师工作台 v2.0</p>
         <p>数据存储在本地，清除浏览器缓存会丢失</p>
@@ -1503,8 +1520,16 @@ createApp({
       input.click();
     }
 
+    const showResetConfirm = ref(false);
+    const resetConfirmText = ref('');
+
     function resetData() {
-      if (confirm('确定要重置所有数据吗？此操作不可恢复！')) {
+      showResetConfirm.value = true;
+      resetConfirmText.value = '';
+    }
+
+    function confirmReset() {
+      if (resetConfirmText.value === '确认重置') {
         localStorage.removeItem(STORE_KEY);
         window.location.reload();
       }
@@ -1547,7 +1572,7 @@ createApp({
     }
 
     // ====== 版本自检：更新后自动刷新，数据不丢失 ======
-    const APP_VERSION = '20260729.3';
+    const APP_VERSION = '20260729.5';
     const lastVersion = localStorage.getItem('teacher-app-version');
     if (lastVersion && lastVersion !== APP_VERSION) {
       // 有旧版本且不同 → 更新版本号后强制刷新加载新页面
@@ -1828,6 +1853,8 @@ createApp({
       showThemePicker, currentTheme, themeNames, themeList, setTheme,
       // Version
       APP_VERSION, updating, checkUpdate,
+      // Reset
+      showResetConfirm, resetConfirmText, resetData, confirmReset,
     };
   }
 }).mount('#app');
