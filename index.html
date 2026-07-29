@@ -6,7 +6,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="theme-color" content="#4A90D9">
-  
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
   <title>教师工作台</title>
   <style>/* ===== 教师工作台 v2.0 全新主题 ===== */
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -200,199 +201,158 @@ textarea.input { resize: vertical; min-height: 60px; }
 .hw-actions { display: flex; gap: 8px; }
 
 /* ===== Profile ===== */
-.profile-header { text-align: center; padding: 30px 16px 24px; }
-.profile-avatar { width: 72px; height: 72px; border-radius: 50%; background: var(--primary-gradient); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700; margin: 0 auto 14px; box-shadow: 0 4px 16px rgba(91,127,255,0.3); }
-.profile-name { font-size: 22px; font-weight: 800; }
-.profile-role { font-size: 14px; color: var(--text-secondary); margin-top: 4px; }
-.profile-card { background: var(--card); border-radius: var(--card-radius); padding: 0 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
-.profile-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+.profile-header { text-align: center; padding: 20px 0 4px; }
+.profile-avatar-large { width: 68px; height: 68px; border-radius: 50%; background: var(--primary-gradient); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 30px; font-weight: 700; margin: 0 auto 12px; box-shadow: 0 4px 16px rgba(91,127,255,0.3); }
+.profile-name { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.profile-role { font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; }
+.profile-card { background: var(--card); border-radius: var(--card-radius); margin-bottom: 12px; box-shadow: var(--shadow); overflow: hidden; }
+.profile-item { display: flex; justify-content: space-between; align-items: center; padding: 16px 18px; border-bottom: 1px solid var(--border); cursor: pointer; }
 .profile-item:last-child { border: none; }
-.profile-item label { font-size: 14px; }
+.profile-item label { font-size: 14px; color: var(--text); font-weight: 500; }
 .profile-item span { font-size: 14px; color: var(--text-secondary); }
-.profile-about { text-align: center; padding: 20px; }
-.profile-about p { font-size: 12px; color: var(--text-tertiary); margin-bottom: 4px; }
-
-/* ===== Bottom Tab Bar ===== */
-.tab-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.88); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); display: flex; border-top: 1px solid rgba(0,0,0,0.06); z-index: 100; padding-bottom: var(--safe-bottom); max-width: 480px; margin: 0 auto; height: calc(var(--tab-height) + var(--safe-bottom)); }
-.tab-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; padding: 4px 0 2px; transition: all .2s; position: relative; }
-.tab-icon { font-size: 20px; line-height: 1.2; transition: all .2s; }
-.tab-label { font-size: 10px; color: var(--text-secondary); margin-top: 2px; font-weight: 500; transition: all .2s; }
-.tab-item.active .tab-label { color: var(--primary); font-weight: 600; }
-.tab-item.active .tab-icon { transform: scale(1.1); }
-
-/* ===== Utility ===== */
-.page { min-height: calc(100vh - var(--header-height) - var(--tab-height) - 24px); }
-
-/* ===== Search Bar ===== */
-.search-bar .input { padding-left: 36px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238E8E93' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M16.5 16.5L21 21'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: 12px center; background-size: 16px; }
-
-/* ===== Timeline ===== */
-.modal-tabs { display: flex; gap: 4px; background: #f0f0f5; border-radius: 8px; padding: 2px; margin-left: 12px; }
-.modal-tab { padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; color: var(--text-secondary); cursor: pointer; transition: all .2s; }
-.modal-tab.active { background: #fff; color: var(--primary); box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-.modal-tall { max-height: 90vh; }
-.timeline-actions { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
-.timeline-summary { display: flex; gap: 6px; margin-left: auto; }
-.tl-badge { font-size: 11px; padding: 3px 10px; border-radius: 12px; font-weight: 500; white-space: nowrap; }
-.tl-badge.good { background: #F0FFF5; color: var(--success); }
-.tl-badge.bad { background: #FFF0F0; color: var(--danger); }
-.timeline { position: relative; padding-left: 12px; }
-.tl-item { position: relative; padding-left: 28px; padding-bottom: 20px; }
-.tl-item:last-child { padding-bottom: 4px; }
-.tl-dot { position: absolute; left: 0; top: 4px; width: 14px; height: 14px; border-radius: 50%; border: 3px solid; background: #fff; z-index: 2; }
-.tl-dot.praise { border-color: var(--success); }
-.tl-dot.criticism { border-color: var(--danger); }
-.tl-dot.general { border-color: var(--primary); }
-.tl-line { position: absolute; left: 6px; top: 18px; bottom: 0; width: 2px; background: var(--border); }
-.tl-content { }
-.tl-date { font-size: 11px; color: var(--text-secondary); font-weight: 500; }
-.tl-text { font-size: 14px; margin: 4px 0 6px; line-height: 1.5; }
-.tl-tags { display: flex; gap: 8px; align-items: center; }
-.tl-tag { font-size: 11px; padding: 2px 10px; border-radius: 10px; font-weight: 500; }
-.tl-tag.praise { background: #F0FFF5; color: var(--success); }
-.tl-tag.criticism { background: #FFF0F0; color: var(--danger); }
-.tl-tag.general { background: #F0F5FF; color: var(--primary); }
-.tl-del { font-size: 11px; color: var(--text-tertiary); cursor: pointer; padding: 2px 6px; }
-.tl-del:active { color: var(--danger); }
+.profile-about { text-align: center; padding: 20px; color: var(--text-tertiary); font-size: 12px; line-height: 1.8; }
 </style>
-  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
 </head>
 <body>
-  <div id="app">
-    <!-- 状态栏 -->
-    <header class="app-header" :class="{ 'has-notch': isNotch }">
-      <div class="header-left">
-        <span class="header-time">{{ now }}</span>
+<div id="app">
+  <!-- Header -->
+  <header class="app-header" :class="{'has-notch': hasNotch}">
+    <div class="header-left">🏫</div>
+    <div class="header-title">教师工作台</div>
+    <div class="header-right">{{ currentDate }}</div>
+  </header>
+
+  <main class="app-main">
+    <!-- 首页 -->
+    <div v-show="tab==='home'">
+      <div class="welcome-card">
+        <div class="welcome-text">
+          <h2>{{ teacherName || '教师' }}，{{ timeGreeting }}</h2>
+          <p>{{ welcomeSub }}</p>
+        </div>
+        <div class="welcome-avatar">{{ (teacherName || '教').charAt(0) }}</div>
       </div>
-      <div class="header-title">{{ currentTitle }}</div>
-      <div class="header-right">
-        <span class="header-date">{{ today }}</span>
-      </div>
-    </header>
 
-    <!-- 主内容 -->
-    <main class="app-main">
-      <!-- 首页 -->
-      <div v-show="tab === 'dashboard'" class="page page-dashboard">
-        <div class="welcome-card">
-          <div class="welcome-text">
-            <h2>{{ teacherName }}，早上好 ☀️</h2>
-            <p>{{ welcomeSub }}</p>
-          </div>
-          <div class="welcome-avatar">{{ teacherName.charAt(0) }}</div>
+      <div class="stats-grid">
+        <div class="stat-card" @click="tab='classes'; classSubTab='students'">
+          <div class="stat-icon">👨‍🎓</div>
+          <div class="stat-num">{{ students.length }}</div>
+          <div class="stat-label">学生人数</div>
         </div>
-
-        <!-- 快捷统计 -->
-        <div class="stats-grid">
-          <div class="stat-card" @click="tab='todo'">
-            <div class="stat-num">{{ todos.filter(t=>!t.done).length }}</div>
-            <div class="stat-label">待办事项</div>
-          </div>
-          <div class="stat-card" @click="tab='class'">
-            <div class="stat-num">{{ students.length }}</div>
-            <div class="stat-label">学生人数</div>
-          </div>
-          <div class="stat-card" @click="tab='class'; classSubTab='homework'">
-            <div class="stat-num">{{ getPendingHomework() }}</div>
-            <div class="stat-label">待批作业</div>
-          </div>
-          <div class="stat-card" @click="tab='schedule'">
-            <div class="stat-num">{{ getTodayClasses().length }}</div>
-            <div class="stat-label">今日课程</div>
-          </div>
+        <div class="stat-card" @click="tab='classes'; classSubTab='homework'">
+          <div class="stat-icon">📝</div>
+          <div class="stat-num">{{ getPendingHomework() }}</div>
+          <div class="stat-label">待批作业</div>
         </div>
-
-        <!-- 今日课程 -->
-        <div class="section-card">
-          <div class="section-header">
-            <h3>📅 今日课程</h3>
-            <span class="section-more" @click="tab='schedule'">查看全部 →</span>
-          </div>
-          <div class="today-classes">
-            <div v-if="todayClasses.length === 0" class="empty-state">今天没有课程安排 🎉</div>
-            <div v-for="(c, i) in todayClasses.slice(0, 4)" :key="i" class="today-class-item">
-              <span class="class-time">{{ c.time }}</span>
-              <span class="class-name">{{ c.name }}</span>
-              <span class="class-location">{{ c.location || '' }}</span>
-            </div>
-          </div>
+        <div class="stat-card" @click="tab='classes'; classSubTab='students'">
+          <div class="stat-icon">📊</div>
+          <div class="stat-num">{{ exams.length }}</div>
+          <div class="stat-label">考试记录</div>
         </div>
-
-        <!-- 近期待办 -->
-        <div class="section-card">
-          <div class="section-header">
-            <h3>📋 近期待办</h3>
-            <span class="section-more" @click="tab='todo'">查看全部 →</span>
-          </div>
-          <div v-if="todos.filter(t=>!t.done).length === 0" class="empty-state">暂无待办，轻松一下 🎉</div>
-          <div v-for="(t, i) in todos.filter(t=>!t.done).slice(0, 5)" :key="i" class="todo-item">
-            <span class="todo-priority" :class="'p-'+t.priority">{{ {high:'高',medium:'中',low:'低'}[t.priority] }}</span>
-            <span class="todo-text">{{ t.text }}</span>
-            <span class="todo-date">{{ t.date }}</span>
-          </div>
+        <div class="stat-card" @click="tab='schedule'">
+          <div class="stat-icon">📅</div>
+          <div class="stat-num">{{ getTodayClasses().length }}</div>
+          <div class="stat-label">今日课程</div>
         </div>
       </div>
 
-      <!-- 待办事项 -->
-      <div v-show="tab === 'todo'" class="page page-todo">
-        <div class="page-actions">
-          <button class="btn-primary" @click="showAddTodo = true">+ 添加待办</button>
+      <div class="section-card">
+        <div class="section-header">
+          <h3>📅 今日课程</h3>
+          <div class="section-more" @click="tab='schedule'">查看全部 ›</div>
         </div>
+        <div v-if="todayClasses.length === 0" class="empty-state">今天没有课程安排 🎉</div>
+        <div v-for="c in todayClasses" :key="c.id" class="today-class-item">
+          <div class="class-time">{{ c.time }}</div>
+          <div class="class-name">{{ c.name }}</div>
+          <div class="class-location">{{ c.location || '' }}</div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-header">
+          <h3>✅ 待办事项</h3>
+          <div class="section-more" @click="tab='todo'">管理 ›</div>
+        </div>
+        <div v-if="todos.filter(t=>!t.done).length === 0" class="empty-state">暂无待办，轻松一下 🎉</div>
+        <div v-for="t in todos.filter(t=>!t.done).slice(0,3)" :key="t.id" class="todo-item">
+          <span :class="['todo-priority', {high:'p-high',medium:'p-medium',low:'p-low'}[t.priority]]">{{ {high:'高',medium:'中',low:'低'}[t.priority] }}</span>
+          <span class="todo-text">{{ t.text }}</span>
+          <span class="todo-date">{{ t.date }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 待办事项 -->
+    <div v-show="tab==='todo'">
+      <div class="section-card">
+        <div class="section-header">
+          <h3>✅ 待办事项</h3>
+          <button class="btn-small" @click="showAddTodo=true">{{ showAddTodo ? '' : '+ 添加' }}</button>
+        </div>
+
         <div class="filter-tabs">
           <span v-for="f in todoFilters" :key="f.key" :class="['filter-tab', {active: todoFilter===f.key}]" @click="todoFilter=f.key">{{ f.label }}</span>
         </div>
+
         <div v-if="filteredTodos.length === 0" class="empty-state">暂无待办事项 ✅</div>
-        <div v-for="(t, i) in filteredTodos" :key="t.id" class="todo-card">
-          <div class="todo-check" :class="{done: t.done}" @click="toggleTodo(t.id)">{{ t.done ? '✓' : '' }}</div>
-          <div class="todo-body" :class="{done: t.done}">
+        <div v-for="t in filteredTodos" :key="t.id" class="todo-card">
+          <div :class="['todo-check', {done: t.done}]" @click="toggleTodo(t.id)">{{ t.done ? '✓' : '' }}</div>
+          <div :class="['todo-body', {done: t.done}]">
             <div class="todo-text">{{ t.text }}</div>
             <div class="todo-meta">
-              <span class="todo-priority" :class="'p-'+t.priority">{{ {high:'高优先级',medium:'中优先级',low:'低优先级'}[t.priority] }}</span>
+              <span :class="['todo-priority', {high:'p-high',medium:'p-medium',low:'p-low'}[t.priority]]">{{ {high:'高优先级',medium:'中优先级',low:'低优先级'}[t.priority] }}</span>
               <span class="todo-meta-date">📅 {{ t.date }}</span>
             </div>
           </div>
-          <div class="todo-delete" @click="deleteTodo(t.id)">✕</div>
-        </div>
-
-        <!-- 添加待办弹窗 -->
-        <div v-if="showAddTodo" class="modal-overlay" @click.self="showAddTodo=false">
-          <div class="modal">
-            <div class="modal-header">添加待办事项</div>
-            <div class="modal-body">
-              <input v-model="newTodo.text" class="input" placeholder="请输入待办内容" @keyup.enter="addTodo">
-              <div class="form-row">
-                <div class="form-group">
-                  <label>优先级</label>
-                  <select v-model="newTodo.priority" class="input">
-                    <option value="high">高</option>
-                    <option value="medium" selected>中</option>
-                    <option value="low">低</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label>截止日期</label>
-                  <input v-model="newTodo.date" type="date" class="input">
-                </div>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button class="btn-cancel" @click="showAddTodo=false">取消</button>
-              <button class="btn-primary" @click="addTodo">确定</button>
-            </div>
-          </div>
+          <div class="todo-delete" @click="todos = todos.filter(x => x.id !== t.id); saveData();">✕</div>
         </div>
       </div>
 
-      <!-- 课表 -->
-      <div v-show="tab === 'schedule'" class="page page-schedule">
-        <div class="page-actions">
-          <button class="btn-primary" @click="showAddClass = true">+ 添加课程</button>
+      <!-- 添加待办弹窗 -->
+      <div v-if="showAddTodo" class="modal-overlay" @click.self="showAddTodo=false">
+        <div class="modal">
+          <div class="modal-header">添加待办</div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label>待办内容</label>
+              <input v-model="newTodo.text" class="input" placeholder="需要做什么？">
+            </div>
+            <div class="form-row">
+              <div class="form-group w-50">
+                <label>优先级</label>
+                <select v-model="newTodo.priority" class="input">
+                  <option value="high">高优先级</option>
+                  <option value="medium">中优先级</option>
+                  <option value="low">低优先级</option>
+                </select>
+              </div>
+              <div class="form-group w-50">
+                <label>截止日期</label>
+                <input v-model="newTodo.date" type="date" class="input">
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-cancel" @click="showAddTodo=false">取消</button>
+            <button class="btn-primary" @click="addTodo">保存</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 课程表 -->
+    <div v-show="tab==='schedule'">
+      <div class="section-card">
+        <div class="section-header">
+          <h3>📅 课程表</h3>
+          <button class="btn-small" @click="showAddClass=true">+ 添加课程</button>
         </div>
         <div class="weekday-tabs">
           <span v-for="(d, i) in weekdays" :key="i" :class="['weekday-tab', {active: weekday===i}]" @click="weekday=i">{{ d }}</span>
         </div>
         <div v-if="getClassesByDay(weekday).length === 0" class="empty-state">{{ weekdays[weekday] }}没有课程安排</div>
-        <div v-for="(c, i) in getClassesByDay(weekday)" :key="c.id" class="class-card" @click="editClass(c)" :style="{borderLeftColor: classColors[c.color||0]}">
+        <div v-for="c in getClassesByDay(weekday)" :key="c.id" class="class-card" :style="{borderLeftColor: classColors[c.color || 0]}" @click="editClass(c)">
           <div class="class-time-block">
             <div class="class-time-start">{{ c.time }}</div>
             <div class="class-time-end">{{ c.endTime || '' }}</div>
@@ -403,497 +363,639 @@ textarea.input { resize: vertical; min-height: 60px; }
           </div>
           <div class="class-delete" @click.stop="deleteClass(c.id)">✕</div>
         </div>
+      </div>
 
-        <!-- 添加课程弹窗 -->
-        <div v-if="showAddClass" class="modal-overlay" @click.self="showAddClass=false">
-          <div class="modal">
-            <div class="modal-header">{{ editingClass ? '编辑课程' : '添加课程' }}</div>
-            <div class="modal-body">
-              <div class="form-row">
-                <div class="form-group w-50">
-                  <label>星期</label>
-                  <select v-model="classForm.day" class="input">
-                    <option v-for="(d,i) in weekdays" :key="i" :value="i">{{ d }}</option>
-                  </select>
-                </div>
-                <div class="form-group w-50">
-                  <label>颜色</label>
-                  <div class="color-picker">
-                    <span v-for="(clr, ci) in classColors" :key="ci" :class="['color-dot', {active: classForm.color===ci}]" :style="{background: clr}" @click="classForm.color=ci"></span>
-                  </div>
-                </div>
+      <!-- 添加课程弹窗 -->
+      <div v-if="showAddClass" class="modal-overlay" @click.self="showAddClass=false">
+        <div class="modal">
+          <div class="modal-header">{{ editingClass ? '编辑课程' : '添加课程' }}</div>
+          <div class="modal-body">
+            <div class="form-row">
+              <div class="form-group w-50">
+                <label>星期</label>
+                <select v-model="classForm.day" class="input">
+                  <option v-for="(d, i) in weekdays" :key="i" :value="i">{{ d }}</option>
+                </select>
               </div>
-              <input v-model="classForm.name" class="input" placeholder="课程名称（如：语文）">
-              <div class="form-row">
-                <div class="form-group w-50">
-                  <label>开始时间</label>
-                  <input v-model="classForm.time" type="time" class="input">
-                </div>
-                <div class="form-group w-50">
-                  <label>结束时间</label>
-                  <input v-model="classForm.endTime" type="time" class="input">
-                </div>
-              </div>
-              <div class="form-row">
-                <div class="form-group w-50">
-                  <label>年级/班级</label>
-                  <input v-model="classForm.grade" class="input" placeholder="如：三年级2班">
-                </div>
-                <div class="form-group w-50">
-                  <label>地点</label>
-                  <input v-model="classForm.location" class="input" placeholder="如：教学楼301">
+              <div class="form-group w-50">
+                <label>颜色</label>
+                <div class="color-picker">
+                  <div v-for="(clr, ci) in classColors" :key="ci" :class="['color-dot', {active: classForm.color===ci}]" :style="{background: clr}" @click="classForm.color=ci"></div>
                 </div>
               </div>
             </div>
-            <div class="modal-footer">
-              <button class="btn-cancel" @click="showAddClass=false">取消</button>
-              <button class="btn-primary" @click="saveClass">保存</button>
+            <div class="form-row">
+              <div class="form-group w-50">
+                <label>开始时间</label>
+                <input v-model="classForm.time" type="time" class="input">
+              </div>
+              <div class="form-group w-50">
+                <label>结束时间</label>
+                <input v-model="classForm.endTime" type="time" class="input">
+              </div>
             </div>
+            <div class="form-group">
+              <label>课程名称</label>
+              <input v-model="classForm.name" class="input" placeholder="如：语文">
+            </div>
+            <div class="form-row">
+              <div class="form-group w-50">
+                <label>年级/班级</label>
+                <input v-model="classForm.grade" class="input" placeholder="如：三年级2班">
+              </div>
+              <div class="form-group w-50">
+                <label>地点</label>
+                <input v-model="classForm.location" class="input" placeholder="如：301教室">
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-cancel" @click="showAddClass=false; editingClass=null; resetClassForm()">取消</button>
+            <button class="btn-primary" @click="saveClass">保存</button>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- 班级管理 -->
-      <div v-show="tab === 'class'" class="page page-class">
-        <div class="class-sub-tabs">
-          <span v-for="st in classSubTabs" :key="st.key" :class="['sub-tab', {active: classSubTab===st.key}]" @click="classSubTab=st.key">{{ st.label }}</span>
+    <!-- 班级管理 -->
+    <div v-show="tab==='classes'">
+      <div class="class-sub-tabs">
+        <span v-for="st in classSubTabs" :key="st.key" :class="['sub-tab', {active: classSubTab===st.key}]" @click="classSubTab=st.key">{{ st.label }}</span>
+      </div>
+
+      <!-- 学生管理 -->
+      <div v-show="classSubTab==='students'" class="sub-page">
+        <div class="page-actions">
+          <button class="btn-small" @click="showAddStudent=true">+ 添加学生</button>
+          <span class="student-count">共 {{ students.length }} 人</span>
         </div>
+        <div class="search-bar">
+          <input v-model="studentSearch" class="input" placeholder="🔍 搜索学生姓名或学号">
+        </div>
+        <div v-for="s in filteredStudents" :key="s.id" class="student-card" @click="viewStudent(s)">
+          <div class="student-avatar" :style="{background: s.avatarColor || '#4A90D9'}">{{ s.name.charAt(0) }}</div>
+          <div class="student-info">
+            <div class="student-name">{{ s.name }}</div>
+            <div class="student-meta">{{ s.studentId }} · {{ s.gender }} · {{ s.parent }}</div>
+          </div>
+          <div class="student-arrow">›</div>
+        </div>
+      </div>
 
-        <!-- 学生档案 -->
-        <div v-show="classSubTab==='students'" class="sub-page">
-          <div class="page-actions">
-            <button class="btn-primary" @click="showAddStudent = true">+ 添加学生</button>
-            <span class="student-count">共 {{ students.length }} 人</span>
-          </div>
-          <div class="search-bar">
-            <input v-model="studentSearch" class="input" placeholder="🔍 搜索学生姓名或学号">
-          </div>
-          <div v-if="filteredStudents.length === 0" class="empty-state">没有找到学生</div>
-          <div v-for="s in filteredStudents" :key="s.id" class="student-card" @click="viewStudent(s)">
-            <div class="student-avatar" :style="{background: s.avatarColor || '#4A90D9'}">{{ s.name.charAt(0) }}</div>
-            <div class="student-info">
-              <div class="student-name">{{ s.name }}</div>
-              <div class="student-meta">{{ s.studentId }} · {{ s.gender }} · {{ s.parent }}</div>
-            </div>
-            <div class="student-arrow">›</div>
-          </div>
       <!-- 学生详情弹窗 -->
-          <div v-if="showStudentDetail" class="modal-overlay" @click.self="showStudentDetail=false">
-            <div class="modal modal-wide modal-tall">
-              <div class="modal-header">
-                <span>学生档案</span>
-                <span class="modal-tabs">
-                  <span :class="['modal-tab',{active:detailTab==='info'}]" @click="detailTab='info'">基本信息</span>
-                  <span :class="['modal-tab',{active:detailTab==='timeline'}]" @click="detailTab='timeline'">成长记录</span>
-                </span>
-              </div>
+      <div v-if="showStudentDetail" class="modal-overlay" @click.self="showStudentDetail=false">
+        <div class="modal modal-wide">
+          <div class="modal-header">{{ selectedStudent.name }}</div>
+          <div class="modal-body">
+            <div class="detail-avatar" :style="{background: selectedStudent.avatarColor || '#4A90D9'}">{{ selectedStudent.name.charAt(0) }}</div>
 
-              <!-- 基本信息 -->
-              <div v-show="detailTab==='info'" class="modal-body">
-                <div class="detail-avatar" :style="{background: selectedStudent.avatarColor}">{{ selectedStudent.name.charAt(0) }}</div>
-                <div class="detail-grid">
-                  <div class="detail-item"><label>姓名</label><span>{{ selectedStudent.name }}</span></div>
-                  <div class="detail-item"><label>学号</label><span>{{ selectedStudent.studentId }}</span></div>
-                  <div class="detail-item"><label>性别</label><span>{{ selectedStudent.gender }}</span></div>
-                  <div class="detail-item"><label>家长</label><span>{{ selectedStudent.parent }}</span></div>
-                  <div class="detail-item"><label>家长电话</label><span>{{ selectedStudent.phone }}</span></div>
-                  <div class="detail-item"><label>住址</label><span>{{ selectedStudent.address }}</span></div>
-                  <div class="detail-item full"><label>备注</label><span>{{ selectedStudent.note }}</span></div>
-                </div>
-              </div>
+            <!-- 信息卡片 -->
+            <div class="detail-grid">
+              <div class="detail-item"><label>姓名</label><span>{{ selectedStudent.name }}</span></div>
+              <div class="detail-item"><label>学号</label><span>{{ selectedStudent.studentId }}</span></div>
+              <div class="detail-item"><label>性别</label><span>{{ selectedStudent.gender }}</span></div>
+              <div class="detail-item"><label>家长</label><span>{{ selectedStudent.parent }}</span></div>
+              <div class="detail-item"><label>家长电话</label><span>{{ selectedStudent.phone }}</span></div>
+              <div class="detail-item"><label>住址</label><span>{{ selectedStudent.address }}</span></div>
+              <div class="detail-item full"><label>备注</label><span>{{ selectedStudent.note || '无' }}</span></div>
+            </div>
 
-              <!-- 成长时间轴 -->
-              <div v-show="detailTab==='timeline'" class="modal-body">
-                <div class="timeline-actions">
-                  <button class="btn-small" @click="showAddRecord=true">+ 添加记录</button>
-                  <span class="timeline-summary">
-                    <span class="tl-badge good">{{ getRecordStats(selectedStudent).good }}件好事</span>
-                    <span class="tl-badge bad">{{ getRecordStats(selectedStudent).bad }}件待改进</span>
-                  </span>
+            <!-- 标签页 -->
+            <div class="filter-tabs" style="margin-top:16px">
+              <span v-for="dt in detailTabs" :key="dt.key" :class="['filter-tab', {active: detailTab===dt.key}]" @click="detailTab=dt.key">{{ dt.label }}</span>
+            </div>
+
+            <!-- 成长记录 -->
+            <div v-if="detailTab==='records'">
+              <div class="page-actions" style="margin-top:8px">
+                <button class="btn-small" @click="showAddRecord=true">+ 添加记录</button>
+                <span class="student-count">{{ getRecordStats(selectedStudent).good }}件好事 {{ getRecordStats(selectedStudent).bad }}件待改进</span>
+              </div>
+              <div v-if="sortedRecords(selectedStudent).length === 0" class="empty-state">暂无成长记录</div>
+              <div v-for="r in sortedRecords(selectedStudent)" :key="r.id" style="display:flex; align-items:flex-start; gap:10px; padding:10px 0; border-bottom:1px solid var(--border)">
+                <span>{{ {praise:'🌟 表扬',criticism:'📌 待改进',general:'📝 日常'}[r.type] }}</span>
+                <div style="flex:1; font-size:13px; color:var(--text-secondary)">
+                  <div>{{ r.text }}</div>
+                  <div style="margin-top:4px; font-size:11px; color:var(--text-tertiary)">{{ r.date }}</div>
                 </div>
-                <div v-if="(!selectedStudent.records || selectedStudent.records.length === 0)" class="empty-state">暂无成长记录</div>
-                <div class="timeline" v-else>
-                  <div v-for="(r, ri) in sortedRecords(selectedStudent)" :key="r.id" class="tl-item">
-                    <div class="tl-dot" :class="r.type"></div>
-                    <div class="tl-line" v-if="ri < sortedRecords(selectedStudent).length - 1"></div>
-                    <div class="tl-content">
-                      <div class="tl-date">{{ r.date }}</div>
-                      <div class="tl-text">{{ r.text }}</div>
-                      <div class="tl-tags">
-                        <span :class="['tl-tag', r.type]">{{ {praise:'🌟 表扬',criticism:'📌 待改进',general:'📝 日常'}[r.type] }}</span>
-                        <span class="tl-del" @click="deleteRecord(selectedStudent, r.id)">删除</span>
-                      </div>
+                <span style="color:var(--text-tertiary); cursor:pointer; font-size:11px" @click="deleteRecord(selectedStudent, r.id)">删除</span>
+              </div>
+            </div>
+
+            <!-- 安全教育 -->
+            <div v-if="detailTab==='safety'">
+              <div class="page-actions" style="margin-top:8px">
+                <button class="btn-small" @click="showAddSafety=true">+ 添加记录</button>
+              </div>
+              <div v-if="safetyRecords.length === 0" class="empty-state">暂无安全教育记录</div>
+              <div v-for="(sr, i) in safetyRecords" :key="sr.id" class="safety-card">
+                <div class="safety-icon">{{ {消防:'🔥',交通:'🚗',防溺水:'💧',食品:'🍔',网络:'💻',其他:'📋'}[sr.type] || '📋' }}</div>
+                <div class="safety-body">
+                  <div class="safety-title">{{ sr.title }}</div>
+                  <div class="safety-meta">{{ sr.type }} · {{ sr.date }} · {{ sr.students }}人参与</div>
+                </div>
+                <div class="safety-delete" @click="deleteSafety(sr.id)">✕</div>
+              </div>
+            </div>
+
+            <!-- 成绩 -->
+            <div v-if="detailTab==='grades'">
+              <div v-if="exams.length === 0" class="empty-state">暂无成绩数据</div>
+              <div v-for="(ex, i) in exams" :key="ex.id" class="exam-card">
+                <div class="exam-header" @click="ex.open = !ex.open">
+                  <div class="exam-title">{{ ex.name }}</div>
+                  <div class="exam-date">{{ ex.date }}</div>
+                  <div class="exam-toggle">{{ ex.open ? '▼' : '▶' }}</div>
+                </div>
+                <div v-if="ex.open" class="exam-body">
+                  <div class="exam-stats">
+                    <div class="exam-stat"><label>平均分</label><span>{{ avgScore(ex) }}</span></div>
+                    <div class="exam-stat"><label>最高分</label><span>{{ maxScore(ex) }}</span></div>
+                    <div class="exam-stat"><label>最低分</label><span>{{ minScore(ex) }}</span></div>
+                    <div class="exam-stat"><label>及格率</label><span>{{ passRate(ex) }}%</span></div>
+                  </div>
+                  <div class="exam-chart" ref="chartContainer" :data-exam-id="ex.id">
+                    <div v-for="(s, si) in ex.scores" :key="si"
+                      class="chart-bar"
+                      :style="{
+                        height: ex.fullScore ? (s.score / ex.fullScore * 120) + 'px' : '0px',
+                        background: getScoreColor(s.score / (ex.fullScore || 100) * 100)
+                      }"
+                      :title="s.name + ': ' + s.score"></div>
+                  </div>
+                  <div class="score-list">
+                    <div v-for="s in ex.scores" :key="s.id" class="score-item">
+                      <span class="score-name">{{ s.name }}</span>
+                      <span class="score-val" :style="{color: getScoreColor(s.score / (ex.fullScore || 100) * 100)}">{{ s.score }}</span>
                     </div>
                   </div>
                 </div>
               </div>
-
-              <div class="modal-footer">
-                <button class="btn-danger" @click="deleteStudent(selectedStudent.id); showStudentDetail=false">删除学生</button>
-                <button class="btn-primary" @click="showStudentDetail=false">关闭</button>
-              </div>
             </div>
           </div>
+          <div class="modal-footer">
+            <button class="btn-cancel" @click="deleteStudent(selectedStudent.id); showStudentDetail=false;">删除学生</button>
+            <button class="btn-primary" @click="showStudentDetail=false">关闭</button>
+          </div>
+        </div>
+      </div>
 
-          <!-- 添加成长记录弹窗 -->
-          <div v-if="showAddRecord" class="modal-overlay" @click.self="showAddRecord=false">
-            <div class="modal">
-              <div class="modal-header">添加成长记录</div>
-              <div class="modal-body">
-                <div class="form-group">
-                  <label>学生</label>
-                  <div style="font-weight:600;font-size:15px;padding:4px 0">{{ selectedStudent.name }}</div>
-                </div>
-                <div class="form-row">
-                  <div class="form-group w-50">
-                    <label>类型</label>
-                    <select v-model="recordForm.type" class="input">
-                      <option value="praise">🌟 表扬</option>
-                      <option value="criticism">📌 待改进</option>
-                      <option value="general">📝 日常记录</option>
-                    </select>
-                  </div>
-                  <div class="form-group w-50">
-                    <label>日期</label>
-                    <input v-model="recordForm.date" type="date" class="input">
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label>事件描述</label>
-                  <textarea v-model="recordForm.text" class="input" rows="3" placeholder="详细描述发生的事情..."></textarea>
-                </div>
-              </div>
-              <div class="modal-footer">
-                <button class="btn-cancel" @click="showAddRecord=false">取消</button>
-                <button class="btn-primary" @click="addRecord">保存</button>
+      <!-- 考试成绩 -->
+      <div v-show="classSubTab==='grades'" class="sub-page">
+        <div class="page-actions">
+          <button class="btn-small" @click="showAddExam=true">+ 录入考试</button>
+          <span class="student-count">共 {{ exams.length }} 次考试</span>
+        </div>
+        <div v-if="exams.length === 0" class="empty-state">暂无成绩数据</div>
+        <div v-for="(ex, i) in exams" :key="ex.id" class="exam-card">
+          <div class="exam-header" @click="ex.open = !ex.open">
+            <div class="exam-title">{{ ex.name }}</div>
+            <div class="exam-date">{{ ex.date }}</div>
+            <div class="exam-toggle">{{ ex.open ? '▼' : '▶' }}</div>
+          </div>
+          <div v-if="ex.open" class="exam-body">
+            <div class="exam-stats">
+              <div class="exam-stat"><label>平均分</label><span>{{ avgScore(ex) }}</span></div>
+              <div class="exam-stat"><label>最高分</label><span>{{ maxScore(ex) }}</span></div>
+              <div class="exam-stat"><label>最低分</label><span>{{ minScore(ex) }}</span></div>
+              <div class="exam-stat"><label>及格率</label><span>{{ passRate(ex) }}%</span></div>
+            </div>
+            <div class="exam-chart" ref="chartContainer" :data-exam-id="ex.id">
+              <div v-for="(s, si) in ex.scores" :key="si"
+                class="chart-bar"
+                :style="{
+                  height: ex.fullScore ? (s.score / ex.fullScore * 120) + 'px' : '0px',
+                  background: getScoreColor(s.score / (ex.fullScore || 100) * 100)
+                }"
+                :title="s.name + ': ' + s.score"></div>
+            </div>
+            <div class="score-list">
+              <div v-for="s in ex.scores" :key="s.id" class="score-item">
+                <span class="score-name">{{ s.name }}</span>
+                <span class="score-val" :style="{color: getScoreColor(s.score / (ex.fullScore || 100) * 100)}">{{ s.score }}</span>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- 安全教育 -->
-        <div v-show="classSubTab==='safety'" class="sub-page">
-          <div class="page-actions">
-            <button class="btn-primary" @click="showAddSafety = true">+ 添加记录</button>
+      <!-- 作业 -->
+      <div v-show="classSubTab==='homework'" class="sub-page">
+        <div class="page-actions">
+          <button class="btn-primary" @click="showAddHomework = true">+ 布置作业</button>
+        </div>
+        <div class="filter-tabs">
+          <span v-for="f in hwFilters" :key="f.key" :class="['filter-tab', {active: hwFilter===f.key}]" @click="hwFilter=f.key">{{ f.label }}</span>
+        </div>
+        <div v-if="filteredHomework.length === 0" class="empty-state">暂无作业记录</div>
+        <div v-for="hw in filteredHomework" :key="hw.id" class="hw-card">
+          <div class="hw-header">
+            <div class="hw-title">{{ hw.title }}</div>
+            <span :class="['hw-status', hw.status]">{{ {pending:'待批改', done:'已批改'}[hw.status] }}</span>
           </div>
-          <div v-if="safetyRecords.length === 0" class="empty-state">暂无安全教育记录</div>
-          <div v-for="(sr, i) in safetyRecords" :key="sr.id" class="safety-card">
-            <div class="safety-icon">{{ {消防:'🔥',交通:'🚗',防溺水:'💧',食品:'🍔',网络:'💻',其他:'📋'}[sr.type] || '📋' }}</div>
-            <div class="safety-body">
-              <div class="safety-title">{{ sr.title }}</div>
-              <div class="safety-meta">{{ sr.type }} · {{ sr.date }} · {{ sr.students }}人参与</div>
-            </div>
-            <div class="safety-delete" @click="deleteSafety(sr.id)">✕</div>
+          <div class="hw-meta">{{ hw.subject }} · {{ hw.date }} · {{ hw.submitted }}/{{ students.length }}人提交</div>
+          <div v-if="hw.status==='pending'" class="hw-actions">
+            <button class="btn-small" @click="markHomeworkDone(hw.id)">标记已批改</button>
+            <button class="btn-small btn-danger" @click="deleteHomework(hw.id)">删除</button>
           </div>
         </div>
+      </div>
+    </div>
 
-        <!-- 成绩分析 -->
-        <div v-show="classSubTab==='grades'" class="sub-page">
-          <div class="page-actions">
-            <button class="btn-primary" @click="showAddExam = true">+ 录入考试</button>
-          </div>
-          <div v-if="exams.length === 0" class="empty-state">暂无成绩数据</div>
-          <div v-for="(ex, i) in exams" :key="ex.id" class="exam-card">
-            <div class="exam-header" @click="ex.open = !ex.open">
-              <div class="exam-title">{{ ex.name }}</div>
-              <div class="exam-date">{{ ex.date }}</div>
-              <div class="exam-toggle">{{ ex.open ? '▼' : '▶' }}</div>
-            </div>
-            <div v-if="ex.open" class="exam-body">
-              <div class="exam-stats">
-                <div class="exam-stat"><label>平均分</label><span>{{ avgScore(ex) }}</span></div>
-                <div class="exam-stat"><label>最高分</label><span>{{ maxScore(ex) }}</span></div>
-                <div class="exam-stat"><label>最低分</label><span>{{ minScore(ex) }}</span></div>
-                <div class="exam-stat"><label>及格率</label><span>{{ passRate(ex) }}%</span></div>
-              </div>
-              <div class="exam-chart" ref="chartContainer" :data-exam-id="ex.id">
-                <div class="chart-bar" v-for="(s, si) in ex.scores" :key="si" :style="{height: (s.score/ex.fullScore||150)*120 + 'px', background: getScoreColor(s.score)}" :title="s.name+':'+s.score"></div>
-              </div>
-              <div class="score-list">
-                <div v-for="s in ex.scores" :key="s.id" class="score-item">
-                  <span class="score-name">{{ s.name }}</span>
-                  <span class="score-val" :style="{color: getScoreColor(s.score)}">{{ s.score }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
+    <!-- 我的 -->
+    <div v-show="tab==='profile'">
+      <div class="profile-header">
+        <div class="profile-avatar-large">{{ (teacherName || '教').charAt(0) }}</div>
+        <div class="profile-name">{{ teacherName || '教师' }}</div>
+        <div class="profile-role">{{ teacherInfo.subject }}教师 · {{ teacherInfo.grade }}</div>
+      </div>
+
+      <div class="profile-card">
+        <div class="profile-item">
+          <label>📧 邮箱</label>
+          <span>{{ teacherInfo.email }}</span>
         </div>
-
-        <!-- 作业情况 -->
-        <div v-show="classSubTab==='homework'" class="sub-page">
-          <div class="page-actions">
-            <button class="btn-primary" @click="showAddHomework = true">+ 布置作业</button>
-          </div>
-          <div class="filter-tabs">
-            <span v-for="f in hwFilters" :key="f.key" :class="['filter-tab', {active: hwFilter===f.key}]" @click="hwFilter=f.key">{{ f.label }}</span>
-          </div>
-          <div v-if="filteredHomework.length === 0" class="empty-state">暂无作业记录</div>
-          <div v-for="hw in filteredHomework" :key="hw.id" class="hw-card">
-            <div class="hw-header">
-              <div class="hw-title">{{ hw.title }}</div>
-              <span :class="['hw-status', hw.status]">{{ {pending:'待批改', done:'已批改'}[hw.status] }}</span>
-            </div>
-            <div class="hw-meta">{{ hw.subject }} · {{ hw.date }} · {{ hw.submitted }}/{{ students.length }}人提交</div>
-            <div v-if="hw.status==='pending'" class="hw-actions">
-              <button class="btn-small" @click="markHomeworkDone(hw.id)">标记已批改</button>
-              <button class="btn-small btn-danger" @click="deleteHomework(hw.id)">删除</button>
-            </div>
-          </div>
+        <div class="profile-item">
+          <label>📞 电话</label>
+          <span>{{ teacherInfo.phone }}</span>
         </div>
-
-        <!-- 添加学生弹窗 -->
-        <div v-if="showAddStudent" class="modal-overlay" @click.self="showAddStudent=false">
-          <div class="modal modal-wide">
-            <div class="modal-header">添加学生</div>
-            <div class="modal-body">
-              <div class="form-row">
-                <div class="form-group w-50">
-                  <label>姓名 *</label>
-                  <input v-model="studentForm.name" class="input" placeholder="学生姓名">
-                </div>
-                <div class="form-group w-50">
-                  <label>学号</label>
-                  <input v-model="studentForm.studentId" class="input" placeholder="学号">
-                </div>
-              </div>
-              <div class="form-row">
-                <div class="form-group w-50">
-                  <label>性别</label>
-                  <select v-model="studentForm.gender" class="input">
-                    <option value="男">男</option>
-                    <option value="女">女</option>
-                  </select>
-                </div>
-                <div class="form-group w-50">
-                  <label>家长</label>
-                  <input v-model="studentForm.parent" class="input" placeholder="家长姓名">
-                </div>
-              </div>
-              <div class="form-row">
-                <div class="form-group w-50">
-                  <label>家长电话</label>
-                  <input v-model="studentForm.phone" class="input" placeholder="手机号" type="tel">
-                </div>
-                <div class="form-group w-50">
-                  <label>住址</label>
-                  <input v-model="studentForm.address" class="input" placeholder="家庭住址">
-                </div>
-              </div>
-              <div class="form-group">
-                <label>备注</label>
-                <textarea v-model="studentForm.note" class="input" placeholder="备注信息" rows="2"></textarea>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button class="btn-cancel" @click="showAddStudent=false">取消</button>
-              <button class="btn-primary" @click="addStudent">保存</button>
-            </div>
-          </div>
+        <div class="profile-item">
+          <label>🏫 学校</label>
+          <span>{{ teacherInfo.school }}</span>
         </div>
-
-        <!-- 添加安全教育弹窗 -->
-        <div v-if="showAddSafety" class="modal-overlay" @click.self="showAddSafety=false">
-          <div class="modal">
-            <div class="modal-header">添加安全教育记录</div>
-            <div class="modal-body">
-              <div class="form-row">
-                <div class="form-group w-50">
-                  <label>类型</label>
-                  <select v-model="safetyForm.type" class="input">
-                    <option value="消防">消防</option>
-                    <option value="交通">交通</option>
-                    <option value="防溺水">防溺水</option>
-                    <option value="食品">食品</option>
-                    <option value="网络">网络</option>
-                    <option value="其他">其他</option>
-                  </select>
-                </div>
-                <div class="form-group w-50">
-                  <label>日期</label>
-                  <input v-model="safetyForm.date" type="date" class="input">
-                </div>
-              </div>
-              <input v-model="safetyForm.title" class="input" placeholder="教育主题">
-              <div class="form-group">
-                <label>参与人数</label>
-                <input v-model="safetyForm.students" type="number" class="input" placeholder="参与学生人数">
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button class="btn-cancel" @click="showAddSafety=false">取消</button>
-              <button class="btn-primary" @click="addSafety">保存</button>
-            </div>
-          </div>
+        <div class="profile-item">
+          <label>📚 任教科目</label>
+          <span>{{ teacherInfo.subject }}</span>
         </div>
+        <div class="profile-item">
+          <label>🎯 任教班级</label>
+          <span>{{ teacherInfo.grade }}</span>
+        </div>
+      </div>
 
-        <!-- 添加考试弹窗 -->
-        <div v-if="showAddExam" class="modal-overlay" @click.self="showAddExam=false">
-          <div class="modal modal-wide">
-            <div class="modal-header">录入考试成绩</div>
-            <div class="modal-body">
+      <div class="profile-card">
+        <div class="profile-item" @click="showEditProfile = true">
+          <label>✏️ 编辑资料</label>
+          <span>›</span>
+        </div>
+        <div class="profile-item" @click="exportData">
+          <label>💾 导出数据</label>
+          <span>›</span>
+        </div>
+        <div class="profile-item" @click="importData">
+          <label>📥 导入数据（JSON）</label>
+          <span>›</span>
+        </div>
+        <!-- ====== Word 导入功能 ====== -->
+        <div class="profile-item" @click="showWordImport = true">
+          <label>📄 从 Word 导入</label>
+          <span>›</span>
+        </div>
+        <div class="profile-item" @click="resetData">
+          <label style="color:#e74c3c">🗑️ 重置所有数据</label>
+          <span>›</span>
+        </div>
+      </div>
+
+      <div class="profile-about">
+        <p>教师工作台 v2.0</p>
+        <p>数据存储在本地，清除浏览器缓存会丢失</p>
+      </div>
+    </div>
+
+    <!-- ====== Word 导入弹窗 ====== -->
+    <div v-if="showWordImport" class="modal-overlay" @click.self="showWordImport=false">
+      <div class="modal">
+        <div class="modal-header">📄 从 Word 导入</div>
+        <div class="modal-body">
+          <p style="font-size:13px; color:var(--text-secondary); margin-bottom:14px">选择 Word 文档（.docx），然后选择要导入的数据类型。系统会自动解析文档中的表格。</p>
+
+          <div v-if="!wordFileSelected" style="margin-bottom:14px">
+            <button class="btn-primary" style="width:100%; text-align:center" @click="selectWordFile">选择 Word 文件</button>
+            <p v-if="wordFileName" style="font-size:12px; color:var(--success); margin-top:8px">✅ 已选择：{{ wordFileName }}</p>
+          </div>
+
+          <div v-if="wordFileSelected">
+            <p style="font-size:13px; font-weight:600; margin-bottom:10px">请选择导入类型：</p>
+
+            <div style="display:flex; flex-direction:column; gap:10px">
+              <div class="profile-item" style="border:1.5px solid var(--border); border-radius:12px; margin-bottom:0; padding:14px 16px; cursor:pointer" :style="{borderColor: wordImportType==='students' ? 'var(--primary)' : 'var(--border)'}" @click="wordImportType='students'">
+                <label>👨‍🎓 学生信息</label>
+                <span v-if="wordImportType==='students'" style="color:var(--primary)">✓</span>
+              </div>
+              <div class="profile-item" style="border:1.5px solid var(--border); border-radius:12px; margin-bottom:0; padding:14px 16px; cursor:pointer" :style="{borderColor: wordImportType==='exams' ? 'var(--primary)' : 'var(--border)'}" @click="wordImportType='exams'">
+                <label>📊 考试成绩</label>
+                <span v-if="wordImportType==='exams'" style="color:var(--primary)">✓</span>
+              </div>
+            </div>
+
+            <div v-if="wordImportType==='exams'" style="margin-top:14px">
               <div class="form-row">
                 <div class="form-group w-50">
                   <label>考试名称</label>
-                  <input v-model="examForm.name" class="input" placeholder="如：期中考试">
+                  <input v-model="wordExamName" class="input" placeholder="如：期中考试">
                 </div>
                 <div class="form-group w-50">
-                  <label>日期</label>
-                  <input v-model="examForm.date" type="date" class="input">
-                </div>
-              </div>
-              <div class="form-group">
-                <label>满分</label>
-                <input v-model="examForm.fullScore" type="number" class="input" placeholder="如：150">
-              </div>
-              <div class="form-group">
-                <label>学生成绩（格式：姓名:分数，每行一个）</label>
-                <textarea v-model="examForm.scoresText" class="input" rows="6" placeholder="张三:138&#10;李四:145&#10;王五:127"></textarea>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button class="btn-cancel" @click="showAddExam=false">取消</button>
-              <button class="btn-primary" @click="addExam">保存</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- 布置作业弹窗 -->
-        <div v-if="showAddHomework" class="modal-overlay" @click.self="showAddHomework=false">
-          <div class="modal">
-            <div class="modal-header">布置作业</div>
-            <div class="modal-body">
-              <input v-model="hwForm.title" class="input" placeholder="作业标题">
-              <div class="form-row">
-                <div class="form-group w-50">
-                  <label>科目</label>
-                  <input v-model="hwForm.subject" class="input" placeholder="如：数学">
-                </div>
-                <div class="form-group w-50">
-                  <label>日期</label>
-                  <input v-model="hwForm.date" type="date" class="input">
+                  <label>满分</label>
+                  <input v-model="wordExamFullScore" type="number" class="input" placeholder="如：150">
                 </div>
               </div>
             </div>
-            <div class="modal-footer">
-              <button class="btn-cancel" @click="showAddHomework=false">取消</button>
-              <button class="btn-primary" @click="addHomework">布置</button>
+
+            <div v-if="wordPreview" style="margin-top:14px; background:#f8f9fc; border-radius:10px; padding:12px; max-height:200px; overflow-y:auto">
+              <p style="font-size:12px; font-weight:600; color:var(--text-secondary); margin-bottom:8px">解析结果预览：</p>
+              <p style="font-size:12px; color:var(--text)">{{ wordPreview }}</p>
+            </div>
+
+            <div v-if="wordImportResult" style="margin-top:14px">
+              <p :style="{fontSize:'13px', fontWeight:600, color: wordImportResult.success ? 'var(--success)' : 'var(--danger)'}">
+                {{ wordImportResult.success ? '✅ 导入成功！' : '❌ 导入失败' }}
+              </p>
+              <p v-if="wordImportResult.msg" style="font-size:12px; color:var(--text-secondary); margin-top:4px">{{ wordImportResult.msg }}</p>
             </div>
           </div>
         </div>
-      </div>
-
-      <!-- 个人信息 -->
-      <div v-show="tab === 'profile'" class="page page-profile">
-        <div class="profile-header">
-          <div class="profile-avatar">{{ teacherName.charAt(0) }}</div>
-          <div class="profile-name">{{ teacherName }}</div>
-          <div class="profile-role">{{ teacherInfo.subject }}教师 · {{ teacherInfo.grade }}</div>
-        </div>
-
-        <div class="profile-card">
-          <div class="profile-item">
-            <label>📧 邮箱</label>
-            <span>{{ teacherInfo.email }}</span>
-          </div>
-          <div class="profile-item">
-            <label>📞 电话</label>
-            <span>{{ teacherInfo.phone }}</span>
-          </div>
-          <div class="profile-item">
-            <label>🏫 学校</label>
-            <span>{{ teacherInfo.school }}</span>
-          </div>
-          <div class="profile-item">
-            <label>📚 任教科目</label>
-            <span>{{ teacherInfo.subject }}</span>
-          </div>
-          <div class="profile-item">
-            <label>🎯 任教班级</label>
-            <span>{{ teacherInfo.grade }}</span>
-          </div>
-        </div>
-
-        <div class="profile-card">
-          <div class="profile-item" @click="showEditProfile = true">
-            <label>✏️ 编辑资料</label>
-            <span>›</span>
-          </div>
-          <div class="profile-item" @click="exportData">
-            <label>💾 导出数据</label>
-            <span>›</span>
-          </div>
-          <div class="profile-item" @click="importData">
-            <label>📥 导入数据</label>
-            <span>›</span>
-          </div>
-          <div class="profile-item" @click="resetData">
-            <label style="color:#e74c3c">🗑️ 重置所有数据</label>
-            <span>›</span>
-          </div>
-        </div>
-
-        <div class="profile-about">
-          <p>教师工作台 v1.0</p>
-          <p>数据存储在本地，清除浏览器缓存会丢失</p>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showWordImport=false; resetWordImport()">关闭</button>
+          <button v-if="wordFileSelected && wordImportType && !wordImportResult.success" class="btn-primary" @click="doWordImport" :disabled="wordImporting">{{ wordImporting ? '解析中...' : '开始导入' }}</button>
         </div>
       </div>
-    </main>
+    </div>
 
-    <!-- 底部导航栏 -->
-    <nav class="tab-bar">
-      <div v-for="tb in tabs" :key="tb.key" :class="['tab-item', {active: tab===tb.key}]" @click="tab=tb.key">
-        <span class="tab-icon" v-html="tb.icon"></span>
-        <span class="tab-label">{{ tb.label }}</span>
+    <!-- 添加学生弹窗 -->
+    <div v-if="showAddStudent" class="modal-overlay" @click.self="showAddStudent=false">
+      <div class="modal modal-wide">
+        <div class="modal-header">添加学生</div>
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>姓名 *</label>
+              <input v-model="studentForm.name" class="input" placeholder="学生姓名">
+            </div>
+            <div class="form-group w-50">
+              <label>学号</label>
+              <input v-model="studentForm.studentId" class="input" placeholder="学号">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>性别</label>
+              <select v-model="studentForm.gender" class="input">
+                <option value="男">男</option>
+                <option value="女">女</option>
+              </select>
+            </div>
+            <div class="form-group w-50">
+              <label>家长</label>
+              <input v-model="studentForm.parent" class="input" placeholder="家长姓名">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>家长电话</label>
+              <input v-model="studentForm.phone" class="input" placeholder="手机号" type="tel">
+            </div>
+            <div class="form-group w-50">
+              <label>住址</label>
+              <input v-model="studentForm.address" class="input" placeholder="家庭住址">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>备注</label>
+            <textarea v-model="studentForm.note" class="input" placeholder="备注信息" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showAddStudent=false">取消</button>
+          <button class="btn-primary" @click="addStudent">保存</button>
+        </div>
       </div>
-    </nav>
-  </div>
+    </div>
 
-  <script>const { createApp, ref, reactive, computed, watch, nextTick } = Vue;
+    <!-- 添加安全教育弹窗 -->
+    <div v-if="showAddSafety" class="modal-overlay" @click.self="showAddSafety=false">
+      <div class="modal">
+        <div class="modal-header">添加安全教育记录</div>
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>类型</label>
+              <select v-model="safetyForm.type" class="input">
+                <option value="消防">消防</option>
+                <option value="交通">交通</option>
+                <option value="防溺水">防溺水</option>
+                <option value="食品">食品</option>
+                <option value="网络">网络</option>
+                <option value="其他">其他</option>
+              </select>
+            </div>
+            <div class="form-group w-50">
+              <label>日期</label>
+              <input v-model="safetyForm.date" type="date" class="input">
+            </div>
+          </div>
+          <input v-model="safetyForm.title" class="input" placeholder="教育主题">
+          <div class="form-group">
+            <label>参与人数</label>
+            <input v-model="safetyForm.students" type="number" class="input" placeholder="参与学生人数">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showAddSafety=false">取消</button>
+          <button class="btn-primary" @click="addSafety">保存</button>
+        </div>
+      </div>
+    </div>
 
-const app = createApp({
+    <!-- 添加考试弹窗 -->
+    <div v-if="showAddExam" class="modal-overlay" @click.self="showAddExam=false">
+      <div class="modal modal-wide">
+        <div class="modal-header">录入考试成绩</div>
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>考试名称</label>
+              <input v-model="examForm.name" class="input" placeholder="如：期中考试">
+            </div>
+            <div class="form-group w-50">
+              <label>日期</label>
+              <input v-model="examForm.date" type="date" class="input">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>满分</label>
+            <input v-model="examForm.fullScore" type="number" class="input" placeholder="如：150">
+          </div>
+          <div class="form-group">
+            <label>学生成绩（格式：姓名:分数，每行一个）</label>
+            <textarea v-model="examForm.scoresText" class="input" rows="6" placeholder="张三:138&#10;李四:145&#10;王五:127"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showAddExam=false">取消</button>
+          <button class="btn-primary" @click="addExam">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 布置作业弹窗 -->
+    <div v-if="showAddHomework" class="modal-overlay" @click.self="showAddHomework=false">
+      <div class="modal">
+        <div class="modal-header">布置作业</div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>作业标题</label>
+            <input v-model="hwForm.title" class="input" placeholder="如：第一单元练习题">
+          </div>
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>科目</label>
+              <select v-model="hwForm.subject" class="input">
+                <option value="语文">语文</option>
+                <option value="数学">数学</option>
+                <option value="英语">英语</option>
+                <option value="科学">科学</option>
+                <option value="其他">其他</option>
+              </select>
+            </div>
+            <div class="form-group w-50">
+              <label>日期</label>
+              <input v-model="hwForm.date" type="date" class="input">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showAddHomework=false">取消</button>
+          <button class="btn-primary" @click="addHomework">布置</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 编辑资料弹窗 -->
+    <div v-if="showEditProfile" class="modal-overlay" @click.self="showEditProfile=false">
+      <div class="modal modal-wide">
+        <div class="modal-header">编辑资料</div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>姓名</label>
+            <input v-model="teacherName" class="input" placeholder="您的姓名">
+          </div>
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>学校</label>
+              <input v-model="teacherInfo.school" class="input" placeholder="学校名称">
+            </div>
+            <div class="form-group w-50">
+              <label>任教科目</label>
+              <select v-model="teacherInfo.subject" class="input">
+                <option value="语文">语文</option>
+                <option value="数学">数学</option>
+                <option value="英语">英语</option>
+                <option value="科学">科学</option>
+                <option value="体育">体育</option>
+                <option value="其他">其他</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>任教班级</label>
+              <input v-model="teacherInfo.grade" class="input" placeholder="如：三年级2班">
+            </div>
+            <div class="form-group w-50">
+              <label>邮箱</label>
+              <input v-model="teacherInfo.email" class="input" placeholder="邮箱地址">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>电话</label>
+              <input v-model="teacherInfo.phone" class="input" placeholder="手机号码" type="tel">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showEditProfile=false">取消</button>
+          <button class="btn-primary" @click="showEditProfile=false; saveData()">保存</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 底部导航栏 -->
+  <nav class="tab-bar">
+    <div v-for="tb in tabs" :key="tb.key" :class="['tab-item', {active: tab===tb.key}]" @click="tab=tb.key">
+      <span class="tab-icon" v-html="tb.icon"></span>
+      <span class="tab-label">{{ tb.label }}</span>
+    </div>
+  </nav>
+</div>
+
+<script>
+const { createApp, ref, reactive, computed, nextTick } = Vue;
+
+// ====== 底部 Tab 样式（动态注入） ======
+const tabStyle = document.createElement('style');
+tabStyle.textContent = `
+.tab-bar { position: fixed; bottom: 0; left: 0; right: 0; max-width: 480px; margin: 0 auto; height: calc(var(--tab-height) + env(safe-area-inset-bottom, 0px)); background: rgba(255,255,255,0.92); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); display: flex; border-top: 1px solid var(--border); z-index: 100; padding-bottom: env(safe-area-inset-bottom, 0px); }
+.tab-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: var(--text-tertiary); cursor: pointer; transition: all .2s; gap: 2px; }
+.tab-item.active { color: var(--primary); }
+.tab-icon { font-size: 20px; line-height: 1; }
+.tab-label { font-size: 10px; font-weight: 500; }
+`;
+document.head.appendChild(tabStyle);
+
+createApp({
   setup() {
-    // ======  App State  ======
-    const tab = ref('dashboard');
-    const now = ref('');
-    const today = ref('');
-    const isNotch = ref(false);
+    // ====== 全局状态 ======
+    const tab = ref('home');
+    const hasNotch = ref(false);
+    const welcomeSub = ref('新的一天，加油！💪');
 
-    // Teacher info
-    const teacherName = ref('张老师');
-    const teacherInfo = reactive({
-      email: 'zhang@school.edu.cn',
-      phone: '138****5678',
-      school: '第一实验小学',
-      subject: '数学',
-      grade: '三年级2班'
-    });
-
-    // ======  Navigation  ======
     const tabs = [
-      { key: 'dashboard', icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12L5 10.5"/><path d="M21 12L19 10.5"/><path d="M5 10.5L12 5L19 10.5V19C19 19.5523 18.5523 20 18 20H6C5.44772 20 5 19.5523 5 19V10.5Z"/></svg>', label: '首页' },
-      { key: 'todo', icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/></svg>', label: '待办' },
-      { key: 'schedule', icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><circle cx="12" cy="15" r="1"/><circle cx="16" cy="15" r="1"/><circle cx="8" cy="15" r="1"/></svg>', label: '课表' },
-      { key: 'class', icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21V19C17 17.8954 16.1046 17 15 17H9C7.89543 17 7 17.8954 7 19V21"/><path d="M12 13C14.2091 13 16 11.2091 16 9C16 6.79086 14.2091 5 12 5C9.79086 5 8 6.79086 8 9C8 11.2091 9.79086 13 12 13Z"/></svg>', label: '班级' },
-      { key: 'profile', icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21V19C20 17.8954 19.1046 17 18 17H6C4.89543 17 4 17.8954 4 19V21"/><path d="M12 13C14.2091 13 16 11.2091 16 9C16 6.79086 14.2091 5 12 5C9.79086 5 8 6.79086 8 9C8 11.2091 9.79086 13 12 13Z"/></svg>', label: '我的' },
+      { key: 'home', label: '首页', icon: '🏠' },
+      { key: 'todo', label: '待办', icon: '✅' },
+      { key: 'schedule', label: '课表', icon: '📅' },
+      { key: 'classes', label: '班级', icon: '👨‍🎓' },
+      { key: 'profile', label: '我的', icon: '👤' },
     ];
 
-    const currentTitle = computed(() => {
-      const map = { dashboard: '教师工作台', todo: '待办事项', schedule: '班级课表', class: '班级管理', profile: '个人信息' };
-      return map[tab.value] || '教师工作台';
+    const classSubTabs = [
+      { key: 'students', label: '👨‍🎓 学生' },
+      { key: 'grades', label: '📊 成绩' },
+      { key: 'homework', label: '📝 作业' },
+    ];
+    const classSubTab = ref('students');
+
+    const detailTabs = [
+      { key: 'info', label: '信息' },
+      { key: 'records', label: '成长' },
+      { key: 'safety', label: '安全' },
+      { key: 'grades', label: '成绩' },
+    ];
+
+    const currentDate = computed(() => {
+      const d = new Date();
+      return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
     });
 
-    const welcomeSub = computed(() => {
+    const timeGreeting = computed(() => {
       const h = new Date().getHours();
-      if (h < 6) return '夜深了，早点休息 🌙';
-      if (h < 9) return '新的一天，元气满满 💪';
-      if (h < 12) return '上午好，教学顺利 📚';
-      if (h < 14) return '中午好，记得吃午饭 🍚';
-      if (h < 18) return '下午好，继续加油 ⚡';
-      return '晚上好，辛苦了 🌆';
+      if (h < 6) return '夜深了🌙';
+      if (h < 9) return '早上好 ☀️';
+      if (h < 12) return '上午好 🌤️';
+      if (h < 14) return '中午好 🌞';
+      if (h < 18) return '下午好 🌤️';
+      return '晚上好 🌆';
     });
 
-    // ======  Store  ======
-    const STORE_KEY = 'teacher_workbench_data';
+    // ====== 检测刘海屏 ======
+    if (typeof CSS !== 'undefined' && CSS.supports && CSS.supports('padding-top: env(safe-area-inset-top)')) {
+      hasNotch.value = true;
+    }
+
+    // ====== Store  ======
+    const STORE_KEY = 'teache…data';
 
     function loadData() {
       try {
@@ -918,7 +1020,7 @@ const app = createApp({
       } catch(e) { console.warn('Save failed', e); }
     }
 
-    // ======  Todos  ======
+    // ====== Todos  ======
     const todos = ref([]);
     const todoFilter = ref('all');
     const showAddTodo = ref(false);
@@ -952,19 +1054,14 @@ const app = createApp({
         date: newTodo.date || new Date().toISOString().slice(0, 10),
         done: false
       });
-      newTodo.text = ''; newTodo.priority = 'medium'; newTodo.date = '';
       showAddTodo.value = false;
+      newTodo.text = ''; newTodo.priority = 'medium'; newTodo.date = '';
       saveData();
     }
 
-    function deleteTodo(id) {
-      todos.value = todos.value.filter(t => t.id !== id);
-      saveData();
-    }
-
-    // ======  Schedule  ======
+    // ====== Schedule  ======
     const classes = ref([]);
-    const weekday = ref(new Date().getDay() === 0 ? 6 : new Date().getDay() - 1); // Mon=0
+    const weekday = ref(new Date().getDay() === 0 ? 6 : new Date().getDay() - 1);
     const showAddClass = ref(false);
     const editingClass = ref(null);
     const classForm = reactive({ day: 0, name: '', time: '08:00', endTime: '08:45', grade: '', location: '', color: 0 });
@@ -978,7 +1075,6 @@ const app = createApp({
     function getTodayClasses() {
       return getClassesByDay(weekday.value === 0 ? 6 : weekday.value - 1);
     }
-    // Today's actual classes (for dashboard)
     const todayClasses = computed(() => {
       const day = new Date().getDay();
       const idx = day === 0 ? 6 : day - 1;
@@ -1011,7 +1107,7 @@ const app = createApp({
 
     function resetClassForm() { classForm.day = 0; classForm.name = ''; classForm.time = '08:00'; classForm.endTime = '08:45'; classForm.grade = ''; classForm.location = ''; classForm.color = 0; }
 
-    // ======  Students  ======
+    // ====== Students  ======
     const students = ref([]);
     const showAddStudent = ref(false);
     const showStudentDetail = ref(false);
@@ -1042,7 +1138,7 @@ const app = createApp({
     function viewStudent(s) { selectedStudent.value = s; showStudentDetail.value = true; detailTab.value = 'info'; }
     function deleteStudent(id) { students.value = students.value.filter(s => s.id !== id); saveData(); }
 
-    // ======  Student Timeline ======
+    // ====== Student Timeline ======
     const detailTab = ref('info');
     const showAddRecord = ref(false);
     const recordForm = reactive({ type: 'praise', date: '', text: '' });
@@ -1086,7 +1182,7 @@ const app = createApp({
       }
     }
 
-    // ======  Safety  ======
+    // ====== Safety  ======
     const safetyRecords = ref([]);
     const showAddSafety = ref(false);
     const safetyForm = reactive({ type: '消防', title: '', date: '', students: '' });
@@ -1105,7 +1201,7 @@ const app = createApp({
 
     function deleteSafety(id) { safetyRecords.value = safetyRecords.value.filter(s => s.id !== id); saveData(); }
 
-    // ======  Grades / Exams  ======
+    // ====== Grades / Exams  ======
     const exams = ref([]);
     const showAddExam = ref(false);
     const examForm = reactive({ name: '', date: '', fullScore: 100, scoresText: '' });
@@ -1157,11 +1253,11 @@ const app = createApp({
       saveData();
     }
 
-    // ======  Homework  ======
+    // ====== Homework  ======
     const homework = ref([]);
-    const hwFilter = ref('all');
     const showAddHomework = ref(false);
-    const hwForm = reactive({ title: '', subject: '', date: '' });
+    const hwForm = reactive({ title: '', subject: '语文', date: '' });
+    const hwFilter = ref('all');
     const hwFilters = [
       { key: 'all', label: '全部' },
       { key: 'pending', label: '待批改' },
@@ -1182,13 +1278,13 @@ const app = createApp({
       homework.value.unshift({
         id: Date.now(),
         title: hwForm.title.trim(),
-        subject: hwForm.subject || '未分类',
+        subject: hwForm.subject,
         date: hwForm.date || new Date().toISOString().slice(0, 10),
-        status: 'pending',
-        submitted: 0
+        submitted: 0,
+        status: 'pending'
       });
       showAddHomework.value = false;
-      hwForm.title = ''; hwForm.subject = ''; hwForm.date = '';
+      hwForm.title = ''; hwForm.subject = '语文'; hwForm.date = '';
       saveData();
     }
 
@@ -1202,7 +1298,7 @@ const app = createApp({
       saveData();
     }
 
-    // ======  Profile Actions  ======
+    // ====== Profile Actions  ======
     const showEditProfile = ref(false);
 
     function exportData() {
@@ -1245,7 +1341,229 @@ const app = createApp({
       }
     }
 
-    // ======  Load / Persist  ======
+    // ====== Word 导入功能 ======
+    const showWordImport = ref(false);
+    const wordFile = ref(null);
+    const wordFileName = ref('');
+    const wordFileSelected = ref(false);
+    const wordImportType = ref('students');
+    const wordImporting = ref(false);
+    const wordPreview = ref('');
+    const wordImportResult = ref({ success: false, msg: '' });
+    const wordExamName = ref('');
+    const wordExamFullScore = ref(100);
+
+    function resetWordImport() {
+      wordFile.value = null;
+      wordFileName.value = '';
+      wordFileSelected.value = false;
+      wordImportType.value = 'students';
+      wordImporting.value = false;
+      wordPreview.value = '';
+      wordImportResult.value = { success: false, msg: '' };
+      wordExamName.value = '';
+      wordExamFullScore.value = 100;
+    }
+
+    function selectWordFile() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.docx';
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        wordFile.value = file;
+        wordFileName.value = file.name;
+        wordFileSelected.value = true;
+        wordPreview.value = '';
+        wordImportResult.value = { success: false, msg: '' };
+        // 先读取预览表格
+        previewWordTables(file);
+      };
+      input.click();
+    }
+
+    async function previewWordTables(file) {
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const result = await mammoth.convertToHtml({ arrayBuffer });
+        const html = result.value;
+
+        // 解析所有表格
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const tables = doc.querySelectorAll('table');
+
+        if (tables.length === 0) {
+          wordPreview.value = '⚠️ 文档中没有找到表格，请确认 Word 中包含表格数据';
+          return;
+        }
+
+        wordPreview.value = `📋 检测到 ${tables.length} 个表格，共 ${Array.from(tables).reduce((sum, t) => sum + t.querySelectorAll('tr').length, 0)} 行数据`;
+      } catch(e) {
+        wordPreview.value = '⚠️ 无法解析 Word 文档：' + e.message;
+      }
+    }
+
+    function getColumnIndex(headers, keywords) {
+      for (let i = 0; i < headers.length; i++) {
+        const h = headers[i].toLowerCase().trim();
+        for (const kw of keywords) {
+          if (h.includes(kw)) return i;
+        }
+      }
+      return -1;
+    }
+
+    function parseStudentTables(html) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      const tables = doc.querySelectorAll('table');
+      const newStudents = [];
+      const colors = ['#4A90D9', '#27ae60', '#e74c3c', '#f39c12', '#9b59b6', '#1abc9c'];
+
+      for (const table of tables) {
+        const rows = table.querySelectorAll('tr');
+        if (rows.length < 2) continue;
+
+        // 第一行作为表头
+        const headerCells = rows[0].querySelectorAll('th, td');
+        const headers = Array.from(headerCells).map(c => c.textContent.trim());
+
+        const nameIdx = getColumnIndex(headers, ['姓名', '学生', '名字', 'name']);
+        const idIdx = getColumnIndex(headers, ['学号', '编号', 'id', '序号']);
+        const genderIdx = getColumnIndex(headers, ['性别', 'gender']);
+        const parentIdx = getColumnIndex(headers, ['家长', '父母', 'parent']);
+        const phoneIdx = getColumnIndex(headers, ['电话', '手机', 'phone', '联系方式']);
+        const addressIdx = getColumnIndex(headers, ['地址', '住址', '家庭', 'address']);
+
+        if (nameIdx === -1) continue; // 没有姓名列的表格跳过
+
+        for (let r = 1; r < rows.length; r++) {
+          const cells = rows[r].querySelectorAll('td');
+          if (cells.length === 0) continue;
+
+          const name = cells[nameIdx]?.textContent.trim();
+          if (!name) continue;
+
+          // 检查是否重复
+          const exists = students.value.some(s => s.name === name || (s.studentId && cells[idIdx] && s.studentId === cells[idIdx].textContent.trim()));
+          if (exists) continue;
+
+          newStudents.push({
+            id: Date.now() + r + Math.random(),
+            name: name,
+            studentId: idIdx >= 0 ? cells[idIdx].textContent.trim() : '',
+            gender: genderIdx >= 0 ? (cells[genderIdx].textContent.trim() || '男') : '男',
+            parent: parentIdx >= 0 ? cells[parentIdx].textContent.trim() : '',
+            phone: phoneIdx >= 0 ? cells[phoneIdx].textContent.trim() : '',
+            address: addressIdx >= 0 ? cells[addressIdx].textContent.trim() : '',
+            note: '',
+            avatarColor: colors[(students.value.length + newStudents.length) % colors.length]
+          });
+        }
+      }
+      return newStudents;
+    }
+
+    function parseExamTables(html, examName, fullScore) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      const tables = doc.querySelectorAll('table');
+      const scores = [];
+
+      for (const table of tables) {
+        const rows = table.querySelectorAll('tr');
+        if (rows.length < 2) continue;
+
+        const headerCells = rows[0].querySelectorAll('th, td');
+        const headers = Array.from(headerCells).map(c => c.textContent.trim());
+
+        const nameIdx = getColumnIndex(headers, ['姓名', '学生', '名字', 'name']);
+        const scoreIdx = getColumnIndex(headers, ['成绩', '分数', '得分', 'score', '总分']);
+
+        // 如果找不到，尝试找倒数第二列和最后一列
+        const finalNameIdx = nameIdx >= 0 ? nameIdx : 0;
+        const finalScoreIdx = scoreIdx >= 0 ? scoreIdx : headers.length - 1;
+
+        for (let r = 1; r < rows.length; r++) {
+          const cells = rows[r].querySelectorAll('td');
+          if (cells.length <= Math.max(finalNameIdx, finalScoreIdx)) continue;
+
+          const name = cells[finalNameIdx]?.textContent.trim();
+          const scoreText = cells[finalScoreIdx]?.textContent.trim();
+          if (!name || !scoreText) continue;
+
+          const score = parseFloat(scoreText);
+          if (isNaN(score)) continue;
+
+          scores.push({
+            id: Date.now() + r + Math.random(),
+            name: name,
+            score: score
+          });
+        }
+      }
+      return scores;
+    }
+
+    async function doWordImport() {
+      if (!wordFile.value) { alert('请先选择 Word 文件'); return; }
+      if (!wordImportType.value) { alert('请选择导入类型'); return; }
+
+      if (wordImportType.value === 'exams' && !wordExamName.value.trim()) {
+        alert('请输入考试名称');
+        return;
+      }
+
+      wordImporting.value = true;
+      wordImportResult.value = { success: false, msg: '' };
+
+      try {
+        const arrayBuffer = await wordFile.value.arrayBuffer();
+        const result = await mammoth.convertToHtml({ arrayBuffer });
+        const html = result.value;
+
+        if (wordImportType.value === 'students') {
+          const newStudents = parseStudentTables(html);
+          if (newStudents.length === 0) {
+            wordImportResult.value = { success: false, msg: '未找到可导入的学生数据，可能文档中无表格或所有学生已存在' };
+          } else {
+            students.value.push(...newStudents);
+            saveData();
+            wordImportResult.value = {
+              success: true,
+              msg: `成功导入 ${newStudents.length} 名学生信息 👨‍🎓`
+            };
+          }
+        } else if (wordImportType.value === 'exams') {
+          const scores = parseExamTables(html, wordExamName.value, parseInt(wordExamFullScore.value) || 100);
+          if (scores.length === 0) {
+            wordImportResult.value = { success: false, msg: '未找到可导入的成绩数据，请确认表格包含姓名和成绩列' };
+          } else {
+            exams.value.unshift({
+              id: Date.now(),
+              name: wordExamName.value.trim(),
+              date: new Date().toISOString().slice(0, 10),
+              fullScore: parseInt(wordExamFullScore.value) || 100,
+              scores: scores,
+              open: true
+            });
+            saveData();
+            wordImportResult.value = {
+              success: true,
+              msg: `成功导入 ${scores.length} 条成绩记录 📊`
+            };
+          }
+        }
+      } catch(e) {
+        wordImportResult.value = { success: false, msg: '解析 Word 文档失败：' + e.message };
+      } finally {
+        wordImporting.value = false;
+      }
+    }
+
+    // ====== Load / Persist  ======
     function loadFromStore() {
       const data = loadData();
       if (!data) return;
@@ -1259,146 +1577,40 @@ const app = createApp({
       if (data.teacherName) teacherName.value = data.teacherName;
     }
 
-    // Init demo data if empty
-    function initDemoData() {
-      if (students.value.length === 0) {
-        const demoStudents = [
-          { id: 1001, name: '张小明', studentId: '2024001', gender: '男', parent: '张伟', phone: '139****1234', address: '阳光小区3栋', note: '学习委员', avatarColor: '#4A90D9',
-            records: [
-              { id: 'r1', date: '2026-10-25', type: 'praise', text: '数学月考全班第一，95分！解题思路清晰' },
-              { id: 'r2', date: '2026-10-20', type: 'praise', text: '主动帮助同桌讲解数学题，耐心细致' },
-              { id: 'r3', date: '2026-10-15', type: 'criticism', text: '上课和后排同学讲话，被提醒两次' },
-              { id: 'r4', date: '2026-10-10', type: 'general', text: '参加学校演讲比赛，获得三等奖' },
-            ] },
-          { id: 1002, name: '李小红', studentId: '2024002', gender: '女', parent: '李强', phone: '139****5678', address: '花园路12号', note: '语文课代表', avatarColor: '#e74c3c',
-            records: [
-              { id: 'r5', date: '2026-10-24', type: 'praise', text: '作文被老师当范文在全班朗读' },
-              { id: 'r6', date: '2026-10-18', type: 'praise', text: '主动组织班级早读，纪律良好' },
-            ] },
-          { id: 1003, name: '王大力', studentId: '2024003', gender: '男', parent: '王刚', phone: '138****9012', address: '和平街5号', note: '体育委员', avatarColor: '#27ae60',
-            records: [
-              { id: 'r7', date: '2026-10-23', type: 'criticism', text: '体育课和同学追逐打闹，差点摔倒' },
-              { id: 'r8', date: '2026-10-16', type: 'praise', text: '校运会100米短跑第一名，为班级争光' },
-            ] },
-          { id: 1004, name: '赵雪', studentId: '2024004', gender: '女', parent: '赵明', phone: '136****3456', address: '东风路8号', note: '', avatarColor: '#f39c12', records: [] },
-          { id: 1005, name: '刘洋', studentId: '2024005', gender: '男', parent: '刘大海', phone: '137****7890', address: '建设路15号', note: '数学课代表', avatarColor: '#9b59b6', records: [] },
-          { id: 1006, name: '陈思思', studentId: '2024006', gender: '女', parent: '陈明', phone: '135****2345', address: '文华苑7号', note: '', avatarColor: '#1abc9c', records: [] },
-          { id: 1007, name: '周杰', studentId: '2024007', gender: '男', parent: '周华', phone: '132****6789', address: '龙腾路22号', note: '纪律委员', avatarColor: '#e67e22', records: [] },
-        ];
-        students.value = demoStudents;
-
-        classes.value = [
-          { id: 1, day: 0, name: '语文', time: '08:00', endTime: '08:45', grade: '三年级2班', location: '教学楼301', color: 0 },
-          { id: 2, day: 0, name: '数学', time: '08:55', endTime: '09:40', grade: '三年级2班', location: '教学楼301', color: 1 },
-          { id: 3, day: 0, name: '英语', time: '10:00', endTime: '10:45', grade: '三年级2班', location: '教学楼302', color: 2 },
-          { id: 4, day: 1, name: '数学', time: '08:00', endTime: '08:45', grade: '三年级2班', location: '教学楼301', color: 1 },
-          { id: 5, day: 1, name: '体育', time: '10:00', endTime: '10:45', grade: '三年级2班', location: '操场', color: 3 },
-          { id: 6, day: 2, name: '数学', time: '08:00', endTime: '08:45', grade: '三年级2班', location: '教学楼301', color: 1 },
-          { id: 7, day: 2, name: '美术', time: '14:00', endTime: '14:45', grade: '三年级2班', location: '美术教室', color: 4 },
-          { id: 8, day: 3, name: '数学', time: '08:00', endTime: '08:45', grade: '三年级2班', location: '教学楼301', color: 1 },
-          { id: 9, day: 3, name: '科学', time: '14:00', endTime: '14:45', grade: '三年级2班', location: '科学实验室', color: 5 },
-          { id: 10, day: 4, name: '数学', time: '08:00', endTime: '08:45', grade: '三年级2班', location: '教学楼301', color: 1 },
-          { id: 11, day: 4, name: '班会', time: '15:00', endTime: '15:45', grade: '三年级2班', location: '教学楼301', color: 6 },
-        ];
-
-        safetyRecords.value = [
-          { id: 1, type: '消防', title: '消防安全知识讲座', date: '2026-09-10', students: 45 },
-          { id: 2, type: '交通', title: '交通安全伴我行', date: '2026-09-15', students: 45 },
-          { id: 3, type: '防溺水', title: '防溺水安全教育', date: '2026-07-05', students: 45 },
-        ];
-
-        exams.value = [
-          { id: 1, name: '第一次月考', date: '2026-09-20', fullScore: 100, open: false,
-            scores: [
-              { id: 'e1s1', name: '张小明', score: 95 }, { id: 'e1s2', name: '李小红', score: 92 },
-              { id: 'e1s3', name: '王大力', score: 78 }, { id: 'e1s4', name: '赵雪', score: 88 },
-              { id: 'e1s5', name: '刘洋', score: 96 }, { id: 'e1s6', name: '陈思思', score: 85 },
-              { id: 'e1s7', name: '周杰', score: 72 },
-            ]
-          },
-          { id: 2, name: '期中考试', date: '2026-10-25', fullScore: 100, open: false,
-            scores: [
-              { id: 'e2s1', name: '张小明', score: 91 }, { id: 'e2s2', name: '李小红', score: 94 },
-              { id: 'e2s3', name: '王大力', score: 82 }, { id: 'e2s4', name: '赵雪', score: 90 },
-              { id: 'e2s5', name: '刘洋', score: 98 }, { id: 'e2s6', name: '陈思思', score: 87 },
-              { id: 'e2s7', name: '周杰', score: 76 },
-            ]
-          },
-        ];
-
-        homework.value = [
-          { id: 1, title: '数学练习册第5章', subject: '数学', date: '2026-10-28', status: 'pending', submitted: 5 },
-          { id: 2, title: '语文作文：我的周末', subject: '语文', date: '2026-10-27', status: 'done', submitted: 7 },
-          { id: 3, title: '英语单词抄写', subject: '英语', date: '2026-10-29', status: 'pending', submitted: 3 },
-        ];
-
-        todos.value = [
-          { id: 1, text: '批改数学作业', priority: 'high', date: '2026-10-28', done: false },
-          { id: 2, text: '准备下周公开课教案', priority: 'high', date: '2026-10-30', done: false },
-          { id: 3, text: '家长会通知发放', priority: 'medium', date: '2026-10-29', done: false },
-          { id: 4, text: '填写教学进度表', priority: 'medium', date: '2026-11-01', done: true },
-          { id: 5, text: '检查学生作业本', priority: 'low', date: '2026-10-31', done: false },
-        ];
-
-        saveData();
-      }
-    }
-
-    // ======  Init  ======
+    // ====== Bootstrap  ======
+    const teacherName = ref('');
+    const teacherInfo = reactive({ email: '', phone: '', school: '', subject: '', grade: '' });
     loadFromStore();
-    initDemoData();
-
-    // Update time
-    function updateTime() {
-      const d = new Date();
-      now.value = d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-      const opts = { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' };
-      today.value = d.toLocaleDateString('zh-CN', opts);
-    }
-    updateTime();
-    setInterval(updateTime, 30000);
-
-    // Check notch
-    if (window.navigator.userAgent.includes('iPhone')) {
-      isNotch.value = true;
-    }
 
     return {
-      tab, now, today, isNotch, teacherName, teacherInfo,
-      tabs, currentTitle, welcomeSub,
+      tab, hasNotch, welcomeSub, tabs, currentDate, timeGreeting,
+      classSubTabs, classSubTab, detailTabs,
       // Todos
-      todos, todoFilter, showAddTodo, newTodo, todoFilters, filteredTodos,
-      toggleTodo, addTodo, deleteTodo,
+      todos, todoFilter, showAddTodo, newTodo, todoFilters, filteredTodos, toggleTodo, addTodo,
       // Schedule
       classes, weekday, showAddClass, editingClass, classForm, weekdays, classColors,
-      getClassesByDay, getTodayClasses, todayClasses, saveClass, editClass, deleteClass,
+      getClassesByDay, getTodayClasses, todayClasses, saveClass, editClass, deleteClass, resetClassForm,
       // Students
       students, showAddStudent, showStudentDetail, selectedStudent, studentSearch, studentForm,
       filteredStudents, addStudent, viewStudent, deleteStudent,
+      // Student Timeline
+      detailTab, showAddRecord, recordForm, getRecordStats, sortedRecords, addRecord, deleteRecord,
       // Safety
       safetyRecords, showAddSafety, safetyForm, addSafety, deleteSafety,
-      // Grades
+      // Exams
       exams, showAddExam, examForm, avgScore, maxScore, minScore, passRate, getScoreColor, addExam,
       // Homework
-      homework, hwFilter, showAddHomework, hwForm, hwFilters, filteredHomework,
-      getPendingHomework, addHomework, markHomeworkDone, deleteHomework,
-      // Class sub tabs
-      classSubTab: ref('students'),
-      classSubTabs: [
-        { key: 'students', label: '学生档案' },
-        { key: 'safety', label: '安全教育' },
-        { key: 'grades', label: '成绩分析' },
-        { key: 'homework', label: '作业情况' },
-      ],
+      homework, showAddHomework, hwForm, hwFilter, hwFilters, filteredHomework, getPendingHomework, addHomework, markHomeworkDone, deleteHomework,
       // Profile
-      showEditProfile, exportData, importData, resetData,
-      // Timeline
-      detailTab, showAddRecord, recordForm, getRecordStats, sortedRecords, addRecord, deleteRecord,
+      showEditProfile, teacherName, teacherInfo,
+      exportData, importData, resetData,
+      // Word Import
+      showWordImport, wordFile, wordFileName, wordFileSelected, wordImportType,
+      wordImporting, wordPreview, wordImportResult, wordExamName, wordExamFullScore,
+      selectWordFile, doWordImport, resetWordImport,
     };
   }
-});
-
-app.mount('#app');
+}).mount('#app');
 </script>
 </body>
 </html>
