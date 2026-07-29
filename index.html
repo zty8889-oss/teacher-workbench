@@ -895,6 +895,35 @@ textarea.input { resize: vertical; min-height: 60px; }
       </div>
     </div>
 
+    <!-- 添加成长记录弹窗 -->
+    <div v-if="showAddRecord" class="modal-overlay" @click.self="showAddRecord=false">
+      <div class="modal">
+        <div class="modal-header">添加成长记录</div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>类型</label>
+            <select v-model="recordForm.type" class="input">
+              <option value="praise">🌟 表扬</option>
+              <option value="criticism">📌 待改进</option>
+              <option value="general">📝 日常</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>日期</label>
+            <input v-model="recordForm.date" type="date" class="input">
+          </div>
+          <div class="form-group">
+            <label>事件描述</label>
+            <textarea v-model="recordForm.text" class="input" rows="3" placeholder="记录学生成长的一点一滴..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showAddRecord=false">取消</button>
+          <button class="btn-primary" @click="addRecord">保存</button>
+        </div>
+      </div>
+    </div>
+
     <!-- 添加考试弹窗 -->
     <div v-if="showAddExam" class="modal-overlay" @click.self="showAddExam=false">
       <div class="modal modal-wide">
@@ -1466,7 +1495,7 @@ createApp({
     }
 
     // ====== 版本自检：更新后自动刷新，数据不丢失 ======
-    const APP_VERSION = '20260729.1';
+    const APP_VERSION = '20260729.2';
     const lastVersion = localStorage.getItem('teacher-app-version');
     if (lastVersion && lastVersion !== APP_VERSION) {
       // 有旧版本且不同 → 更新版本号后强制刷新加载新页面
