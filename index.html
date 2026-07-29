@@ -10,7 +10,7 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <title>教师工作台</title>
   <style>/* ===== 教师工作台 v2.0 全新主题 ===== */
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -721,9 +721,9 @@ textarea.input { resize: vertical; min-height: 60px; }
           <label>📥 导入数据（JSON）</label>
           <span>›</span>
         </div>
-        <!-- ====== Word 导入功能 ====== -->
+        <!-- ====== Excel 导入功能 ====== -->
         <div class="profile-item" @click="showWordImport = true">
-          <label>📄 从 Word 导入</label>
+          <label>📊 从 Excel 导入</label>
           <span>›</span>
         </div>
         <div class="profile-item" @click="showThemePicker = true">
@@ -784,12 +784,12 @@ textarea.input { resize: vertical; min-height: 60px; }
     <!-- ====== Word 导入弹窗 ====== -->
     <div v-if="showWordImport" class="modal-overlay" @click.self="showWordImport=false">
       <div class="modal">
-        <div class="modal-header">📄 从 Word 导入</div>
+        <div class="modal-header">📊 从 Excel 导入</div>
         <div class="modal-body">
-          <p style="font-size:13px; color:var(--text-secondary); margin-bottom:14px">选择 Word 文档（.docx），然后选择要导入的数据类型。系统会自动解析文档中的表格。</p>
+          <p style="font-size:13px; color:var(--text-secondary); margin-bottom:14px">选择 Excel 文件（.xlsx / .xls），系统自动读取第一个工作表中的表格数据。</p>
 
           <div v-if="!wordFileSelected" style="margin-bottom:14px">
-            <button class="btn-primary" style="width:100%; text-align:center" @click="selectWordFile">选择 Word 文件</button>
+            <button class="btn-primary" style="width:100%; text-align:center" @click="selectWordFile">选择 Excel 文件</button>
             <p v-if="wordFileName" style="font-size:12px; color:var(--success); margin-top:8px">✅ 已选择：{{ wordFileName }}</p>
           </div>
 
@@ -1572,7 +1572,7 @@ createApp({
     }
 
     // ====== 版本自检：更新后自动刷新，数据不丢失 ======
-    const APP_VERSION = '20260729.5';
+    const APP_VERSION = '20260729.6';
     const lastVersion = localStorage.getItem('teacher-app-version');
     if (lastVersion && lastVersion !== APP_VERSION) {
       // 有旧版本且不同 → 更新版本号后强制刷新加载新页面
@@ -1608,7 +1608,7 @@ createApp({
     function selectWordFile() {
       const input = document.createElement('input');
       input.type = 'file';
-      input.accept = '.docx';
+      input.accept = '.xlsx,.xls';
       input.onchange = (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -1618,30 +1618,24 @@ createApp({
         wordPreview.value = '';
         wordImportResult.value = { success: false, msg: '' };
         // 先读取预览表格
-        previewWordTables(file);
+        previewExcelFile(file);
       };
       input.click();
     }
 
-    async function previewWordTables(file) {
+    async function previewExcelFile(file) {
       try {
         const arrayBuffer = await file.arrayBuffer();
-        const result = await mammoth.convertToHtml({ arrayBuffer });
-        const html = result.value;
-
-        // 解析所有表格
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        const tables = doc.querySelectorAll('table');
-
-        if (tables.length === 0) {
-          wordPreview.value = '⚠️ 文档中没有找到表格，请确认 Word 中包含表格数据';
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
+        if (data.length < 2) {
+          wordPreview.value = '⚠️ Excel 表格数据不足（至少需要表头+1行数据）';
           return;
         }
-
-        wordPreview.value = `📋 检测到 ${tables.length} 个表格，共 ${Array.from(tables).reduce((sum, t) => sum + t.querySelectorAll('tr').length, 0)} 行数据`;
+        wordPreview.value = `📋 工作表「${sheetName}」共 ${data.length - 1} 行数据，${data[0].length} 列`;
       } catch(e) {
-        wordPreview.value = '⚠️ 无法解析 Word 文档：' + e.message;
+        wordPreview.value = '⚠️ 无法解析 Excel 文件：' + e.message;
       }
     }
 
@@ -1655,100 +1649,75 @@ createApp({
       return -1;
     }
 
-    function parseStudentTables(html) {
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, 'text/html');
-      const tables = doc.querySelectorAll('table');
+    function parseStudentExcel(data) {
       const newStudents = [];
       const colors = ['#4A90D9', '#27ae60', '#e74c3c', '#f39c12', '#9b59b6', '#1abc9c'];
+      if (data.length < 2) return newStudents;
 
-      for (const table of tables) {
-        const rows = table.querySelectorAll('tr');
-        if (rows.length < 2) continue;
+      const headers = data[0].map(h => String(h || '').trim());
+      const nameIdx = getColumnIndex(headers, ['姓名', '学生', '名字', 'name']);
+      const idIdx = getColumnIndex(headers, ['学号', '编号', 'id', '序号']);
+      const genderIdx = getColumnIndex(headers, ['性别', 'gender']);
+      const parentIdx = getColumnIndex(headers, ['家长', '父母', 'parent']);
+      const phoneIdx = getColumnIndex(headers, ['电话', '手机', 'phone', '联系方式']);
+      const addressIdx = getColumnIndex(headers, ['地址', '住址', '家庭', 'address']);
 
-        // 第一行作为表头
-        const headerCells = rows[0].querySelectorAll('th, td');
-        const headers = Array.from(headerCells).map(c => c.textContent.trim());
+      if (nameIdx === -1) return newStudents;
 
-        const nameIdx = getColumnIndex(headers, ['姓名', '学生', '名字', 'name']);
-        const idIdx = getColumnIndex(headers, ['学号', '编号', 'id', '序号']);
-        const genderIdx = getColumnIndex(headers, ['性别', 'gender']);
-        const parentIdx = getColumnIndex(headers, ['家长', '父母', 'parent']);
-        const phoneIdx = getColumnIndex(headers, ['电话', '手机', 'phone', '联系方式']);
-        const addressIdx = getColumnIndex(headers, ['地址', '住址', '家庭', 'address']);
+      for (let r = 1; r < data.length; r++) {
+        const row = data[r];
+        const name = String(row[nameIdx] || '').trim();
+        if (!name) continue;
 
-        if (nameIdx === -1) continue; // 没有姓名列的表格跳过
+        const exists = students.value.some(s => s.name === name || (s.studentId && row[idIdx] && s.studentId === String(row[idIdx]).trim()));
+        if (exists) continue;
 
-        for (let r = 1; r < rows.length; r++) {
-          const cells = rows[r].querySelectorAll('td');
-          if (cells.length === 0) continue;
-
-          const name = cells[nameIdx]?.textContent.trim();
-          if (!name) continue;
-
-          // 检查是否重复
-          const exists = students.value.some(s => s.name === name || (s.studentId && cells[idIdx] && s.studentId === cells[idIdx].textContent.trim()));
-          if (exists) continue;
-
-          newStudents.push({
-            id: Date.now() + r + Math.random(),
-            name: name,
-            studentId: idIdx >= 0 ? cells[idIdx].textContent.trim() : '',
-            gender: genderIdx >= 0 ? (cells[genderIdx].textContent.trim() || '男') : '男',
-            parent: parentIdx >= 0 ? cells[parentIdx].textContent.trim() : '',
-            phone: phoneIdx >= 0 ? cells[phoneIdx].textContent.trim() : '',
-            address: addressIdx >= 0 ? cells[addressIdx].textContent.trim() : '',
-            note: '',
-            avatarColor: colors[(students.value.length + newStudents.length) % colors.length]
-          });
-        }
+        newStudents.push({
+          id: Date.now() + r + Math.random(),
+          name: name,
+          studentId: idIdx >= 0 ? String(row[idIdx] || '').trim() : '',
+          gender: genderIdx >= 0 ? (String(row[genderIdx] || '').trim() || '男') : '男',
+          parent: parentIdx >= 0 ? String(row[parentIdx] || '').trim() : '',
+          phone: phoneIdx >= 0 ? String(row[phoneIdx] || '').trim() : '',
+          address: addressIdx >= 0 ? String(row[addressIdx] || '').trim() : '',
+          note: '',
+          avatarColor: colors[(students.value.length + newStudents.length) % colors.length]
+        });
       }
       return newStudents;
     }
 
-    function parseExamTables(html, examName, fullScore) {
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, 'text/html');
-      const tables = doc.querySelectorAll('table');
+    function parseExamExcel(data, fullScore) {
       const scores = [];
+      if (data.length < 2) return scores;
 
-      for (const table of tables) {
-        const rows = table.querySelectorAll('tr');
-        if (rows.length < 2) continue;
+      const headers = data[0].map(h => String(h || '').trim());
+      const nameIdx = getColumnIndex(headers, ['姓名', '学生', '名字', 'name']);
+      const scoreIdx = getColumnIndex(headers, ['成绩', '分数', '得分', 'score', '总分']);
 
-        const headerCells = rows[0].querySelectorAll('th, td');
-        const headers = Array.from(headerCells).map(c => c.textContent.trim());
+      const finalNameIdx = nameIdx >= 0 ? nameIdx : 0;
+      const finalScoreIdx = scoreIdx >= 0 ? scoreIdx : headers.length - 1;
 
-        const nameIdx = getColumnIndex(headers, ['姓名', '学生', '名字', 'name']);
-        const scoreIdx = getColumnIndex(headers, ['成绩', '分数', '得分', 'score', '总分']);
+      for (let r = 1; r < data.length; r++) {
+        const row = data[r];
+        const name = String(row[finalNameIdx] || '').trim();
+        const scoreText = String(row[finalScoreIdx] || '').trim();
+        if (!name || !scoreText) continue;
 
-        // 如果找不到，尝试找倒数第二列和最后一列
-        const finalNameIdx = nameIdx >= 0 ? nameIdx : 0;
-        const finalScoreIdx = scoreIdx >= 0 ? scoreIdx : headers.length - 1;
+        const score = parseFloat(scoreText);
+        if (isNaN(score)) continue;
 
-        for (let r = 1; r < rows.length; r++) {
-          const cells = rows[r].querySelectorAll('td');
-          if (cells.length <= Math.max(finalNameIdx, finalScoreIdx)) continue;
-
-          const name = cells[finalNameIdx]?.textContent.trim();
-          const scoreText = cells[finalScoreIdx]?.textContent.trim();
-          if (!name || !scoreText) continue;
-
-          const score = parseFloat(scoreText);
-          if (isNaN(score)) continue;
-
-          scores.push({
-            id: Date.now() + r + Math.random(),
-            name: name,
-            score: score
-          });
-        }
+        scores.push({
+          id: Date.now() + r + Math.random(),
+          name: name,
+          score: score
+        });
       }
       return scores;
     }
 
     async function doWordImport() {
-      if (!wordFile.value) { alert('请先选择 Word 文件'); return; }
+      if (!wordFile.value) { alert('请先选择 Excel 文件'); return; }
       if (!wordImportType.value) { alert('请选择导入类型'); return; }
 
       if (wordImportType.value === 'exams' && !wordExamName.value.trim()) {
@@ -1761,23 +1730,30 @@ createApp({
 
       try {
         const arrayBuffer = await wordFile.value.arrayBuffer();
-        const result = await mammoth.convertToHtml({ arrayBuffer });
-        const html = result.value;
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
+
+        if (data.length < 2) {
+          wordImportResult.value = { success: false, msg: 'Excel 数据不足（至少需要表头+1行数据）' };
+          wordImporting.value = false;
+          return;
+        }
 
         if (wordImportType.value === 'students') {
-          const newStudents = parseStudentTables(html);
+          const newStudents = parseStudentExcel(data);
           if (newStudents.length === 0) {
-            wordImportResult.value = { success: false, msg: '未找到可导入的学生数据，可能文档中无表格或所有学生已存在' };
+            wordImportResult.value = { success: false, msg: '未找到可导入的学生数据，可能缺少姓名列或所有学生已存在' };
           } else {
             students.value.push(...newStudents);
             saveData();
             wordImportResult.value = {
               success: true,
-              msg: `成功导入 ${newStudents.length} 名学生信息 👨‍🎓`
+              msg: `成功导入 ${newStudents.length} 名学生信息 👨🎓`
             };
           }
         } else if (wordImportType.value === 'exams') {
-          const scores = parseExamTables(html, wordExamName.value, parseInt(wordExamFullScore.value) || 100);
+          const scores = parseExamExcel(data, parseInt(wordExamFullScore.value) || 100);
           if (scores.length === 0) {
             wordImportResult.value = { success: false, msg: '未找到可导入的成绩数据，请确认表格包含姓名和成绩列' };
           } else {
@@ -1797,7 +1773,8 @@ createApp({
           }
         }
       } catch(e) {
-        wordImportResult.value = { success: false, msg: '解析 Word 文档失败：' + e.message };
+        wordImportResult.value = { success: false, msg: '解析 Excel 文件失败：' + e.message };
+      } finally {
       } finally {
         wordImporting.value = false;
       }
