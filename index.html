@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#4A90D9">
+  
+  <title>教师工作台</title>
+  <style>* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+:root {
+  --primary: #4A90D9;
+  --primary-light: #6BA3E0;
+  --primary-dark: #3570B0;
+  --success: #27ae60;
+  --warning: #f39c12;
+  --danger: #e74c3c;
+  --bg: #f5f7fa;
+  --card: #ffffff;
+  --text: #2c3e50;
+  --text-light: #7f8c8d;
+  --border: #e8ecf1;
+  --shadow: 0 2px 12px rgba(0,0,0,0.06);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --tab-height: 56px;
+  --header-height: 48px;
+}
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; -webkit-font-smoothing: antialiased; }
+#app { max-width: 480px; margin: 0 auto; min-height: 100vh; position: relative; background: var(--bg); }
+
+/* Header */
+.app-header { height: var(--header-height); background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; position: sticky; top: 0; z-index: 100; }
+.app-header.has-notch { padding-top: env(safe-area-inset-top); height: calc(var(--header-height) + env(safe-area-inset-top)); }
+.header-left, .header-right { font-size: 12px; opacity: .85; }
+.header-title { font-size: 16px; font-weight: 600; }
+
+/* Main Content */
+.app-main { padding: 12px 12px calc(var(--tab-height) + 12px); overflow-y: auto; }
+
+/* Cards & Sections */
+.welcome-card { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); border-radius: var(--radius); padding: 20px; color: #fff; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.welcome-text h2 { font-size: 18px; margin-bottom: 4px; }
+.welcome-text p { font-size: 13px; opacity: .85; }
+.welcome-avatar { width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,.2); display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; }
+
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+.stat-card { background: var(--card); border-radius: var(--radius-sm); padding: 14px 8px; text-align: center; box-shadow: var(--shadow); cursor: pointer; transition: transform .15s; }
+.stat-card:active { transform: scale(.95); }
+.stat-num { font-size: 24px; font-weight: 700; color: var(--primary); }
+.stat-label { font-size: 11px; color: var(--text-light); margin-top: 4px; }
+
+.section-card { background: var(--card); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.section-header h3 { font-size: 15px; }
+.section-more { font-size: 12px; color: var(--primary); cursor: pointer; }
+
+/* Today Classes */
+.today-class-item { display: flex; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); gap: 10px; }
+.today-class-item:last-child { border: none; }
+.class-time { font-size: 12px; color: var(--primary); font-weight: 600; min-width: 36px; }
+.class-name { flex: 1; font-size: 14px; }
+.class-location { font-size: 12px; color: var(--text-light); }
+
+/* Todo */
+.todo-item { display: flex; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); gap: 8px; }
+.todo-item:last-child { border: none; }
+.todo-priority { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 500; min-width: 28px; text-align: center; }
+.p-high { background: #fde8e8; color: var(--danger); }
+.p-medium { background: #fef5e7; color: var(--warning); }
+.p-low { background: #eafaf1; color: var(--success); }
+.todo-text { flex: 1; font-size: 14px; }
+.todo-date { font-size: 11px; color: var(--text-light); }
+
+/* Filter Tabs */
+.filter-tabs, .weekday-tabs, .class-sub-tabs { display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto; padding: 2px 0; }
+.filter-tab, .weekday-tab, .sub-tab { padding: 6px 16px; border-radius: 20px; font-size: 13px; background: var(--card); color: var(--text-light); cursor: pointer; white-space: nowrap; border: 1px solid var(--border); transition: all .2s; }
+.filter-tab.active, .weekday-tab.active, .sub-tab.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+/* Page Actions */
+.page-actions { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.student-count { font-size: 13px; color: var(--text-light); margin-left: auto; }
+
+/* Buttons */
+.btn-primary { background: var(--primary); color: #fff; border: none; padding: 10px 20px; border-radius: var(--radius-sm); font-size: 14px; cursor: pointer; transition: background .2s; }
+.btn-primary:active { background: var(--primary-dark); }
+.btn-cancel { background: var(--border); color: var(--text); border: none; padding: 10px 20px; border-radius: var(--radius-sm); font-size: 14px; cursor: pointer; }
+.btn-danger { background: var(--danger); color: #fff; border: none; padding: 10px 20px; border-radius: var(--radius-sm); font-size: 14px; cursor: pointer; }
+.btn-small { background: var(--primary); color: #fff; border: none; padding: 6px 14px; border-radius: var(--radius-sm); font-size: 12px; cursor: pointer; }
+.btn-small.btn-danger { background: var(--danger); }
+
+/* Empty State */
+.empty-state { text-align: center; padding: 40px 20px; color: var(--text-light); font-size: 14px; }
+
+/* Todo Card */
+.todo-card { background: var(--card); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow); }
+.todo-check { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; color: #fff; flex-shrink: 0; transition: all .2s; }
+.todo-check.done { background: var(--success); border-color: var(--success); }
+.todo-body { flex: 1; }
+.todo-body.done .todo-text { text-decoration: line-through; color: var(--text-light); }
+.todo-meta { display: flex; gap: 10px; margin-top: 4px; }
+.todo-meta-date { font-size: 11px; color: var(--text-light); }
+.todo-delete { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; color: var(--text-light); cursor: pointer; border-radius: 50%; }
+.todo-delete:active { background: var(--border); }
+
+/* Schedule */
+.class-card { background: var(--card); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow); border-left: 4px solid var(--primary); cursor: pointer; }
+.class-time-block { text-align: center; min-width: 50px; }
+.class-time-start { font-size: 15px; font-weight: 700; color: var(--primary); }
+.class-time-end { font-size: 11px; color: var(--text-light); }
+.class-info { flex: 1; }
+.class-detail { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+.class-delete { color: var(--text-light); cursor: pointer; padding: 4px; }
+
+/* Modal */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
+.modal { background: var(--card); border-radius: var(--radius); width: 100%; max-width: 380px; max-height: 85vh; overflow-y: auto; }
+.modal-wide { max-width: 440px; }
+.modal-header { padding: 16px 20px; font-size: 16px; font-weight: 600; border-bottom: 1px solid var(--border); }
+.modal-body { padding: 16px 20px; }
+.modal-footer { padding: 12px 20px; display: flex; gap: 10px; justify-content: flex-end; border-top: 1px solid var(--border); }
+
+/* Form */
+.input { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; outline: none; transition: border .2s; font-family: inherit; background: #fff; }
+.input:focus { border-color: var(--primary); }
+select.input { appearance: auto; }
+textarea.input { resize: vertical; }
+.form-row { display: flex; gap: 10px; margin-bottom: 10px; }
+.form-group { margin-bottom: 10px; flex: 1; }
+.form-group label { display: block; font-size: 12px; color: var(--text-light); margin-bottom: 4px; font-weight: 500; }
+.w-50 { flex: 1; min-width: 0; }
+
+/* Color Picker */
+.color-picker { display: flex; gap: 6px; flex-wrap: wrap; }
+.color-dot { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: all .2s; }
+.color-dot.active { border-color: var(--text); transform: scale(1.15); }
+
+/* Student Card */
+.search-bar { margin-bottom: 12px; }
+.student-card { background: var(--card); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 6px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow); cursor: pointer; }
+.student-avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16px; font-weight: 700; flex-shrink: 0; }
+.student-info { flex: 1; }
+.student-name { font-size: 14px; font-weight: 500; }
+.student-meta { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+.student-arrow { color: var(--text-light); font-size: 20px; }
+
+/* Student Detail */
+.detail-avatar { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 24px; font-weight: 700; margin: 0 auto 16px; }
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.detail-item.full { grid-column: 1 / -1; }
+.detail-item label { display: block; font-size: 11px; color: var(--text-light); margin-bottom: 2px; }
+.detail-item span { font-size: 14px; }
+
+/* Safety Card */
+.safety-card { background: var(--card); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow); }
+.safety-icon { font-size: 28px; }
+.safety-body { flex: 1; }
+.safety-title { font-size: 14px; font-weight: 500; }
+.safety-meta { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+.safety-delete { color: var(--text-light); cursor: pointer; padding: 4px; }
+
+/* Exam Card */
+.exam-card { background: var(--card); border-radius: var(--radius-sm); margin-bottom: 8px; box-shadow: var(--shadow); overflow: hidden; }
+.exam-header { display: flex; align-items: center; padding: 14px; cursor: pointer; gap: 10px; }
+.exam-title { flex: 1; font-size: 14px; font-weight: 500; }
+.exam-date { font-size: 12px; color: var(--text-light); }
+.exam-toggle { font-size: 12px; color: var(--text-light); }
+.exam-body { padding: 0 14px 14px; border-top: 1px solid var(--border); padding-top: 12px; }
+.exam-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+.exam-stat { text-align: center; }
+.exam-stat label { display: block; font-size: 11px; color: var(--text-light); }
+.exam-stat span { font-size: 18px; font-weight: 700; color: var(--primary); }
+.exam-chart { display: flex; align-items: flex-end; gap: 3px; height: 130px; padding: 8px 0; overflow-x: auto; }
+.chart-bar { min-width: 16px; max-width: 24px; border-radius: 3px 3px 0 0; flex-shrink: 0; position: relative; cursor: pointer; }
+.score-list { max-height: 200px; overflow-y: auto; }
+.score-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.score-item:last-child { border: none; }
+.score-name { font-size: 13px; }
+.score-val { font-weight: 700; }
+
+/* Homework Card */
+.hw-card { background: var(--card); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 8px; box-shadow: var(--shadow); }
+.hw-header { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.hw-title { flex: 1; font-size: 14px; font-weight: 500; }
+.hw-status { font-size: 11px; padding: 2px 10px; border-radius: 10px; }
+.hw-status.pending { background: #fef5e7; color: var(--warning); }
+.hw-status.done { background: #eafaf1; color: var(--success); }
+.hw-meta { font-size: 12px; color: var(--text-light); margin-bottom: 8px; }
+.hw-actions { display: flex; gap: 8px; }
+
+/* Profile */
+.profile-header { text-align: center; padding: 24px 16px; }
+.profile-avatar { width: 64px; height: 64px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 700; margin: 0 auto 12px; }
+.profile-name { font-size: 20px; font-weight: 700; }
+.profile-role { font-size: 13px; color: var(--text-light); margin-top: 4px; }
+.profile-card { background: var(--card); border-radius: var(--radius); padding: 0 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
+.profile-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+.profile-item:last-child { border: none; }
+.profile-item label { font-size: 14px; }
+.profile-item span { font-size: 14px; color: var(--text-light); }
+.profile-about { text-align: center; padding: 20px; }
+.profile-about p { font-size: 12px; color: var(--text-light); margin-bottom: 4px; }
+
+/* Bottom Tab Bar */
+.tab-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); display: flex; border-top: 1px solid var(--border); z-index: 100; padding-bottom: env(safe-area-inset-bottom); max-width: 480px; margin: 0 auto; height: var(--tab-height); }
+.tab-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; padding: 4px 0; transition: all .2s; }
+.tab-icon { font-size: 22px; line-height: 1.2; }
+.tab-label { font-size: 10px; color: var(--text-light); margin-top: 2px; }
+.tab-item.active .tab-label { color: var(--primary); font-weight: 600; }
+.tab-item.active .tab-icon { transform: scale(1.1); }
+
+/* Utility */
+.page { min-height: calc(100vh - var(--header-height) - var(--tab-height) - 24px); }
+</style>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+</head>
+<body>
+  <div id="app">
+    <!-- 状态栏 -->
+    <header class="app-header" :class="{ 'has-notch': isNotch }">
+      <div class="header-left">
+        <span class="header-time">{{ now }}</span>
+      </div>
+      <div class="header-title">{{ currentTitle }}</div>
+      <div class="header-right">
+        <span class="header-date">{{ today }}</span>
+      </div>
+    </header>
+
+    <!-- 主内容 -->
+    <main class="app-main">
+      <!-- 首页 -->
+      <div v-show="tab === 'dashboard'" class="page page-dashboard">
+        <div class="welcome-card">
+          <div class="welcome-text">
+            <h2>{{ teacherName }}，早上好 ☀️</h2>
+            <p>{{ welcomeSub }}</p>
+          </div>
+          <div class="welcome-avatar">{{ teacherName.charAt(0) }}</div>
+        </div>
+
+        <!-- 快捷统计 -->
+        <div class="stats-grid">
+          <div class="stat-card" @click="tab='todo'">
+            <div class="stat-num">{{ todos.filter(t=>!t.done).length }}</div>
+            <div class="stat-label">待办事项</div>
+          </div>
+          <div class="stat-card" @click="tab='class'">
+            <div class="stat-num">{{ students.length }}</div>
+            <div class="stat-label">学生人数</div>
+          </div>
+          <div class="stat-card" @click="tab='class'; classSubTab='homework'">
+            <div class="stat-num">{{ getPendingHomework() }}</div>
+            <div class="stat-label">待批作业</div>
+          </div>
+          <div class="stat-card" @click="tab='schedule'">
+            <div class="stat-num">{{ getTodayClasses().length }}</div>
+            <div class="stat-label">今日课程</div>
+          </div>
+        </div>
+
+        <!-- 今日课程 -->
+        <div class="section-card">
+          <div class="section-header">
+            <h3>📅 今日课程</h3>
+            <span class="section-more" @click="tab='schedule'">查看全部 →</span>
+          </div>
+          <div class="today-classes">
+            <div v-if="todayClasses.length === 0" class="empty-state">今天没有课程安排 🎉</div>
+            <div v-for="(c, i) in todayClasses.slice(0, 4)" :key="i" class="today-class-item">
+              <span class="class-time">{{ c.time }}</span>
+              <span class="class-name">{{ c.name }}</span>
+              <span class="class-location">{{ c.location || '' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 近期待办 -->
+        <div class="section-card">
+          <div class="section-header">
+            <h3>📋 近期待办</h3>
+            <span class="section-more" @click="tab='todo'">查看全部 →</span>
+          </div>
+          <div v-if="todos.filter(t=>!t.done).length === 0" class="empty-state">暂无待办，轻松一下 🎉</div>
+          <div v-for="(t, i) in todos.filter(t=>!t.done).slice(0, 5)" :key="i" class="todo-item">
+            <span class="todo-priority" :class="'p-'+t.priority">{{ {high:'高',medium:'中',low:'低'}[t.priority] }}</span>
+            <span class="todo-text">{{ t.text }}</span>
+            <span class="todo-date">{{ t.date }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 待办事项 -->
+      <div v-show="tab === 'todo'" class="page page-todo">
+        <div class="page-actions">
+          <button class="btn-primary" @click="showAddTodo = true">+ 添加待办</button>
+        </div>
+        <div class="filter-tabs">
+          <span v-for="f in todoFilters" :key="f.key" :class="['filter-tab', {active: todoFilter===f.key}]" @click="todoFilter=f.key">{{ f.label }}</span>
+        </div>
+        <div v-if="filteredTodos.length === 0" class="empty-state">暂无待办事项 ✅</div>
+        <div v-for="(t, i) in filteredTodos" :key="t.id" class="todo-card">
+          <div class="todo-check" :class="{done: t.done}" @click="toggleTodo(t.id)">{{ t.done ? '✓' : '' }}</div>
+          <div class="todo-body" :class="{done: t.done}">
+            <div class="todo-text">{{ t.text }}</div>
+            <div class="todo-meta">
+              <span class="todo-priority" :class="'p-'+t.priority">{{ {high:'高优先级',medium:'中优先级',low:'低优先级'}[t.priority] }}</span>
+              <span class="todo-meta-date">📅 {{ t.date }}</span>
+            </div>
+          </div>
+          <div class="todo-delete" @click="deleteTodo(t.id)">✕</div>
+        </div>
+
+        <!-- 添加待办弹窗 -->
+        <div v-if="showAddTodo" class="modal-overlay" @click.self="showAddTodo=false">
+          <div class="modal">
+            <div class="modal-header">添加待办事项</div>
+            <div class="modal-body">
+              <input v-model="newTodo.text" class="input" placeholder="请输入待办内容" @keyup.enter="addTodo">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>优先级</label>
+                  <select v-model="newTodo.priority" class="input">
+                    <option value="high">高</option>
+                    <option value="medium" selected>中</option>
+                    <option value="low">低</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>截止日期</label>
+                  <input v-model="newTodo.date" type="date" class="input">
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn-cancel" @click="showAddTodo=false">取消</button>
+              <button class="btn-primary" @click="addTodo">确定</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 课表 -->
+      <div v-show="tab === 'schedule'" class="page page-schedule">
+        <div class="page-actions">
+          <button class="btn-primary" @click="showAddClass = true">+ 添加课程</button>
+        </div>
+        <div class="weekday-tabs">
+          <span v-for="(d, i) in weekdays" :key="i" :class="['weekday-tab', {active: weekday===i}]" @click="weekday=i">{{ d }}</span>
+        </div>
+        <div v-if="getClassesByDay(weekday).length === 0" class="empty-state">{{ weekdays[weekday] }}没有课程安排</div>
+        <div v-for="(c, i) in getClassesByDay(weekday)" :key="c.id" class="class-card" @click="editClass(c)" :style="{borderLeftColor: classColors[c.color||0]}">
+          <div class="class-time-block">
+            <div class="class-time-start">{{ c.time }}</div>
+            <div class="class-time-end">{{ c.endTime || '' }}</div>
+          </div>
+          <div class="class-info">
+            <div class="class-name">{{ c.name }}</div>
+            <div class="class-detail">{{ c.grade }} · {{ c.location }}</div>
+          </div>
+          <div class="class-delete" @click.stop="deleteClass(c.id)">✕</div>
+        </div>
+
+        <!-- 添加课程弹窗 -->
+        <div v-if="showAddClass" class="modal-overlay" @click.self="showAddClass=false">
+          <div class="modal">
+            <div class="modal-header">{{ editingClass ? '编辑课程' : '添加课程' }}</div>
+            <div class="modal-body">
+              <div class="form-row">
+                <div class="form-group w-50">
+                  <label>星期</label>
+                  <select v-model="classForm.day" class="input">
+                    <option v-for="(d,i) in weekdays" :key="i" :value="i">{{ d }}</option>
+                  </select>
+                </div>
+                <div class="form-group w-50">
+                  <label>颜色</label>
+                  <div class="color-picker">
+                    <span v-for="(clr, ci) in classColors" :key="ci" :class="['color-dot', {active: classForm.color===ci}]" :style="{background: clr}" @click="classForm.color=ci"></span>
+                  </div>
+                </div>
+              </div>
+              <input v-model="classForm.name" class="input" placeholder="课程名称（如：语文）">
+              <div class="form-row">
+                <div class="form-group w-50">
+                  <label>开始时间</label>
+                  <input v-model="classForm.time" type="time" class="input">
+                </div>
+                <div class="form-group w-50">
+                  <label>结束时间</label>
+                  <input v-model="classForm.endTime" type="time" class="input">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group w-50">
+                  <label>年级/班级</label>
+                  <input v-model="classForm.grade" class="input" placeholder="如：三年级2班">
+                </div>
+                <div class="form-group w-50">
+                  <label>地点</label>
+                  <input v-model="classForm.location" class="input" placeholder="如：教学楼301">
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn-cancel" @click="showAddClass=false">取消</button>
+              <button class="btn-primary" @click="saveClass">保存</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 班级管理 -->
+      <div v-show="tab === 'class'" class="page page-class">
+        <div class="class-sub-tabs">
+          <span v-for="st in classSubTabs" :key="st.key" :class="['sub-tab', {active: classSubTab===st.key}]" @click="classSubTab=st.key">{{ st.label }}</span>
+        </div>
+
+        <!-- 学生档案 -->
+        <div v-show="classSubTab==='students'" class="sub-page">
+          <div class="page-actions">
+            <button class="btn-primary" @click="showAddStudent = true">+ 添加学生</button>
+            <span class="student-count">共 {{ students.length }} 人</span>
+          </div>
+          <div class="search-bar">
+            <input v-model="studentSearch" class="input" placeholder="🔍 搜索学生姓名或学号">
+          </div>
+          <div v-if="filteredStudents.length === 0" class="empty-state">没有找到学生</div>
+          <div v-for="s in filteredStudents" :key="s.id" class="student-card" @click="viewStudent(s)">
+            <div class="student-avatar" :style="{background: s.avatarColor || '#4A90D9'}">{{ s.name.charAt(0) }}</div>
+            <div class="student-info">
+              <div class="student-name">{{ s.name }}</div>
+              <div class="student-meta">{{ s.studentId }} · {{ s.gender }} · {{ s.parent }}</div>
+            </div>
+            <div class="student-arrow">›</div>
+          </div>
+          <!-- 学生详情弹窗 -->
+          <div v-if="showStudentDetail" class="modal-overlay" @click.self="showStudentDetail=false">
+            <div class="modal modal-wide">
+              <div class="modal-header">学生档案</div>
+              <div class="modal-body">
+                <div class="detail-avatar" :style="{background: selectedStudent.avatarColor}">{{ selectedStudent.name.charAt(0) }}</div>
+                <div class="detail-grid">
+                  <div class="detail-item"><label>姓名</label><span>{{ selectedStudent.name }}</span></div>
+                  <div class="detail-item"><label>学号</label><span>{{ selectedStudent.studentId }}</span></div>
+                  <div class="detail-item"><label>性别</label><span>{{ selectedStudent.gender }}</span></div>
+                  <div class="detail-item"><label>家长</label><span>{{ selectedStudent.parent }}</span></div>
+                  <div class="detail-item"><label>家长电话</label><span>{{ selectedStudent.phone }}</span></div>
+                  <div class="detail-item"><label>住址</label><span>{{ selectedStudent.address }}</span></div>
+                  <div class="detail-item full"><label>备注</label><span>{{ selectedStudent.note }}</span></div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button class="btn-danger" @click="deleteStudent(selectedStudent.id); showStudentDetail=false">删除</button>
+                <button class="btn-primary" @click="showStudentDetail=false">关闭</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 安全教育 -->
+        <div v-show="classSubTab==='safety'" class="sub-page">
+          <div class="page-actions">
+            <button class="btn-primary" @click="showAddSafety = true">+ 添加记录</button>
+          </div>
+          <div v-if="safetyRecords.length === 0" class="empty-state">暂无安全教育记录</div>
+          <div v-for="(sr, i) in safetyRecords" :key="sr.id" class="safety-card">
+            <div class="safety-icon">{{ {消防:'🔥',交通:'🚗',防溺水:'💧',食品:'🍔',网络:'💻',其他:'📋'}[sr.type] || '📋' }}</div>
+            <div class="safety-body">
+              <div class="safety-title">{{ sr.title }}</div>
+              <div class="safety-meta">{{ sr.type }} · {{ sr.date }} · {{ sr.students }}人参与</div>
+            </div>
+            <div class="safety-delete" @click="deleteSafety(sr.id)">✕</div>
+          </div>
+        </div>
+
+        <!-- 成绩分析 -->
+        <div v-show="classSubTab==='grades'" class="sub-page">
+          <div class="page-actions">
+            <button class="btn-primary" @click="showAddExam = true">+ 录入考试</button>
+          </div>
+          <div v-if="exams.length === 0" class="empty-state">暂无成绩数据</div>
+          <div v-for="(ex, i) in exams" :key="ex.id" class="exam-card">
+            <div class="exam-header" @click="ex.open = !ex.open">
+              <div class="exam-title">{{ ex.name }}</div>
+              <div class="exam-date">{{ ex.date }}</div>
+              <div class="exam-toggle">{{ ex.open ? '▼' : '▶' }}</div>
+            </div>
+            <div v-if="ex.open" class="exam-body">
+              <div class="exam-stats">
+                <div class="exam-stat"><label>平均分</label><span>{{ avgScore(ex) }}</span></div>
+                <div class="exam-stat"><label>最高分</label><span>{{ maxScore(ex) }}</span></div>
+                <div class="exam-stat"><label>最低分</label><span>{{ minScore(ex) }}</span></div>
+                <div class="exam-stat"><label>及格率</label><span>{{ passRate(ex) }}%</span></div>
+              </div>
+              <div class="exam-chart" ref="chartContainer" :data-exam-id="ex.id">
+                <div class="chart-bar" v-for="(s, si) in ex.scores" :key="si" :style="{height: (s.score/ex.fullScore||150)*120 + 'px', background: getScoreColor(s.score)}" :title="s.name+':'+s.score"></div>
+              </div>
+              <div class="score-list">
+                <div v-for="s in ex.scores" :key="s.id" class="score-item">
+                  <span class="score-name">{{ s.name }}</span>
+                  <span class="score-val" :style="{color: getScoreColor(s.score)}">{{ s.score }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 作业情况 -->
+        <div v-show="classSubTab==='homework'" class="sub-page">
+          <div class="page-actions">
+            <button class="btn-primary" @click="showAddHomework = true">+ 布置作业</button>
+          </div>
+          <div class="filter-tabs">
+            <span v-for="f in hwFilters" :key="f.key" :class="['filter-tab', {active: hwFilter===f.key}]" @click="hwFilter=f.key">{{ f.label }}</span>
+          </div>
+          <div v-if="filteredHomework.length === 0" class="empty-state">暂无作业记录</div>
+          <div v-for="hw in filteredHomework" :key="hw.id" class="hw-card">
+            <div class="hw-header">
+              <div class="hw-title">{{ hw.title }}</div>
+              <span :class="['hw-status', hw.status]">{{ {pending:'待批改', done:'已批改'}[hw.status] }}</span>
+            </div>
+            <div class="hw-meta">{{ hw.subject }} · {{ hw.date }} · {{ hw.submitted }}/{{ students.length }}人提交</div>
+            <div v-if="hw.status==='pending'" class="hw-actions">
+              <button class="btn-small" @click="markHomeworkDone(hw.id)">标记已批改</button>
+              <button class="btn-small btn-danger" @click="deleteHomework(hw.id)">删除</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 添加学生弹窗 -->
+        <div v-if="showAddStudent" class="modal-overlay" @click.self="showAddStudent=false">
+          <div class="modal modal-wide">
+            <div class="modal-header">添加学生</div>
+            <div class="modal-body">
+              <div class="form-row">
+                <div class="form-group w-50">
+                  <label>姓名 *</label>
+                  <input v-model="studentForm.name" class="input" placeholder="学生姓名">
+                </div>
+                <div class="form-group w-50">
+                  <label>学号</label>
+                  <input v-model="studentForm.studentId" class="input" placeholder="学号">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group w-50">
+                  <label>性别</label>
+                  <select v-model="studentForm.gender" class="input">
+                    <option value="男">男</option>
+                    <option value="女">女</option>
+                  </select>
+                </div>
+                <div class="form-group w-50">
+                  <label>家长</label>
+                  <input v-model="studentForm.parent" class="input" placeholder="家长姓名">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group w-50">
+                  <label>家长电话</label>
+                  <input v-model="studentForm.phone" class="input" placeholder="手机号" type="tel">
+                </div>
+                <div class="form-group w-50">
+                  <label>住址</label>
+                  <input v-model="studentForm.address" class="input" placeholder="家庭住址">
+                </div>
+              </div>
+              <div class="form-group">
+                <label>备注</label>
+                <textarea v-model="studentForm.note" class="input" placeholder="备注信息" rows="2"></textarea>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn-cancel" @click="showAddStudent=false">取消</button>
+              <button class="btn-primary" @click="addStudent">保存</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 添加安全教育弹窗 -->
+        <div v-if="showAddSafety" class="modal-overlay" @click.self="showAddSafety=false">
+          <div class="modal">
+            <div class="modal-header">添加安全教育记录</div>
+            <div class="modal-body">
+              <div class="form-row">
+                <div class="form-group w-50">
+                  <label>类型</label>
+                  <select v-model="safetyForm.type" class="input">
+                    <option value="消防">消防</option>
+                    <option value="交通">交通</option>
+                    <option value="防溺水">防溺水</option>
+                    <option value="食品">食品</option>
+                    <option value="网络">网络</option>
+                    <option value="其他">其他</option>
+                  </select>
+                </div>
+                <div class="form-group w-50">
+                  <label>日期</label>
+                  <input v-model="safetyForm.date" type="date" class="input">
+                </div>
+              </div>
+              <input v-model="safetyForm.title" class="input" placeholder="教育主题">
+              <div class="form-group">
+                <label>参与人数</label>
+                <input v-model="safetyForm.students" type="number" class="input" placeholder="参与学生人数">
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn-cancel" @click="showAddSafety=false">取消</button>
+              <button class="btn-primary" @click="addSafety">保存</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 添加考试弹窗 -->
+        <div v-if="showAddExam" class="modal-overlay" @click.self="showAddExam=false">
+          <div class="modal modal-wide">
+            <div class="modal-header">录入考试成绩</div>
+            <div class="modal-body">
+              <div class="form-row">
+                <div class="form-group w-50">
+                  <label>考试名称</label>
+                  <input v-model="examForm.name" class="input" placeholder="如：期中考试">
+                </div>
+                <div class="form-group w-50">
+                  <label>日期</label>
+                  <input v-model="examForm.date" type="date" class="input">
+                </div>
+              </div>
+              <div class="form-group">
+                <label>满分</label>
+                <input v-model="examForm.fullScore" type="number" class="input" placeholder="如：150">
+              </div>
+              <div class="form-group">
+                <label>学生成绩（格式：姓名:分数，每行一个）</label>
+                <textarea v-model="examForm.scoresText" class="input" rows="6" placeholder="张三:138&#10;李四:145&#10;王五:127"></textarea>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn-cancel" @click="showAddExam=false">取消</button>
+              <button class="btn-primary" @click="addExam">保存</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 布置作业弹窗 -->
+        <div v-if="showAddHomework" class="modal-overlay" @click.self="showAddHomework=false">
+          <div class="modal">
+            <div class="modal-header">布置作业</div>
+            <div class="modal-body">
+              <input v-model="hwForm.title" class="input" placeholder="作业标题">
+              <div class="form-row">
+                <div class="form-group w-50">
+                  <label>科目</label>
+                  <input v-model="hwForm.subject" class="input" placeholder="如：数学">
+                </div>
+                <div class="form-group w-50">
+                  <label>日期</label>
+                  <input v-model="hwForm.date" type="date" class="input">
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn-cancel" @click="showAddHomework=false">取消</button>
+              <button class="btn-primary" @click="addHomework">布置</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 个人信息 -->
+      <div v-show="tab === 'profile'" class="page page-profile">
+        <div class="profile-header">
+          <div class="profile-avatar">{{ teacherName.charAt(0) }}</div>
+          <div class="profile-name">{{ teacherName }}</div>
+          <div class="profile-role">{{ teacherInfo.subject }}教师 · {{ teacherInfo.grade }}</div>
+        </div>
+
+        <div class="profile-card">
+          <div class="profile-item">
+            <label>📧 邮箱</label>
+            <span>{{ teacherInfo.email }}</span>
+          </div>
+          <div class="profile-item">
+            <label>📞 电话</label>
+            <span>{{ teacherInfo.phone }}</span>
+          </div>
+          <div class="profile-item">
+            <label>🏫 学校</label>
+            <span>{{ teacherInfo.school }}</span>
+          </div>
+          <div class="profile-item">
+            <label>📚 任教科目</label>
+            <span>{{ teacherInfo.subject }}</span>
+          </div>
+          <div class="profile-item">
+            <label>🎯 任教班级</label>
+            <span>{{ teacherInfo.grade }}</span>
+          </div>
+        </div>
+
+        <div class="profile-card">
+          <div class="profile-item" @click="showEditProfile = true">
+            <label>✏️ 编辑资料</label>
+            <span>›</span>
+          </div>
+          <div class="profile-item" @click="exportData">
+            <label>💾 导出数据</label>
+            <span>›</span>
+          </div>
+          <div class="profile-item" @click="importData">
+            <label>📥 导入数据</label>
+            <span>›</span>
+          </div>
+          <div class="profile-item" @click="resetData">
+            <label style="color:#e74c3c">🗑️ 重置所有数据</label>
+            <span>›</span>
+          </div>
+        </div>
+
+        <div class="profile-about">
+          <p>教师工作台 v1.0</p>
+          <p>数据存储在本地，清除浏览器缓存会丢失</p>
+        </div>
+      </div>
+    </main>
+
+    <!-- 底部导航栏 -->
+    <nav class="tab-bar">
+      <div v-for="tb in tabs" :key="tb.key" :class="['tab-item', {active: tab===tb.key}]" @click="tab=tb.key">
+        <span class="tab-icon">{{ tb.icon }}</span>
+        <span class="tab-label">{{ tb.label }}</span>
+      </div>
+    </nav>
+  </div>
+
+  <script>const { createApp, ref, reactive, computed, watch, nextTick } = Vue;
+
+const app = createApp({
+  setup() {
+    // ======  App State  ======
+    const tab = ref('dashboard');
+    const now = ref('');
+    const today = ref('');
+    const isNotch = ref(false);
+
+    // Teacher info
+    const teacherName = ref('张老师');
+    const teacherInfo = reactive({
+      email: 'zhang@school.edu.cn',
+      phone: '138****5678',
+      school: '第一实验小学',
+      subject: '数学',
+      grade: '三年级2班'
+    });
+
+    // ======  Navigation  ======
+    const tabs = [
+      { key: 'dashboard', icon: '🏠', label: '首页' },
+      { key: 'todo', icon: '📋', label: '待办' },
+      { key: 'schedule', icon: '📅', label: '课表' },
+      { key: 'class', icon: '👥', label: '班级' },
+      { key: 'profile', icon: '👤', label: '我的' },
+    ];
+
+    const currentTitle = computed(() => {
+      const map = { dashboard: '教师工作台', todo: '待办事项', schedule: '班级课表', class: '班级管理', profile: '个人信息' };
+      return map[tab.value] || '教师工作台';
+    });
+
+    const welcomeSub = computed(() => {
+      const h = new Date().getHours();
+      if (h < 6) return '夜深了，早点休息 🌙';
+      if (h < 9) return '新的一天，元气满满 💪';
+      if (h < 12) return '上午好，教学顺利 📚';
+      if (h < 14) return '中午好，记得吃午饭 🍚';
+      if (h < 18) return '下午好，继续加油 ⚡';
+      return '晚上好，辛苦了 🌆';
+    });
+
+    // ======  Store  ======
+    const STORE_KEY = 'teacher_workbench_data';
+
+    function loadData() {
+      try {
+        const raw = localStorage.getItem(STORE_KEY);
+        if (raw) return JSON.parse(raw);
+      } catch(e) {}
+      return null;
+    }
+
+    function saveData() {
+      try {
+        localStorage.setItem(STORE_KEY, JSON.stringify({
+          todos: todos.value,
+          classes: classes.value,
+          students: students.value,
+          safetyRecords: safetyRecords.value,
+          exams: exams.value,
+          homework: homework.value,
+          teacherInfo: teacherInfo,
+          teacherName: teacherName.value
+        }));
+      } catch(e) { console.warn('Save failed', e); }
+    }
+
+    // ======  Todos  ======
+    const todos = ref([]);
+    const todoFilter = ref('all');
+    const showAddTodo = ref(false);
+    const newTodo = reactive({ text: '', priority: 'medium', date: '' });
+    const todoFilters = [
+      { key: 'all', label: '全部' },
+      { key: 'pending', label: '未完成' },
+      { key: 'done', label: '已完成' },
+      { key: 'high', label: '高优先级' },
+    ];
+
+    const filteredTodos = computed(() => {
+      let list = todos.value;
+      if (todoFilter.value === 'pending') return list.filter(t => !t.done);
+      if (todoFilter.value === 'done') return list.filter(t => t.done);
+      if (todoFilter.value === 'high') return list.filter(t => t.priority === 'high' && !t.done);
+      return list;
+    });
+
+    function toggleTodo(id) {
+      const t = todos.value.find(x => x.id === id);
+      if (t) { t.done = !t.done; saveData(); }
+    }
+
+    function addTodo() {
+      if (!newTodo.text.trim()) return;
+      todos.value.unshift({
+        id: Date.now(),
+        text: newTodo.text.trim(),
+        priority: newTodo.priority,
+        date: newTodo.date || new Date().toISOString().slice(0, 10),
+        done: false
+      });
+      newTodo.text = ''; newTodo.priority = 'medium'; newTodo.date = '';
+      showAddTodo.value = false;
+      saveData();
+    }
+
+    function deleteTodo(id) {
+      todos.value = todos.value.filter(t => t.id !== id);
+      saveData();
+    }
+
+    // ======  Schedule  ======
+    const classes = ref([]);
+    const weekday = ref(new Date().getDay() === 0 ? 6 : new Date().getDay() - 1); // Mon=0
+    const showAddClass = ref(false);
+    const editingClass = ref(null);
+    const classForm = reactive({ day: 0, name: '', time: '08:00', endTime: '08:45', grade: '', location: '', color: 0 });
+    const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+    const classColors = ['#4A90D9', '#27ae60', '#e74c3c', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22', '#3498db'];
+
+    function getClassesByDay(day) {
+      return classes.value.filter(c => c.day === day).sort((a, b) => a.time.localeCompare(b.time));
+    }
+
+    function getTodayClasses() {
+      return getClassesByDay(weekday.value === 0 ? 6 : weekday.value - 1);
+    }
+    // Today's actual classes (for dashboard)
+    const todayClasses = computed(() => {
+      const day = new Date().getDay();
+      const idx = day === 0 ? 6 : day - 1;
+      return classes.value.filter(c => c.day === idx).sort((a, b) => a.time.localeCompare(b.time));
+    });
+
+    function saveClass() {
+      if (!classForm.name.trim()) return;
+      if (editingClass.value) {
+        Object.assign(editingClass.value, { ...classForm });
+      } else {
+        classes.value.push({ id: Date.now(), ...classForm });
+      }
+      showAddClass.value = false;
+      editingClass.value = null;
+      resetClassForm();
+      saveData();
+    }
+
+    function editClass(c) {
+      editingClass.value = c;
+      Object.assign(classForm, { day: c.day, name: c.name, time: c.time, endTime: c.endTime, grade: c.grade, location: c.location, color: c.color });
+      showAddClass.value = true;
+    }
+
+    function deleteClass(id) {
+      classes.value = classes.value.filter(c => c.id !== id);
+      saveData();
+    }
+
+    function resetClassForm() { classForm.day = 0; classForm.name = ''; classForm.time = '08:00'; classForm.endTime = '08:45'; classForm.grade = ''; classForm.location = ''; classForm.color = 0; }
+
+    // ======  Students  ======
+    const students = ref([]);
+    const showAddStudent = ref(false);
+    const showStudentDetail = ref(false);
+    const selectedStudent = ref({});
+    const studentSearch = ref('');
+    const studentForm = reactive({ name: '', studentId: '', gender: '男', parent: '', phone: '', address: '', note: '' });
+
+    const filteredStudents = computed(() => {
+      if (!studentSearch.value.trim()) return students.value;
+      const q = studentSearch.value.trim().toLowerCase();
+      return students.value.filter(s => s.name.toLowerCase().includes(q) || s.studentId.toLowerCase().includes(q));
+    });
+
+    function addStudent() {
+      if (!studentForm.name.trim()) return;
+      const colors = ['#4A90D9', '#27ae60', '#e74c3c', '#f39c12', '#9b59b6', '#1abc9c'];
+      students.value.push({
+        id: Date.now(),
+        ...studentForm,
+        avatarColor: colors[students.value.length % colors.length]
+      });
+      showAddStudent.value = false;
+      Object.keys(studentForm).forEach(k => studentForm[k] = '');
+      studentForm.gender = '男';
+      saveData();
+    }
+
+    function viewStudent(s) { selectedStudent.value = s; showStudentDetail.value = true; }
+    function deleteStudent(id) { students.value = students.value.filter(s => s.id !== id); saveData(); }
+
+    // ======  Safety  ======
+    const safetyRecords = ref([]);
+    const showAddSafety = ref(false);
+    const safetyForm = reactive({ type: '消防', title: '', date: '', students: '' });
+
+    function addSafety() {
+      if (!safetyForm.title.trim()) return;
+      safetyRecords.value.unshift({
+        id: Date.now(),
+        ...safetyForm,
+        students: safetyForm.students || students.value.length
+      });
+      showAddSafety.value = false;
+      safetyForm.type = '消防'; safetyForm.title = ''; safetyForm.date = ''; safetyForm.students = '';
+      saveData();
+    }
+
+    function deleteSafety(id) { safetyRecords.value = safetyRecords.value.filter(s => s.id !== id); saveData(); }
+
+    // ======  Grades / Exams  ======
+    const exams = ref([]);
+    const showAddExam = ref(false);
+    const examForm = reactive({ name: '', date: '', fullScore: 100, scoresText: '' });
+
+    function avgScore(ex) {
+      if (!ex.scores || !ex.scores.length) return '-';
+      return (ex.scores.reduce((s, x) => s + x.score, 0) / ex.scores.length).toFixed(1);
+    }
+    function maxScore(ex) {
+      if (!ex.scores || !ex.scores.length) return '-';
+      return Math.max(...ex.scores.map(s => s.score));
+    }
+    function minScore(ex) {
+      if (!ex.scores || !ex.scores.length) return '-';
+      return Math.min(...ex.scores.map(s => s.score));
+    }
+    function passRate(ex) {
+      if (!ex.scores || !ex.scores.length) return '0';
+      const pass = ex.scores.filter(s => s.score >= (ex.fullScore || 100) * 0.6).length;
+      return (pass / ex.scores.length * 100).toFixed(0);
+    }
+    function getScoreColor(score) {
+      if (score >= 90) return '#27ae60';
+      if (score >= 80) return '#4A90D9';
+      if (score >= 70) return '#f39c12';
+      if (score >= 60) return '#e67e22';
+      return '#e74c3c';
+    }
+
+    function addExam() {
+      if (!examForm.name.trim()) return;
+      const scores = examForm.scoresText.split('\n')
+        .filter(line => line.trim())
+        .map(line => {
+          const parts = line.split(':');
+          return { id: Date.now() + Math.random(), name: parts[0].trim(), score: parseFloat(parts[1]) || 0 };
+        });
+
+      exams.value.unshift({
+        id: Date.now(),
+        name: examForm.name.trim(),
+        date: examForm.date || new Date().toISOString().slice(0, 10),
+        fullScore: parseInt(examForm.fullScore) || 100,
+        scores: scores,
+        open: true
+      });
+      showAddExam.value = false;
+      examForm.name = ''; examForm.date = ''; examForm.fullScore = 100; examForm.scoresText = '';
+      saveData();
+    }
+
+    // ======  Homework  ======
+    const homework = ref([]);
+    const hwFilter = ref('all');
+    const showAddHomework = ref(false);
+    const hwForm = reactive({ title: '', subject: '', date: '' });
+    const hwFilters = [
+      { key: 'all', label: '全部' },
+      { key: 'pending', label: '待批改' },
+      { key: 'done', label: '已批改' },
+    ];
+
+    const filteredHomework = computed(() => {
+      if (hwFilter.value === 'all') return homework.value;
+      return homework.value.filter(h => h.status === hwFilter.value);
+    });
+
+    function getPendingHomework() {
+      return homework.value.filter(h => h.status === 'pending').length;
+    }
+
+    function addHomework() {
+      if (!hwForm.title.trim()) return;
+      homework.value.unshift({
+        id: Date.now(),
+        title: hwForm.title.trim(),
+        subject: hwForm.subject || '未分类',
+        date: hwForm.date || new Date().toISOString().slice(0, 10),
+        status: 'pending',
+        submitted: 0
+      });
+      showAddHomework.value = false;
+      hwForm.title = ''; hwForm.subject = ''; hwForm.date = '';
+      saveData();
+    }
+
+    function markHomeworkDone(id) {
+      const hw = homework.value.find(h => h.id === id);
+      if (hw) { hw.status = 'done'; saveData(); }
+    }
+
+    function deleteHomework(id) {
+      homework.value = homework.value.filter(h => h.id !== id);
+      saveData();
+    }
+
+    // ======  Profile Actions  ======
+    const showEditProfile = ref(false);
+
+    function exportData() {
+      const data = localStorage.getItem(STORE_KEY);
+      if (!data) { alert('没有数据可导出'); return; }
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `教师工作台备份_${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importData() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.json';
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          try {
+            const data = JSON.parse(ev.target.result);
+            localStorage.setItem(STORE_KEY, JSON.stringify(data));
+            loadFromStore();
+            alert('数据导入成功！');
+          } catch(err) { alert('文件格式错误'); }
+        };
+        reader.readAsText(file);
+      };
+      input.click();
+    }
+
+    function resetData() {
+      if (confirm('确定要重置所有数据吗？此操作不可恢复！')) {
+        localStorage.removeItem(STORE_KEY);
+        window.location.reload();
+      }
+    }
+
+    // ======  Load / Persist  ======
+    function loadFromStore() {
+      const data = loadData();
+      if (!data) return;
+      if (data.todos) todos.value = data.todos;
+      if (data.classes) classes.value = data.classes;
+      if (data.students) students.value = data.students;
+      if (data.safetyRecords) safetyRecords.value = data.safetyRecords;
+      if (data.exams) exams.value = data.exams;
+      if (data.homework) homework.value = data.homework;
+      if (data.teacherInfo) Object.assign(teacherInfo, data.teacherInfo);
+      if (data.teacherName) teacherName.value = data.teacherName;
+    }
+
+    // Init demo data if empty
+    function initDemoData() {
+      if (students.value.length === 0) {
+        const demoStudents = [
+          { id: 1001, name: '张小明', studentId: '2024001', gender: '男', parent: '张伟', phone: '139****1234', address: '阳光小区3栋', note: '学习委员', avatarColor: '#4A90D9' },
+          { id: 1002, name: '李小红', studentId: '2024002', gender: '女', parent: '李强', phone: '139****5678', address: '花园路12号', note: '语文课代表', avatarColor: '#e74c3c' },
+          { id: 1003, name: '王大力', studentId: '2024003', gender: '男', parent: '王刚', phone: '138****9012', address: '和平街5号', note: '体育委员', avatarColor: '#27ae60' },
+          { id: 1004, name: '赵雪', studentId: '2024004', gender: '女', parent: '赵明', phone: '136****3456', address: '东风路8号', note: '', avatarColor: '#f39c12' },
+          { id: 1005, name: '刘洋', studentId: '2024005', gender: '男', parent: '刘大海', phone: '137****7890', address: '建设路15号', note: '数学课代表', avatarColor: '#9b59b6' },
+          { id: 1006, name: '陈思思', studentId: '2024006', gender: '女', parent: '陈明', phone: '135****2345', address: '文华苑7号', note: '', avatarColor: '#1abc9c' },
+          { id: 1007, name: '周杰', studentId: '2024007', gender: '男', parent: '周华', phone: '132****6789', address: '龙腾路22号', note: '纪律委员', avatarColor: '#e67e22' },
+        ];
+        students.value = demoStudents;
+
+        classes.value = [
+          { id: 1, day: 0, name: '语文', time: '08:00', endTime: '08:45', grade: '三年级2班', location: '教学楼301', color: 0 },
+          { id: 2, day: 0, name: '数学', time: '08:55', endTime: '09:40', grade: '三年级2班', location: '教学楼301', color: 1 },
+          { id: 3, day: 0, name: '英语', time: '10:00', endTime: '10:45', grade: '三年级2班', location: '教学楼302', color: 2 },
+          { id: 4, day: 1, name: '数学', time: '08:00', endTime: '08:45', grade: '三年级2班', location: '教学楼301', color: 1 },
+          { id: 5, day: 1, name: '体育', time: '10:00', endTime: '10:45', grade: '三年级2班', location: '操场', color: 3 },
+          { id: 6, day: 2, name: '数学', time: '08:00', endTime: '08:45', grade: '三年级2班', location: '教学楼301', color: 1 },
+          { id: 7, day: 2, name: '美术', time: '14:00', endTime: '14:45', grade: '三年级2班', location: '美术教室', color: 4 },
+          { id: 8, day: 3, name: '数学', time: '08:00', endTime: '08:45', grade: '三年级2班', location: '教学楼301', color: 1 },
+          { id: 9, day: 3, name: '科学', time: '14:00', endTime: '14:45', grade: '三年级2班', location: '科学实验室', color: 5 },
+          { id: 10, day: 4, name: '数学', time: '08:00', endTime: '08:45', grade: '三年级2班', location: '教学楼301', color: 1 },
+          { id: 11, day: 4, name: '班会', time: '15:00', endTime: '15:45', grade: '三年级2班', location: '教学楼301', color: 6 },
+        ];
+
+        safetyRecords.value = [
+          { id: 1, type: '消防', title: '消防安全知识讲座', date: '2026-09-10', students: 45 },
+          { id: 2, type: '交通', title: '交通安全伴我行', date: '2026-09-15', students: 45 },
+          { id: 3, type: '防溺水', title: '防溺水安全教育', date: '2026-07-05', students: 45 },
+        ];
+
+        exams.value = [
+          { id: 1, name: '第一次月考', date: '2026-09-20', fullScore: 100, open: false,
+            scores: [
+              { id: 'e1s1', name: '张小明', score: 95 }, { id: 'e1s2', name: '李小红', score: 92 },
+              { id: 'e1s3', name: '王大力', score: 78 }, { id: 'e1s4', name: '赵雪', score: 88 },
+              { id: 'e1s5', name: '刘洋', score: 96 }, { id: 'e1s6', name: '陈思思', score: 85 },
+              { id: 'e1s7', name: '周杰', score: 72 },
+            ]
+          },
+          { id: 2, name: '期中考试', date: '2026-10-25', fullScore: 100, open: false,
+            scores: [
+              { id: 'e2s1', name: '张小明', score: 91 }, { id: 'e2s2', name: '李小红', score: 94 },
+              { id: 'e2s3', name: '王大力', score: 82 }, { id: 'e2s4', name: '赵雪', score: 90 },
+              { id: 'e2s5', name: '刘洋', score: 98 }, { id: 'e2s6', name: '陈思思', score: 87 },
+              { id: 'e2s7', name: '周杰', score: 76 },
+            ]
+          },
+        ];
+
+        homework.value = [
+          { id: 1, title: '数学练习册第5章', subject: '数学', date: '2026-10-28', status: 'pending', submitted: 5 },
+          { id: 2, title: '语文作文：我的周末', subject: '语文', date: '2026-10-27', status: 'done', submitted: 7 },
+          { id: 3, title: '英语单词抄写', subject: '英语', date: '2026-10-29', status: 'pending', submitted: 3 },
+        ];
+
+        todos.value = [
+          { id: 1, text: '批改数学作业', priority: 'high', date: '2026-10-28', done: false },
+          { id: 2, text: '准备下周公开课教案', priority: 'high', date: '2026-10-30', done: false },
+          { id: 3, text: '家长会通知发放', priority: 'medium', date: '2026-10-29', done: false },
+          { id: 4, text: '填写教学进度表', priority: 'medium', date: '2026-11-01', done: true },
+          { id: 5, text: '检查学生作业本', priority: 'low', date: '2026-10-31', done: false },
+        ];
+
+        saveData();
+      }
+    }
+
+    // ======  Init  ======
+    loadFromStore();
+    initDemoData();
+
+    // Update time
+    function updateTime() {
+      const d = new Date();
+      now.value = d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+      const opts = { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' };
+      today.value = d.toLocaleDateString('zh-CN', opts);
+    }
+    updateTime();
+    setInterval(updateTime, 30000);
+
+    // Check notch
+    if (window.navigator.userAgent.includes('iPhone')) {
+      isNotch.value = true;
+    }
+
+    return {
+      tab, now, today, isNotch, teacherName, teacherInfo,
+      tabs, currentTitle, welcomeSub,
+      // Todos
+      todos, todoFilter, showAddTodo, newTodo, todoFilters, filteredTodos,
+      toggleTodo, addTodo, deleteTodo,
+      // Schedule
+      classes, weekday, showAddClass, editingClass, classForm, weekdays, classColors,
+      getClassesByDay, getTodayClasses, todayClasses, saveClass, editClass, deleteClass,
+      // Students
+      students, showAddStudent, showStudentDetail, selectedStudent, studentSearch, studentForm,
+      filteredStudents, addStudent, viewStudent, deleteStudent,
+      // Safety
+      safetyRecords, showAddSafety, safetyForm, addSafety, deleteSafety,
+      // Grades
+      exams, showAddExam, examForm, avgScore, maxScore, minScore, passRate, getScoreColor, addExam,
+      // Homework
+      homework, hwFilter, showAddHomework, hwForm, hwFilters, filteredHomework,
+      getPendingHomework, addHomework, markHomeworkDone, deleteHomework,
+      // Class sub tabs
+      classSubTab: ref('students'),
+      classSubTabs: [
+        { key: 'students', label: '学生档案' },
+        { key: 'safety', label: '安全教育' },
+        { key: 'grades', label: '成绩分析' },
+        { key: 'homework', label: '作业情况' },
+      ],
+      // Profile
+      showEditProfile, exportData, importData, resetData,
+          };
+  }
+});
+
+app.mount('#app');
+</script>
+</body>
+</html>
