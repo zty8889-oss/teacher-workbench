@@ -568,7 +568,6 @@ textarea.input { resize: vertical; min-height: 60px; }
                   <div class="exam-title">{{ ex.name }}</div>
                   <div class="exam-date">{{ ex.date }}</div>
                   <div class="exam-toggle">
-                    <span style="font-size:12px; color:var(--danger); cursor:pointer; margin-right:6px" @click.stop="deleteScoreFromExam(ex.id, s.id)" v-if="false"></span>
                     {{ ex.open ? '▼' : '▶' }}
                   </div>
                 </div>
@@ -583,15 +582,18 @@ textarea.input { resize: vertical; min-height: 60px; }
                     <div v-for="(s, si) in ex.scores" :key="si"
                       class="chart-bar"
                       :style="{
-                        height: ex.fullScore ? (s.score / ex.fullScore * 120) + 'px' : '0px',
-                        background: getScoreColor(s.score / (ex.fullScore || 100) * 100)
+                        height: '100px',
+                        background: getScoreColor((s.total || 0) / ((ex.subjects?.length || 1) * 100) * 100)
                       }"
-                      :title="s.name + ': ' + s.score"></div>
+                      :title="s.name + ': ' + (s.total || '-')"></div>
                   </div>
                   <div class="score-list">
-                    <div v-for="s in ex.scores" :key="s.id" class="score-item">
-                      <span class="score-name">{{ s.name }}</span>
-                      <span class="score-val" :style="{color: getScoreColor(s.score / (ex.fullScore || 100) * 100)}">{{ s.score }}</span>
+                    <div v-for="s in ex.scores" :key="s.id" class="score-item" style="flex-wrap:wrap">
+                      <span class="score-name" style="min-width:50px; font-weight:600">{{ s.name }}</span>
+                      <span v-for="sub in (ex.subjects || [])" :key="sub" style="font-size:11px; margin:0 4px; color:var(--text-secondary)">
+                        {{ sub }}:<span :style="{color: getScoreColor((s.subjects?.[sub] || 0) / 100 * 100), fontWeight:600}">{{ s.subjects?.[sub] || '-' }}</span>
+                      </span>
+                      <span style="font-size:12px; font-weight:700; margin-left:6px; color:var(--text)">总分:{{ s.total || '-' }}</span>
                     </div>
                   </div>
                 </div>
@@ -623,26 +625,43 @@ textarea.input { resize: vertical; min-height: 60px; }
             </div>
           </div>
           <div v-if="ex.open" class="exam-body">
+            <!-- 科目选择标签 -->
+            <div class="filter-tabs" style="margin-bottom:10px; gap:4px">
+              <span v-for="sub in (ex.subjects || [])" :key="sub"
+                :class="['filter-tab', {active: ex.subjectFilter === sub}]"
+                @click.stop="ex.subjectFilter = (ex.subjectFilter === sub ? '' : sub)"
+                style="font-size:11px; padding:4px 10px">{{ sub }}</span>
+              <span class="filter-tab" :class="{active: !ex.subjectFilter}" @click.stop="ex.subjectFilter=''"
+                style="font-size:11px; padding:4px 10px">📊 总分</span>
+            </div>
             <div class="exam-stats">
-              <div class="exam-stat"><label>平均分</label><span>{{ avgScore(ex) }}</span></div>
-              <div class="exam-stat"><label>最高分</label><span>{{ maxScore(ex) }}</span></div>
-              <div class="exam-stat"><label>最低分</label><span>{{ minScore(ex) }}</span></div>
-              <div class="exam-stat"><label>及格率</label><span>{{ passRate(ex) }}%</span></div>
+              <div class="exam-stat"><label>平均分</label><span>{{ ex.subjectFilter ? avgSubject(ex, ex.subjectFilter) : avgScore(ex) }}</span></div>
+              <div class="exam-stat"><label>最高分</label><span>{{ ex.subjectFilter ? maxSubject(ex, ex.subjectFilter) : maxScore(ex) }}</span></div>
+              <div class="exam-stat"><label>最低分</label><span>{{ ex.subjectFilter ? minSubject(ex, ex.subjectFilter) : minScore(ex) }}</span></div>
+              <div class="exam-stat"><label>及格率</label><span>{{ ex.subjectFilter ? passSubject(ex, ex.subjectFilter) : passRate(ex) }}%</span></div>
             </div>
             <div class="exam-chart" ref="chartContainer" :data-exam-id="ex.id">
               <div v-for="(s, si) in ex.scores" :key="si"
                 class="chart-bar"
                 :style="{
-                  height: ex.fullScore ? (s.score / ex.fullScore * 120) + 'px' : '0px',
-                  background: getScoreColor(s.score / (ex.fullScore || 100) * 100)
+                  height: '100px',
+                  background: getScoreColor((ex.subjectFilter ? (s.subjects?.[ex.subjectFilter] || 0) : (s.total || 0)) / ((ex.fullScore || 100) * (ex.subjectFilter ? 1 : 1)) * 100)
                 }"
-                :title="s.name + ': ' + s.score"></div>
+                :title="s.name + ': ' + (ex.subjectFilter ? (s.subjects?.[ex.subjectFilter] || '-') : (s.total || '-'))"></div>
             </div>
-            <div class="score-list">
-              <div v-for="s in ex.scores" :key="s.id" class="score-item">
-                <span class="score-name">{{ s.name }}</span>
-                <span class="score-val" :style="{color: getScoreColor(s.score / (ex.fullScore || 100) * 100)}">{{ s.score }}</span>
-                <span style="color:var(--danger); cursor:pointer; font-size:12px; margin-left:8px" @click="deleteScore(ex.id, s.id)">✕</span>
+            <div class="score-list" style="max-height:300px">
+              <div v-for="s in ex.scores" :key="s.id" class="score-item" style="flex-wrap:wrap">
+                <span class="score-name" style="min-width:50px; font-weight:600">{{ s.name }}</span>
+                <template v-if="ex.subjectFilter">
+                  <span class="score-val" :style="{color: getScoreColor((s.subjects?.[ex.subjectFilter] || 0) / 100 * 100)}">{{ s.subjects?.[ex.subjectFilter] || '-' }}</span>
+                </template>
+                <template v-else>
+                  <span v-for="sub in (ex.subjects || [])" :key="sub" style="font-size:11px; margin:0 4px; color:var(--text-secondary)">
+                    {{ sub }}:<span :style="{color: getScoreColor((s.subjects?.[sub] || 0) / 100 * 100), fontWeight:600}">{{ s.subjects?.[sub] || '-' }}</span>
+                  </span>
+                  <span style="font-size:12px; font-weight:700; margin-left:6px; color:var(--text)">总分:{{ s.total || '-' }}</span>
+                </template>
+                <span style="color:var(--danger); cursor:pointer; font-size:12px; margin-left:auto" @click.stop="deleteScore(ex.id, s.id)">✕</span>
               </div>
             </div>
           </div>
@@ -970,17 +989,24 @@ textarea.input { resize: vertical; min-height: 60px; }
             </div>
           </div>
           <div class="form-group">
-            <label>满分</label>
-            <input v-model="examForm.fullScore" type="number" class="input" placeholder="如：150">
+            <label>选择科目</label>
+            <div class="filter-tabs" style="flex-wrap:wrap; gap:4px">
+              <span v-for="sub in allSubjects" :key="sub"
+                :class="['filter-tab', {active: examForm.subjects.includes(sub)}]"
+                @click="toggleSubject(sub)"
+                style="font-size:12px; padding:5px 12px">{{ sub }}</span>
+            </div>
           </div>
-          <div class="form-group">
-            <label>学生成绩（格式：姓名:分数，每行一个）</label>
-            <textarea v-model="examForm.scoresText" class="input" rows="6" placeholder="张三:138&#10;李四:145&#10;王五:127"></textarea>
+          <div class="form-group" v-if="examForm.subjects.length > 0">
+            <label>学生成绩（格式：姓名: 科目1:分数 科目2:分数 ...）</label>
+            <textarea v-model="examForm.scoresText" class="input" rows="8"
+              :placeholder="examForm.subjects.map(s => s+':分数').join(' ') + '\n例：张三: 语文:90 数学:85 英语:88'"></textarea>
+            <p style="font-size:11px; color:var(--text-tertiary); margin-top:4px">每行一个学生，科目间用空格隔开，自动计算总分</p>
           </div>
         </div>
         <div class="modal-footer">
           <button class="btn-cancel" @click="showAddExam=false; editingExam=null">取消</button>
-          <button class="btn-primary" @click="saveExam">{{ editingExam ? '保存修改' : '保存' }}</button>
+          <button class="btn-primary" @click="saveExam" :disabled="examForm.subjects.length === 0">{{ editingExam ? '保存修改' : '保存' }}</button>
         </div>
       </div>
     </div>
@@ -1364,29 +1390,88 @@ createApp({
     const exams = ref([]);
     const showAddExam = ref(false);
     const editingExam = ref(null);
-    const examForm = reactive({ name: '', date: '', fullScore: 100, scoresText: '' });
+    const examForm = reactive({ name: '', date: '', fullScore: 100, subjects: [], scoresText: '' });
+    const allSubjects = ['语文', '数学', '英语', '物理', '化学', '生物', '历史', '地理', '政治', '信息技术', '通用技术', '音乐', '美术', '体育'];
 
     function resetExamForm() {
-      examForm.name = ''; examForm.date = ''; examForm.fullScore = 100; examForm.scoresText = '';
+      examForm.name = ''; examForm.date = ''; examForm.fullScore = 100; examForm.subjects = []; examForm.scoresText = '';
+    }
+
+    function toggleSubject(sub) {
+      const idx = examForm.subjects.indexOf(sub);
+      if (idx >= 0) {
+        examForm.subjects.splice(idx, 1);
+      } else {
+        examForm.subjects.push(sub);
+      }
+    }
+
+    function parseScores(text, subjects) {
+      return text.split('\n')
+        .filter(line => line.trim())
+        .map(line => {
+          const parts = line.trim().split(/\s+/);
+          const name = parts[0].replace(':', '').trim();
+          const subScores = {};
+          let total = 0;
+          for (let i = 1; i < parts.length; i++) {
+            const sp = parts[i].split(':');
+            if (sp.length === 2 && subjects.includes(sp[0])) {
+              const val = parseFloat(sp[1]) || 0;
+              subScores[sp[0]] = val;
+              total += val;
+            }
+          }
+          return {
+            id: Date.now() + Math.random(),
+            name: name,
+            subjects: subScores,
+            total: total
+          };
+        });
     }
 
     function avgScore(ex) {
       if (!ex.scores || !ex.scores.length) return '-';
-      return (ex.scores.reduce((s, x) => s + x.score, 0) / ex.scores.length).toFixed(1);
+      return (ex.scores.reduce((s, x) => s + (x.total || 0), 0) / ex.scores.length).toFixed(1);
     }
     function maxScore(ex) {
       if (!ex.scores || !ex.scores.length) return '-';
-      return Math.max(...ex.scores.map(s => s.score));
+      return Math.max(...ex.scores.map(s => s.total || 0));
     }
     function minScore(ex) {
       if (!ex.scores || !ex.scores.length) return '-';
-      return Math.min(...ex.scores.map(s => s.score));
+      return Math.min(...ex.scores.map(s => s.total || 0));
     }
     function passRate(ex) {
       if (!ex.scores || !ex.scores.length) return '0';
-      const pass = ex.scores.filter(s => s.score >= (ex.fullScore || 100) * 0.6).length;
+      const pass = ex.scores.filter(s => (s.total || 0) >= ((ex.subjects?.length || 1) * (ex.fullScore || 100)) * 0.6).length;
       return (pass / ex.scores.length * 100).toFixed(0);
     }
+
+    // 单科统计
+    function avgSubject(ex, sub) {
+      const vals = ex.scores.map(s => s.subjects?.[sub]).filter(v => v !== undefined);
+      if (!vals.length) return '-';
+      return (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1);
+    }
+    function maxSubject(ex, sub) {
+      const vals = ex.scores.map(s => s.subjects?.[sub]).filter(v => v !== undefined);
+      if (!vals.length) return '-';
+      return Math.max(...vals);
+    }
+    function minSubject(ex, sub) {
+      const vals = ex.scores.map(s => s.subjects?.[sub]).filter(v => v !== undefined);
+      if (!vals.length) return '-';
+      return Math.min(...vals);
+    }
+    function passSubject(ex, sub) {
+      const vals = ex.scores.map(s => s.subjects?.[sub]).filter(v => v !== undefined);
+      if (!vals.length) return '0';
+      const pass = vals.filter(v => v >= (ex.fullScore || 100) * 0.6).length;
+      return (pass / vals.length * 100).toFixed(0);
+    }
+
     function getScoreColor(score) {
       if (score >= 90) return '#27ae60';
       if (score >= 80) return '#4A90D9';
@@ -1397,27 +1482,24 @@ createApp({
 
     function saveExam() {
       if (!examForm.name.trim()) return;
-      const scores = examForm.scoresText.split('\n')
-        .filter(line => line.trim())
-        .map(line => {
-          const parts = line.split(':');
-          return { id: Date.now() + Math.random(), name: parts[0].trim(), score: parseFloat(parts[1]) || 0 };
-        });
+      if (examForm.subjects.length === 0) { alert('请至少选择一个科目'); return; }
+      const scores = parseScores(examForm.scoresText, examForm.subjects);
 
       if (editingExam.value) {
-        // 编辑模式：更新现有考试
         editingExam.value.name = examForm.name.trim();
         editingExam.value.date = examForm.date || new Date().toISOString().slice(0, 10);
         editingExam.value.fullScore = parseInt(examForm.fullScore) || 100;
+        editingExam.value.subjects = [...examForm.subjects];
         editingExam.value.scores = scores;
       } else {
-        // 新增模式
         exams.value.unshift({
           id: Date.now(),
           name: examForm.name.trim(),
           date: examForm.date || new Date().toISOString().slice(0, 10),
           fullScore: parseInt(examForm.fullScore) || 100,
+          subjects: [...examForm.subjects],
           scores: scores,
+          subjectFilter: '',
           open: true
         });
       }
@@ -1432,7 +1514,11 @@ createApp({
       examForm.name = ex.name;
       examForm.date = ex.date;
       examForm.fullScore = ex.fullScore;
-      examForm.scoresText = ex.scores.map(s => s.name + ':' + s.score).join('\n');
+      examForm.subjects = [...(ex.subjects || [])];
+      examForm.scoresText = (ex.scores || []).map(s => {
+        const subParts = (ex.subjects || []).map(sub => `${sub}:${s.subjects?.[sub] || ''}`);
+        return s.name + ': ' + subParts.join(' ');
+      }).join('\n');
       showAddExam.value = true;
     }
 
@@ -1583,7 +1669,7 @@ createApp({
       document.documentElement.setAttribute('data-theme', savedTheme);
     }
 
-    const APP_VERSION = '20260729.6';
+    const APP_VERSION = '20260729.7';
 
     const updating = ref(false);
     function checkUpdate() {
@@ -1810,7 +1896,8 @@ createApp({
       // Safety
       safetyRecords, showAddSafety, safetyForm, addSafety, deleteSafety,
       // Exams
-      exams, showAddExam, editingExam, examForm, avgScore, maxScore, minScore, passRate, getScoreColor,
+      exams, showAddExam, editingExam, examForm, allSubjects, avgScore, maxScore, minScore, passRate, getScoreColor,
+      avgSubject, maxSubject, minSubject, passSubject, toggleSubject,
       saveExam, editExam, deleteExam, deleteScore,
       // Homework
       homework, showAddHomework, hwForm, hwFilter, hwFilters, filteredHomework, getPendingHomework, addHomework, markHomeworkDone, deleteHomework,
