@@ -805,7 +805,12 @@ textarea.input { resize: vertical; min-height: 60px; }
       <div class="modal">
         <div class="modal-header">📊 从 Excel 导入</div>
         <div class="modal-body">
-          <p style="font-size:13px; color:var(--text-secondary); margin-bottom:14px">选择 Excel 文件（.xlsx / .xls），系统自动读取第一个工作表中的表格数据。</p>
+          <p style="font-size:13px; color:var(--text-secondary); margin-bottom:10px">选择 Excel 文件（.xlsx / .xls），系统自动读取第一个工作表中的表格数据。</p>
+
+          <div style="display:flex; gap:8px; margin-bottom:14px; font-size:12px">
+            <a href="学生信息导入模板.xlsx" download style="flex:1; text-align:center; padding:8px; border:1.5px dashed var(--primary); border-radius:10px; color:var(--primary); text-decoration:none">👇 下载学生模板</a>
+            <a href="考试成绩导入模板.xlsx" download style="flex:1; text-align:center; padding:8px; border:1.5px dashed var(--primary); border-radius:10px; color:var(--primary); text-decoration:none">👇 下载成绩模板</a>
+          </div>
 
           <div v-if="!wordFileSelected" style="margin-bottom:14px">
             <button class="btn-primary" style="width:100%; text-align:center" @click="selectWordFile">选择 Excel 文件</button>
