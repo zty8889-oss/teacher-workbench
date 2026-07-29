@@ -1765,16 +1765,10 @@ createApp({
               scores: scores,
               open: true
             });
-            saveData();
-            wordImportResult.value = {
-              success: true,
-              msg: `成功导入 ${scores.length} 条成绩记录 📊`
-            };
           }
         }
       } catch(e) {
         wordImportResult.value = { success: false, msg: '解析 Excel 文件失败：' + e.message };
-      } finally {
       } finally {
         wordImporting.value = false;
       }
