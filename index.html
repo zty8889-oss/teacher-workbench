@@ -11,7 +11,9 @@
   <title>教师工作台</title>
   <style>/* ===== 教师工作台 v2.0 全新主题 ===== */
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-:root {
+
+/* ===== 默认主题（蓝紫渐变） ===== */
+:root, [data-theme="default"] {
   --primary: #5B7FFF;
   --primary-light: #7C96FF;
   --primary-dark: #3D5CE5;
@@ -31,6 +33,63 @@
   --tab-height: 56px;
   --header-height: 48px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ===== 暗黑主题 ===== */
+[data-theme="dark"] {
+  --primary: #6C8CFF;
+  --primary-light: #8CA4FF;
+  --primary-dark: #4A6AE0;
+  --primary-gradient: linear-gradient(135deg, #2C2C3E 0%, #1A1A2E 100%);
+  --success: #4CD964;
+  --warning: #FF9F0A;
+  --danger: #FF453A;
+  --bg: #1C1C1E;
+  --card: #2C2C2E;
+  --text: #F5F5F5;
+  --text-secondary: #AEAEB2;
+  --text-tertiary: #636366;
+  --border: #3A3A3C;
+  --shadow: 0 2px 16px rgba(0,0,0,0.3);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.4);
+}
+
+/* ===== 白色主题 ===== */
+[data-theme="white"] {
+  --primary: #333333;
+  --primary-light: #666666;
+  --primary-dark: #000000;
+  --primary-gradient: linear-gradient(135deg, #555555 0%, #333333 100%);
+  --success: #2E7D32;
+  --warning: #E65100;
+  --danger: #C62828;
+  --bg: #FAFAFA;
+  --card: #FFFFFF;
+  --text: #212121;
+  --text-secondary: #757575;
+  --text-tertiary: #BDBDBD;
+  --border: #E0E0E0;
+  --shadow: 0 2px 16px rgba(0,0,0,0.04);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.08);
+}
+
+/* ===== 粉色主题 ===== */
+[data-theme="pink"] {
+  --primary: #E87A9F;
+  --primary-light: #F0A0BE;
+  --primary-dark: #D45A82;
+  --primary-gradient: linear-gradient(135deg, #F0A0BE 0%, #E87A9F 100%);
+  --success: #7BC67E;
+  --warning: #F5A623;
+  --danger: #E85D75;
+  --bg: #FEF5F7;
+  --card: #FFFFFF;
+  --text: #4A3040;
+  --text-secondary: #9E7E8E;
+  --text-tertiary: #D0BCC6;
+  --border: #F5E0E8;
+  --shadow: 0 2px 16px rgba(200,100,140,0.08);
+  --shadow-lg: 0 8px 32px rgba(200,100,140,0.15);
 }
 body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFang SC', 'Microsoft YaHei', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; -webkit-font-smoothing: antialiased; }
 #app { max-width: 480px; margin: 0 auto; min-height: 100vh; position: relative; background: var(--bg); }
@@ -651,9 +710,35 @@ textarea.input { resize: vertical; min-height: 60px; }
           <label>📄 从 Word 导入</label>
           <span>›</span>
         </div>
+        <div class="profile-item" @click="showThemePicker = true">
+          <label>🎨 主题切换</label>
+          <span style="font-size:13px; color:var(--primary)">{{ themeNames[currentTheme] }} ›</span>
+        </div>
         <div class="profile-item" @click="resetData">
           <label style="color:#e74c3c">🗑️ 重置所有数据</label>
           <span>›</span>
+        </div>
+      </div>
+
+      <!-- ====== 主题选择弹窗 ====== -->
+      <div v-if="showThemePicker" class="modal-overlay" @click.self="showThemePicker=false">
+        <div class="modal">
+          <div class="modal-header">🎨 选择主题</div>
+          <div class="modal-body">
+            <div style="display:flex; flex-direction:column; gap:10px">
+              <div v-for="t in themeList" :key="t.key"
+                class="profile-item"
+                style="border:1.5px solid var(--border); border-radius:12px; margin-bottom:0; padding:14px 16px; cursor:pointer"
+                :style="{borderColor: currentTheme===t.key ? 'var(--primary)' : 'var(--border)'}"
+                @click="setTheme(t.key)">
+                <label>{{ t.icon }} {{ t.name }}</label>
+                <span v-if="currentTheme===t.key" style="color:var(--primary)">✓</span>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-primary" @click="showThemePicker=false">完成</button>
+          </div>
         </div>
       </div>
 
@@ -1353,6 +1438,30 @@ createApp({
     const wordExamName = ref('');
     const wordExamFullScore = ref(100);
 
+    // ====== Theme 主题切换 ======
+    const showThemePicker = ref(false);
+    const currentTheme = ref('default');
+    const themeNames = { default: '默认', dark: '暗黑', white: '纯白', pink: '粉色' };
+    const themeList = [
+      { key: 'default', name: '默认蓝紫', icon: '💜' },
+      { key: 'dark', name: '暗黑模式', icon: '🌙' },
+      { key: 'white', name: '简洁白', icon: '🤍' },
+      { key: 'pink', name: '少女粉', icon: '🌸' },
+    ];
+
+    function setTheme(name) {
+      currentTheme.value = name;
+      document.documentElement.setAttribute('data-theme', name);
+      localStorage.setItem('teacher-theme', name);
+    }
+
+    // 启动时读取已保存的主题
+    const savedTheme = localStorage.getItem('teacher-theme');
+    if (savedTheme && ['default','dark','white','pink'].includes(savedTheme)) {
+      currentTheme.value = savedTheme;
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    }
+
     function resetWordImport() {
       wordFile.value = null;
       wordFileName.value = '';
@@ -1608,6 +1717,8 @@ createApp({
       showWordImport, wordFile, wordFileName, wordFileSelected, wordImportType,
       wordImporting, wordPreview, wordImportResult, wordExamName, wordExamFullScore,
       selectWordFile, doWordImport, resetWordImport,
+      // Theme
+      showThemePicker, currentTheme, themeNames, themeList, setTheme,
     };
   }
 }).mount('#app');
