@@ -567,7 +567,10 @@ textarea.input { resize: vertical; min-height: 60px; }
                 <div class="exam-header" @click="ex.open = !ex.open">
                   <div class="exam-title">{{ ex.name }}</div>
                   <div class="exam-date">{{ ex.date }}</div>
-                  <div class="exam-toggle">{{ ex.open ? '▼' : '▶' }}</div>
+                  <div class="exam-toggle">
+                    <span style="font-size:12px; color:var(--danger); cursor:pointer; margin-right:6px" @click.stop="deleteScoreFromExam(ex.id, s.id)" v-if="false"></span>
+                    {{ ex.open ? '▼' : '▶' }}
+                  </div>
                 </div>
                 <div v-if="ex.open" class="exam-body">
                   <div class="exam-stats">
@@ -613,7 +616,11 @@ textarea.input { resize: vertical; min-height: 60px; }
           <div class="exam-header" @click="ex.open = !ex.open">
             <div class="exam-title">{{ ex.name }}</div>
             <div class="exam-date">{{ ex.date }}</div>
-            <div class="exam-toggle">{{ ex.open ? '▼' : '▶' }}</div>
+            <div class="exam-toggle" style="display:flex; align-items:center; gap:6px">
+              <span style="font-size:12px; color:var(--primary); cursor:pointer" @click.stop="editExam(ex)">✏️</span>
+              <span style="font-size:12px; color:var(--danger); cursor:pointer" @click.stop="deleteExam(ex.id)">🗑️</span>
+              <span>{{ ex.open ? '▼' : '▶' }}</span>
+            </div>
           </div>
           <div v-if="ex.open" class="exam-body">
             <div class="exam-stats">
@@ -635,6 +642,7 @@ textarea.input { resize: vertical; min-height: 60px; }
               <div v-for="s in ex.scores" :key="s.id" class="score-item">
                 <span class="score-name">{{ s.name }}</span>
                 <span class="score-val" :style="{color: getScoreColor(s.score / (ex.fullScore || 100) * 100)}">{{ s.score }}</span>
+                <span style="color:var(--danger); cursor:pointer; font-size:12px; margin-left:8px" @click="deleteScore(ex.id, s.id)">✕</span>
               </div>
             </div>
           </div>
@@ -924,10 +932,10 @@ textarea.input { resize: vertical; min-height: 60px; }
       </div>
     </div>
 
-    <!-- 添加考试弹窗 -->
+    <!-- 添加/编辑考试弹窗 -->
     <div v-if="showAddExam" class="modal-overlay" @click.self="showAddExam=false">
       <div class="modal modal-wide">
-        <div class="modal-header">录入考试成绩</div>
+        <div class="modal-header">{{ editingExam ? '编辑考试' : '录入考试成绩' }}</div>
         <div class="modal-body">
           <div class="form-row">
             <div class="form-group w-50">
@@ -949,8 +957,8 @@ textarea.input { resize: vertical; min-height: 60px; }
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn-cancel" @click="showAddExam=false">取消</button>
-          <button class="btn-primary" @click="addExam">保存</button>
+          <button class="btn-cancel" @click="showAddExam=false; editingExam=null">取消</button>
+          <button class="btn-primary" @click="saveExam">{{ editingExam ? '保存修改' : '保存' }}</button>
         </div>
       </div>
     </div>
@@ -1321,7 +1329,12 @@ createApp({
     // ====== Grades / Exams  ======
     const exams = ref([]);
     const showAddExam = ref(false);
+    const editingExam = ref(null);
     const examForm = reactive({ name: '', date: '', fullScore: 100, scoresText: '' });
+
+    function resetExamForm() {
+      examForm.name = ''; examForm.date = ''; examForm.fullScore = 100; examForm.scoresText = '';
+    }
 
     function avgScore(ex) {
       if (!ex.scores || !ex.scores.length) return '-';
@@ -1348,7 +1361,7 @@ createApp({
       return '#e74c3c';
     }
 
-    function addExam() {
+    function saveExam() {
       if (!examForm.name.trim()) return;
       const scores = examForm.scoresText.split('\n')
         .filter(line => line.trim())
@@ -1357,17 +1370,51 @@ createApp({
           return { id: Date.now() + Math.random(), name: parts[0].trim(), score: parseFloat(parts[1]) || 0 };
         });
 
-      exams.value.unshift({
-        id: Date.now(),
-        name: examForm.name.trim(),
-        date: examForm.date || new Date().toISOString().slice(0, 10),
-        fullScore: parseInt(examForm.fullScore) || 100,
-        scores: scores,
-        open: true
-      });
+      if (editingExam.value) {
+        // 编辑模式：更新现有考试
+        editingExam.value.name = examForm.name.trim();
+        editingExam.value.date = examForm.date || new Date().toISOString().slice(0, 10);
+        editingExam.value.fullScore = parseInt(examForm.fullScore) || 100;
+        editingExam.value.scores = scores;
+      } else {
+        // 新增模式
+        exams.value.unshift({
+          id: Date.now(),
+          name: examForm.name.trim(),
+          date: examForm.date || new Date().toISOString().slice(0, 10),
+          fullScore: parseInt(examForm.fullScore) || 100,
+          scores: scores,
+          open: true
+        });
+      }
       showAddExam.value = false;
-      examForm.name = ''; examForm.date = ''; examForm.fullScore = 100; examForm.scoresText = '';
+      editingExam.value = null;
+      resetExamForm();
       saveData();
+    }
+
+    function editExam(ex) {
+      editingExam.value = ex;
+      examForm.name = ex.name;
+      examForm.date = ex.date;
+      examForm.fullScore = ex.fullScore;
+      examForm.scoresText = ex.scores.map(s => s.name + ':' + s.score).join('\n');
+      showAddExam.value = true;
+    }
+
+    function deleteExam(id) {
+      if (confirm('确定要删除这场考试吗？')) {
+        exams.value = exams.value.filter(e => e.id !== id);
+        saveData();
+      }
+    }
+
+    function deleteScore(examId, scoreId) {
+      const ex = exams.value.find(e => e.id === examId);
+      if (ex) {
+        ex.scores = ex.scores.filter(s => s.id !== scoreId);
+        saveData();
+      }
     }
 
     // ====== Homework  ======
@@ -1495,7 +1542,7 @@ createApp({
     }
 
     // ====== 版本自检：更新后自动刷新，数据不丢失 ======
-    const APP_VERSION = '20260729.2';
+    const APP_VERSION = '20260729.3';
     const lastVersion = localStorage.getItem('teacher-app-version');
     if (lastVersion && lastVersion !== APP_VERSION) {
       // 有旧版本且不同 → 更新版本号后强制刷新加载新页面
@@ -1751,7 +1798,8 @@ createApp({
       // Safety
       safetyRecords, showAddSafety, safetyForm, addSafety, deleteSafety,
       // Exams
-      exams, showAddExam, examForm, avgScore, maxScore, minScore, passRate, getScoreColor, addExam,
+      exams, showAddExam, editingExam, examForm, avgScore, maxScore, minScore, passRate, getScoreColor,
+      saveExam, editExam, deleteExam, deleteScore,
       // Homework
       homework, showAddHomework, hwForm, hwFilter, hwFilters, filteredHomework, getPendingHomework, addHomework, markHomeworkDone, deleteHomework,
       // Profile
