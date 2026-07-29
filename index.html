@@ -1092,6 +1092,18 @@ tabStyle.textContent = `
 `;
 document.head.appendChild(tabStyle);
 
+// ====== 版本自检：放在 Vue 启动前，避免冲突 ======
+(function() {
+  const APP_VER = '20260729.6';
+  const lastVer = localStorage.getItem('teacher-app-version');
+  if (lastVer && lastVer !== APP_VER) {
+    localStorage.setItem('teacher-app-version', APP_VER);
+    window.location.href = window.location.pathname.split('?')[0] + '?v=' + Date.now();
+  } else if (!lastVer) {
+    localStorage.setItem('teacher-app-version', APP_VER);
+  }
+})();
+
 createApp({
   setup() {
     // ====== 全局状态 ======
@@ -1571,25 +1583,14 @@ createApp({
       document.documentElement.setAttribute('data-theme', savedTheme);
     }
 
-    // ====== 版本自检：更新后自动刷新，数据不丢失 ======
     const APP_VERSION = '20260729.6';
-    const lastVersion = localStorage.getItem('teacher-app-version');
-    if (lastVersion && lastVersion !== APP_VERSION) {
-      // 有旧版本且不同 → 更新版本号后强制刷新加载新页面
-      localStorage.setItem('teacher-app-version', APP_VERSION);
-      // 加时间戳强制拉取最新HTML，不丢失 localStorage 数据
-      window.location.href = window.location.pathname + '?v=' + Date.now();
-    } else if (!lastVersion) {
-      localStorage.setItem('teacher-app-version', APP_VERSION);
-    }
 
     const updating = ref(false);
     function checkUpdate() {
       updating.value = true;
-      // 强制触发版本变化，页面加载自动检测到不同后刷新
       localStorage.setItem('teacher-app-version', 'update-' + Date.now());
       setTimeout(() => {
-        window.location.href = window.location.pathname + '?v=' + Date.now();
+        window.location.href = window.location.pathname.split('?')[0] + '?v=' + Date.now();
       }, 500);
     }
 
