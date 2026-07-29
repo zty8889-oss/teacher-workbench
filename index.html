@@ -833,10 +833,11 @@ textarea.input { resize: vertical; min-height: 60px; }
                   <input v-model="wordExamName" class="input" placeholder="如：期中考试">
                 </div>
                 <div class="form-group w-50">
-                  <label>满分</label>
-                  <input v-model="wordExamFullScore" type="number" class="input" placeholder="如：150">
+                  <label>满分（每科）</label>
+                  <input v-model="wordExamFullScore" type="number" class="input" placeholder="如：100">
                 </div>
               </div>
+              <p style="font-size:12px; color:var(--text-tertiary); margin-top:-8px; margin-bottom:8px">Excel 表头除「姓名」外自动识别为科目列</p>
             </div>
 
             <div v-if="wordPreview" style="margin-top:14px; background:#f8f9fc; border-radius:10px; padding:12px; max-height:200px; overflow-y:auto">
@@ -1669,7 +1670,7 @@ createApp({
       document.documentElement.setAttribute('data-theme', savedTheme);
     }
 
-    const APP_VERSION = '20260729.7';
+    const APP_VERSION = '20260729.8';
 
     const updating = ref(false);
     function checkUpdate() {
@@ -1776,31 +1777,46 @@ createApp({
 
     function parseExamExcel(data, fullScore) {
       const scores = [];
-      if (data.length < 2) return scores;
+      const subjects = [];
+      if (data.length < 2) return { scores: [], subjects: [] };
 
       const headers = data[0].map(h => String(h || '').trim());
       const nameIdx = getColumnIndex(headers, ['姓名', '学生', '名字', 'name']);
-      const scoreIdx = getColumnIndex(headers, ['成绩', '分数', '得分', 'score', '总分']);
-
       const finalNameIdx = nameIdx >= 0 ? nameIdx : 0;
-      const finalScoreIdx = scoreIdx >= 0 ? scoreIdx : headers.length - 1;
+
+      // 除姓名列外的表头作为科目
+      for (let i = 0; i < headers.length; i++) {
+        if (i !== finalNameIdx && headers[i]) {
+          subjects.push(headers[i]);
+        }
+      }
 
       for (let r = 1; r < data.length; r++) {
         const row = data[r];
         const name = String(row[finalNameIdx] || '').trim();
-        const scoreText = String(row[finalScoreIdx] || '').trim();
-        if (!name || !scoreText) continue;
+        if (!name) continue;
 
-        const score = parseFloat(scoreText);
-        if (isNaN(score)) continue;
+        const subScores = {};
+        let total = 0;
+        for (const sub of subjects) {
+          const colIdx = headers.indexOf(sub);
+          if (colIdx >= 0) {
+            const val = parseFloat(String(row[colIdx] || '').trim());
+            if (!isNaN(val)) {
+              subScores[sub] = val;
+              total += val;
+            }
+          }
+        }
 
         scores.push({
           id: Date.now() + r + Math.random(),
           name: name,
-          score: score
+          subjects: subScores,
+          total: total
         });
       }
-      return scores;
+      return { scores, subjects };
     }
 
     async function doWordImport() {
@@ -1840,8 +1856,8 @@ createApp({
             };
           }
         } else if (wordImportType.value === 'exams') {
-          const scores = parseExamExcel(data, parseInt(wordExamFullScore.value) || 100);
-          if (scores.length === 0) {
+          const result = parseExamExcel(data, parseInt(wordExamFullScore.value) || 100);
+          if (result.scores.length === 0) {
             wordImportResult.value = { success: false, msg: '未找到可导入的成绩数据，请确认表格包含姓名和成绩列' };
           } else {
             exams.value.unshift({
@@ -1849,9 +1865,16 @@ createApp({
               name: wordExamName.value.trim(),
               date: new Date().toISOString().slice(0, 10),
               fullScore: parseInt(wordExamFullScore.value) || 100,
-              scores: scores,
+              subjects: result.subjects,
+              scores: result.scores,
+              subjectFilter: '',
               open: true
             });
+            saveData();
+            wordImportResult.value = {
+              success: true,
+              msg: `成功导入 ${result.scores.length} 条成绩（${result.subjects.length}科）📊`
+            };
           }
         }
       } catch(e) {
