@@ -6,6 +6,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="theme-color" content="#4A90D9">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
   <title>教师工作台</title>
@@ -1460,6 +1463,18 @@ createApp({
     if (savedTheme && ['default','dark','white','pink'].includes(savedTheme)) {
       currentTheme.value = savedTheme;
       document.documentElement.setAttribute('data-theme', savedTheme);
+    }
+
+    // ====== 版本自检：更新后自动刷新，数据不丢失 ======
+    const APP_VERSION = '20260729.1';
+    const lastVersion = localStorage.getItem('teacher-app-version');
+    if (lastVersion && lastVersion !== APP_VERSION) {
+      // 有旧版本且不同 → 更新版本号后强制刷新加载新页面
+      localStorage.setItem('teacher-app-version', APP_VERSION);
+      // 加时间戳强制拉取最新HTML，不丢失 localStorage 数据
+      window.location.href = window.location.pathname + '?v=' + Date.now();
+    } else if (!lastVersion) {
+      localStorage.setItem('teacher-app-version', APP_VERSION);
     }
 
     function resetWordImport() {
