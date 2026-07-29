@@ -225,6 +225,35 @@ textarea.input { resize: vertical; min-height: 60px; }
 
 /* ===== Search Bar ===== */
 .search-bar .input { padding-left: 36px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238E8E93' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M16.5 16.5L21 21'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: 12px center; background-size: 16px; }
+
+/* ===== Timeline ===== */
+.modal-tabs { display: flex; gap: 4px; background: #f0f0f5; border-radius: 8px; padding: 2px; margin-left: 12px; }
+.modal-tab { padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; color: var(--text-secondary); cursor: pointer; transition: all .2s; }
+.modal-tab.active { background: #fff; color: var(--primary); box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.modal-tall { max-height: 90vh; }
+.timeline-actions { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+.timeline-summary { display: flex; gap: 6px; margin-left: auto; }
+.tl-badge { font-size: 11px; padding: 3px 10px; border-radius: 12px; font-weight: 500; white-space: nowrap; }
+.tl-badge.good { background: #F0FFF5; color: var(--success); }
+.tl-badge.bad { background: #FFF0F0; color: var(--danger); }
+.timeline { position: relative; padding-left: 12px; }
+.tl-item { position: relative; padding-left: 28px; padding-bottom: 20px; }
+.tl-item:last-child { padding-bottom: 4px; }
+.tl-dot { position: absolute; left: 0; top: 4px; width: 14px; height: 14px; border-radius: 50%; border: 3px solid; background: #fff; z-index: 2; }
+.tl-dot.praise { border-color: var(--success); }
+.tl-dot.criticism { border-color: var(--danger); }
+.tl-dot.general { border-color: var(--primary); }
+.tl-line { position: absolute; left: 6px; top: 18px; bottom: 0; width: 2px; background: var(--border); }
+.tl-content { }
+.tl-date { font-size: 11px; color: var(--text-secondary); font-weight: 500; }
+.tl-text { font-size: 14px; margin: 4px 0 6px; line-height: 1.5; }
+.tl-tags { display: flex; gap: 8px; align-items: center; }
+.tl-tag { font-size: 11px; padding: 2px 10px; border-radius: 10px; font-weight: 500; }
+.tl-tag.praise { background: #F0FFF5; color: var(--success); }
+.tl-tag.criticism { background: #FFF0F0; color: var(--danger); }
+.tl-tag.general { background: #F0F5FF; color: var(--primary); }
+.tl-del { font-size: 11px; color: var(--text-tertiary); cursor: pointer; padding: 2px 6px; }
+.tl-del:active { color: var(--danger); }
 </style>
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
 </head>
@@ -448,11 +477,19 @@ textarea.input { resize: vertical; min-height: 60px; }
             </div>
             <div class="student-arrow">›</div>
           </div>
-          <!-- 学生详情弹窗 -->
+      <!-- 学生详情弹窗 -->
           <div v-if="showStudentDetail" class="modal-overlay" @click.self="showStudentDetail=false">
-            <div class="modal modal-wide">
-              <div class="modal-header">学生档案</div>
-              <div class="modal-body">
+            <div class="modal modal-wide modal-tall">
+              <div class="modal-header">
+                <span>学生档案</span>
+                <span class="modal-tabs">
+                  <span :class="['modal-tab',{active:detailTab==='info'}]" @click="detailTab='info'">基本信息</span>
+                  <span :class="['modal-tab',{active:detailTab==='timeline'}]" @click="detailTab='timeline'">成长记录</span>
+                </span>
+              </div>
+
+              <!-- 基本信息 -->
+              <div v-show="detailTab==='info'" class="modal-body">
                 <div class="detail-avatar" :style="{background: selectedStudent.avatarColor}">{{ selectedStudent.name.charAt(0) }}</div>
                 <div class="detail-grid">
                   <div class="detail-item"><label>姓名</label><span>{{ selectedStudent.name }}</span></div>
@@ -464,9 +501,71 @@ textarea.input { resize: vertical; min-height: 60px; }
                   <div class="detail-item full"><label>备注</label><span>{{ selectedStudent.note }}</span></div>
                 </div>
               </div>
+
+              <!-- 成长时间轴 -->
+              <div v-show="detailTab==='timeline'" class="modal-body">
+                <div class="timeline-actions">
+                  <button class="btn-small" @click="showAddRecord=true">+ 添加记录</button>
+                  <span class="timeline-summary">
+                    <span class="tl-badge good">{{ getRecordStats(selectedStudent).good }}件好事</span>
+                    <span class="tl-badge bad">{{ getRecordStats(selectedStudent).bad }}件待改进</span>
+                  </span>
+                </div>
+                <div v-if="(!selectedStudent.records || selectedStudent.records.length === 0)" class="empty-state">暂无成长记录</div>
+                <div class="timeline" v-else>
+                  <div v-for="(r, ri) in sortedRecords(selectedStudent)" :key="r.id" class="tl-item">
+                    <div class="tl-dot" :class="r.type"></div>
+                    <div class="tl-line" v-if="ri < sortedRecords(selectedStudent).length - 1"></div>
+                    <div class="tl-content">
+                      <div class="tl-date">{{ r.date }}</div>
+                      <div class="tl-text">{{ r.text }}</div>
+                      <div class="tl-tags">
+                        <span :class="['tl-tag', r.type]">{{ {praise:'🌟 表扬',criticism:'📌 待改进',general:'📝 日常'}[r.type] }}</span>
+                        <span class="tl-del" @click="deleteRecord(selectedStudent, r.id)">删除</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div class="modal-footer">
-                <button class="btn-danger" @click="deleteStudent(selectedStudent.id); showStudentDetail=false">删除</button>
+                <button class="btn-danger" @click="deleteStudent(selectedStudent.id); showStudentDetail=false">删除学生</button>
                 <button class="btn-primary" @click="showStudentDetail=false">关闭</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 添加成长记录弹窗 -->
+          <div v-if="showAddRecord" class="modal-overlay" @click.self="showAddRecord=false">
+            <div class="modal">
+              <div class="modal-header">添加成长记录</div>
+              <div class="modal-body">
+                <div class="form-group">
+                  <label>学生</label>
+                  <div style="font-weight:600;font-size:15px;padding:4px 0">{{ selectedStudent.name }}</div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group w-50">
+                    <label>类型</label>
+                    <select v-model="recordForm.type" class="input">
+                      <option value="praise">🌟 表扬</option>
+                      <option value="criticism">📌 待改进</option>
+                      <option value="general">📝 日常记录</option>
+                    </select>
+                  </div>
+                  <div class="form-group w-50">
+                    <label>日期</label>
+                    <input v-model="recordForm.date" type="date" class="input">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>事件描述</label>
+                  <textarea v-model="recordForm.text" class="input" rows="3" placeholder="详细描述发生的事情..."></textarea>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button class="btn-cancel" @click="showAddRecord=false">取消</button>
+                <button class="btn-primary" @click="addRecord">保存</button>
               </div>
             </div>
           </div>
@@ -940,8 +1039,52 @@ const app = createApp({
       saveData();
     }
 
-    function viewStudent(s) { selectedStudent.value = s; showStudentDetail.value = true; }
+    function viewStudent(s) { selectedStudent.value = s; showStudentDetail.value = true; detailTab.value = 'info'; }
     function deleteStudent(id) { students.value = students.value.filter(s => s.id !== id); saveData(); }
+
+    // ======  Student Timeline ======
+    const detailTab = ref('info');
+    const showAddRecord = ref(false);
+    const recordForm = reactive({ type: 'praise', date: '', text: '' });
+
+    function getRecordStats(student) {
+      const records = student.records || [];
+      return {
+        good: records.filter(r => r.type === 'praise').length,
+        bad: records.filter(r => r.type === 'criticism').length
+      };
+    }
+
+    function sortedRecords(student) {
+      const records = [...(student.records || [])];
+      return records.sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
+    }
+
+    function addRecord() {
+      if (!recordForm.text.trim()) return;
+      const student = students.value.find(s => s.id === selectedStudent.value.id);
+      if (!student) return;
+      if (!student.records) student.records = [];
+      student.records.push({
+        id: 'r' + Date.now(),
+        date: recordForm.date || new Date().toISOString().slice(0, 10),
+        type: recordForm.type,
+        text: recordForm.text.trim()
+      });
+      selectedStudent.value = student;
+      showAddRecord.value = false;
+      recordForm.type = 'praise'; recordForm.date = ''; recordForm.text = '';
+      saveData();
+    }
+
+    function deleteRecord(student, recordId) {
+      const s = students.value.find(x => x.id === student.id);
+      if (s && s.records) {
+        s.records = s.records.filter(r => r.id !== recordId);
+        selectedStudent.value = s;
+        saveData();
+      }
+    }
 
     // ======  Safety  ======
     const safetyRecords = ref([]);
@@ -1120,13 +1263,27 @@ const app = createApp({
     function initDemoData() {
       if (students.value.length === 0) {
         const demoStudents = [
-          { id: 1001, name: '张小明', studentId: '2024001', gender: '男', parent: '张伟', phone: '139****1234', address: '阳光小区3栋', note: '学习委员', avatarColor: '#4A90D9' },
-          { id: 1002, name: '李小红', studentId: '2024002', gender: '女', parent: '李强', phone: '139****5678', address: '花园路12号', note: '语文课代表', avatarColor: '#e74c3c' },
-          { id: 1003, name: '王大力', studentId: '2024003', gender: '男', parent: '王刚', phone: '138****9012', address: '和平街5号', note: '体育委员', avatarColor: '#27ae60' },
-          { id: 1004, name: '赵雪', studentId: '2024004', gender: '女', parent: '赵明', phone: '136****3456', address: '东风路8号', note: '', avatarColor: '#f39c12' },
-          { id: 1005, name: '刘洋', studentId: '2024005', gender: '男', parent: '刘大海', phone: '137****7890', address: '建设路15号', note: '数学课代表', avatarColor: '#9b59b6' },
-          { id: 1006, name: '陈思思', studentId: '2024006', gender: '女', parent: '陈明', phone: '135****2345', address: '文华苑7号', note: '', avatarColor: '#1abc9c' },
-          { id: 1007, name: '周杰', studentId: '2024007', gender: '男', parent: '周华', phone: '132****6789', address: '龙腾路22号', note: '纪律委员', avatarColor: '#e67e22' },
+          { id: 1001, name: '张小明', studentId: '2024001', gender: '男', parent: '张伟', phone: '139****1234', address: '阳光小区3栋', note: '学习委员', avatarColor: '#4A90D9',
+            records: [
+              { id: 'r1', date: '2026-10-25', type: 'praise', text: '数学月考全班第一，95分！解题思路清晰' },
+              { id: 'r2', date: '2026-10-20', type: 'praise', text: '主动帮助同桌讲解数学题，耐心细致' },
+              { id: 'r3', date: '2026-10-15', type: 'criticism', text: '上课和后排同学讲话，被提醒两次' },
+              { id: 'r4', date: '2026-10-10', type: 'general', text: '参加学校演讲比赛，获得三等奖' },
+            ] },
+          { id: 1002, name: '李小红', studentId: '2024002', gender: '女', parent: '李强', phone: '139****5678', address: '花园路12号', note: '语文课代表', avatarColor: '#e74c3c',
+            records: [
+              { id: 'r5', date: '2026-10-24', type: 'praise', text: '作文被老师当范文在全班朗读' },
+              { id: 'r6', date: '2026-10-18', type: 'praise', text: '主动组织班级早读，纪律良好' },
+            ] },
+          { id: 1003, name: '王大力', studentId: '2024003', gender: '男', parent: '王刚', phone: '138****9012', address: '和平街5号', note: '体育委员', avatarColor: '#27ae60',
+            records: [
+              { id: 'r7', date: '2026-10-23', type: 'criticism', text: '体育课和同学追逐打闹，差点摔倒' },
+              { id: 'r8', date: '2026-10-16', type: 'praise', text: '校运会100米短跑第一名，为班级争光' },
+            ] },
+          { id: 1004, name: '赵雪', studentId: '2024004', gender: '女', parent: '赵明', phone: '136****3456', address: '东风路8号', note: '', avatarColor: '#f39c12', records: [] },
+          { id: 1005, name: '刘洋', studentId: '2024005', gender: '男', parent: '刘大海', phone: '137****7890', address: '建设路15号', note: '数学课代表', avatarColor: '#9b59b6', records: [] },
+          { id: 1006, name: '陈思思', studentId: '2024006', gender: '女', parent: '陈明', phone: '135****2345', address: '文华苑7号', note: '', avatarColor: '#1abc9c', records: [] },
+          { id: 1007, name: '周杰', studentId: '2024007', gender: '男', parent: '周华', phone: '132****6789', address: '龙腾路22号', note: '纪律委员', avatarColor: '#e67e22', records: [] },
         ];
         students.value = demoStudents;
 
@@ -1235,7 +1392,9 @@ const app = createApp({
       ],
       // Profile
       showEditProfile, exportData, importData, resetData,
-          };
+      // Timeline
+      detailTab, showAddRecord, recordForm, getRecordStats, sortedRecords, addRecord, deleteRecord,
+    };
   }
 });
 
