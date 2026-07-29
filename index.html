@@ -708,6 +708,11 @@ textarea.input { resize: vertical; min-height: 60px; }
           <label>✏️ 编辑资料</label>
           <span>›</span>
         </div>
+        <div class="profile-item" @click="checkUpdate">
+          <label>🔄 检查更新</label>
+          <span v-if="updating" style="color:var(--warning)">检查中...</span>
+          <span v-else style="font-size:12px">{{ 'v' + APP_VERSION }} ›</span>
+        </div>
         <div class="profile-item" @click="exportData">
           <label>💾 导出数据</label>
           <span>›</span>
@@ -1553,6 +1558,16 @@ createApp({
       localStorage.setItem('teacher-app-version', APP_VERSION);
     }
 
+    const updating = ref(false);
+    function checkUpdate() {
+      updating.value = true;
+      // 强制触发版本变化，页面加载自动检测到不同后刷新
+      localStorage.setItem('teacher-app-version', 'update-' + Date.now());
+      setTimeout(() => {
+        window.location.href = window.location.pathname + '?v=' + Date.now();
+      }, 500);
+    }
+
     function resetWordImport() {
       wordFile.value = null;
       wordFileName.value = '';
@@ -1811,6 +1826,8 @@ createApp({
       selectWordFile, doWordImport, resetWordImport,
       // Theme
       showThemePicker, currentTheme, themeNames, themeList, setTheme,
+      // Version
+      APP_VERSION, updating, checkUpdate,
     };
   }
 }).mount('#app');
