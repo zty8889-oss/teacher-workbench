@@ -508,6 +508,7 @@ textarea.input { resize: vertical; min-height: 60px; }
                   <span v-if="m.absent"> · 缺勤{{ m.absent }}人</span>
                 </div>
               </div>
+              <span style="cursor:pointer;color:var(--primary);font-size:12px;margin-right:10px" @click="editMeeting(m)">✏️</span>
               <span style="cursor:pointer;color:var(--danger);font-size:12px" @click="deleteMeeting(m.id)">删除</span>
             </div>
             <div v-if="m.summary" class="record-body">{{ m.summary }}</div>
@@ -1172,9 +1173,9 @@ textarea.input { resize: vertical; min-height: 60px; }
     </div>
 
     <!-- 主题班会弹窗 -->
-    <div v-if="showAddMeeting" class="modal-overlay" @click.self="showAddMeeting=false">
+    <div v-if="showAddMeeting" class="modal-overlay" @click.self="showAddMeeting=false; editingMeeting=null">
       <div class="modal modal-wide">
-        <div class="modal-header">📋 记录主题班会</div>
+        <div class="modal-header">{{ editingMeeting ? "✏️ 编辑主题班会" : "📋 记录主题班会" }}</div>
         <div class="modal-body">
           <div class="form-row">
             <div class="form-group w-50">
@@ -1218,16 +1219,16 @@ textarea.input { resize: vertical; min-height: 60px; }
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn-cancel" @click="showAddMeeting=false">取消</button>
+          <button class="btn-cancel" @click="showAddMeeting=false; editingMeeting=null">取消</button>
           <button class="btn-primary" @click="addMeeting">保存</button>
         </div>
       </div>
     </div>
 
     <!-- 临时离班弹窗 -->
-    <div v-if="showAddLeave" class="modal-overlay" @click.self="showAddLeave=false">
+    <div v-if="showAddLeave" class="modal-overlay" @click.self="showAddLeave=false; editingLeave=null">
       <div class="modal modal-wide">
-        <div class="modal-header">🚶 临时离班登记</div>
+        <div class="modal-header">{{ editingLeave ? "✏️ 编辑离班记录" : "🚶 临时离班登记" }}</div>
         <div class="modal-body">
           <div class="form-row">
             <div class="form-group w-50">
@@ -1266,16 +1267,16 @@ textarea.input { resize: vertical; min-height: 60px; }
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn-cancel" @click="showAddLeave=false">取消</button>
+          <button class="btn-cancel" @click="showAddLeave=false; editingLeave=null">取消</button>
           <button class="btn-primary" @click="addLeave">登记</button>
         </div>
       </div>
     </div>
 
     <!-- 通知回执弹窗 -->
-    <div v-if="showAddNotice" class="modal-overlay" @click.self="showAddNotice=false">
+    <div v-if="showAddNotice" class="modal-overlay" @click.self="showAddNotice=false; editingNotice=null">
       <div class="modal modal-wide">
-        <div class="modal-header">📄 通知回执登记</div>
+        <div class="modal-header">{{ editingNotice ? "✏️ 编辑通知回执" : "📄 通知回执登记" }}</div>
         <div class="modal-body">
           <div class="form-row">
             <div class="form-group w-50">
@@ -1309,16 +1310,16 @@ textarea.input { resize: vertical; min-height: 60px; }
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn-cancel" @click="showAddNotice=false">取消</button>
+          <button class="btn-cancel" @click="showAddNotice=false; editingNotice=null">取消</button>
           <button class="btn-primary" @click="addNotice">保存</button>
         </div>
       </div>
     </div>
 
     <!-- 班规执行弹窗 -->
-    <div v-if="showAddRule" class="modal-overlay" @click.self="showAddRule=false">
+    <div v-if="showAddRule" class="modal-overlay" @click.self="showAddRule=false; editingRule=null">
       <div class="modal modal-wide">
-        <div class="modal-header">📏 班规执行记录</div>
+        <div class="modal-header">{{ editingRule ? "✏️ 编辑班规记录" : "📏 班规执行记录" }}</div>
         <div class="modal-body">
           <div class="form-row">
             <div class="form-group w-50">
@@ -1353,16 +1354,16 @@ textarea.input { resize: vertical; min-height: 60px; }
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn-cancel" @click="showAddRule=false">取消</button>
+          <button class="btn-cancel" @click="showAddRule=false; editingRule=null">取消</button>
           <button class="btn-primary" @click="addRule">保存</button>
         </div>
       </div>
     </div>
 
     <!-- 集体荣誉弹窗 -->
-    <div v-if="showAddHonor" class="modal-overlay" @click.self="showAddHonor=false">
+    <div v-if="showAddHonor" class="modal-overlay" @click.self="showAddHonor=false; editingHonor=null">
       <div class="modal modal-wide">
-        <div class="modal-header">🏆 集体荣誉登记</div>
+        <div class="modal-header">{{ editingHonor ? "✏️ 编辑荣誉" : "🏆 集体荣誉登记" }}</div>
         <div class="modal-body">
           <div class="form-row">
             <div class="form-group w-50">
@@ -1388,16 +1389,16 @@ textarea.input { resize: vertical; min-height: 60px; }
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn-cancel" @click="showAddHonor=false">取消</button>
+          <button class="btn-cancel" @click="showAddHonor=false; editingHonor=null">取消</button>
           <button class="btn-primary" @click="addHonor">保存</button>
         </div>
       </div>
     </div>
 
     <!-- 值日排程弹窗 -->
-    <div v-if="showAddDuty" class="modal-overlay" @click.self="showAddDuty=false">
+    <div v-if="showAddDuty" class="modal-overlay" @click.self="showAddDuty=false; editingDuty=null">
       <div class="modal modal-wide">
-        <div class="modal-header">🧹 值日排程</div>
+        <div class="modal-header">{{ editingDuty ? "✏️ 编辑值日" : "🧹 值日排程" }}</div>
         <div class="modal-body">
           <div class="form-row">
             <div class="form-group w-50">
@@ -1419,16 +1420,16 @@ textarea.input { resize: vertical; min-height: 60px; }
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn-cancel" @click="showAddDuty=false">取消</button>
+          <button class="btn-cancel" @click="showAddDuty=false; editingDuty=null">取消</button>
           <button class="btn-primary" @click="addDuty">保存</button>
         </div>
       </div>
     </div>
 
     <!-- 学业预警弹窗 -->
-    <div v-if="showAddWarning" class="modal-overlay" @click.self="showAddWarning=false">
+    <div v-if="showAddWarning" class="modal-overlay" @click.self="showAddWarning=false; editingWarning=null">
       <div class="modal modal-wide">
-        <div class="modal-header">⚠️ 学业预警登记</div>
+        <div class="modal-header">{{ editingWarning ? "✏️ 编辑学业预警" : "⚠️ 学业预警登记" }}</div>
         <div class="modal-body">
           <div class="form-row">
             <div class="form-group w-50">
@@ -1460,16 +1461,16 @@ textarea.input { resize: vertical; min-height: 60px; }
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn-cancel" @click="showAddWarning=false">取消</button>
+          <button class="btn-cancel" @click="showAddWarning=false; editingWarning=null">取消</button>
           <button class="btn-primary" @click="addWarning">保存</button>
         </div>
       </div>
     </div>
 
     <!-- 任课老师沟通弹窗 -->
-    <div v-if="showAddComm" class="modal-overlay" @click.self="showAddComm=false">
+    <div v-if="showAddComm" class="modal-overlay" @click.self="showAddComm=false; editingComm=null">
       <div class="modal modal-wide">
-        <div class="modal-header">💬 任课老师沟通记录</div>
+        <div class="modal-header">{{ editingComm ? "✏️ 编辑沟通记录" : "💬 任课老师沟通记录" }}</div>
         <div class="modal-body">
           <div class="form-row">
             <div class="form-group w-50">
@@ -1501,7 +1502,7 @@ textarea.input { resize: vertical; min-height: 60px; }
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn-cancel" @click="showAddComm=false">取消</button>
+          <button class="btn-cancel" @click="showAddComm=false; editingComm=null">取消</button>
           <button class="btn-primary" @click="addComm">保存</button>
         </div>
       </div>
@@ -2073,25 +2074,39 @@ createApp({
     // ====== 主题班会台账 ======
     const meetingRecords = ref([]);
     const showAddMeeting = ref(false);
+    const editingMeeting = ref(null);
     const meetingForm = reactive({ date: '', type: '防溺水', topic: '', absent: 0, absentList: '', summary: '', archived: false });
 
     const sortedMeetings = computed(() => {
       return [...meetingRecords.value].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
     });
 
+    function editMeeting(m) {
+      editingMeeting.value = m;
+      meetingForm.date = m.date; meetingForm.type = m.type; meetingForm.topic = m.topic;
+      meetingForm.absent = m.absent; meetingForm.absentList = m.absentList || '';
+      meetingForm.summary = m.summary || ''; meetingForm.archived = m.archived;
+      showAddMeeting.value = true;
+    }
+
     function addMeeting() {
       if (!meetingForm.topic.trim() || !meetingForm.date) return;
-      meetingRecords.value.unshift({
-        id: Date.now(),
-        date: meetingForm.date,
-        type: meetingForm.type,
-        topic: meetingForm.topic.trim(),
-        absent: meetingForm.absent || 0,
-        absentList: meetingForm.absentList || '',
-        summary: meetingForm.summary || '',
-        archived: meetingForm.archived
-      });
+      if (editingMeeting.value) {
+        Object.assign(editingMeeting.value, {
+          date: meetingForm.date, type: meetingForm.type, topic: meetingForm.topic.trim(),
+          absent: meetingForm.absent || 0, absentList: meetingForm.absentList || '',
+          summary: meetingForm.summary || '', archived: meetingForm.archived
+        });
+      } else {
+        meetingRecords.value.unshift({
+          id: Date.now(),
+          date: meetingForm.date, type: meetingForm.type, topic: meetingForm.topic.trim(),
+          absent: meetingForm.absent || 0, absentList: meetingForm.absentList || '',
+          summary: meetingForm.summary || '', archived: meetingForm.archived
+        });
+      }
       showAddMeeting.value = false;
+      editingMeeting.value = null;
       meetingForm.date = ''; meetingForm.type = '防溺水'; meetingForm.topic = ''; meetingForm.absent = 0; meetingForm.absentList = ''; meetingForm.summary = ''; meetingForm.archived = false;
       saveData();
     }
@@ -2106,25 +2121,37 @@ createApp({
     // ====== 临时离班记录 ======
     const leaveRecords = ref([]);
     const showAddLeave = ref(false);
+    const editingLeave = ref(null);
     const leaveForm = reactive({ date: '', student: '', time: '', destination: '医务室', returnTime: '', note: '' });
 
     const sortedLeaves = computed(() => {
       return [...leaveRecords.value].sort((a, b) => b.date.localeCompare(a.date) || b.time.localeCompare(a.time));
     });
 
+    function editLeave(l) {
+      editingLeave.value = l;
+      leaveForm.date = l.date; leaveForm.student = l.student; leaveForm.time = l.time;
+      leaveForm.destination = l.destination; leaveForm.returnTime = l.returnTime || ''; leaveForm.note = l.note || '';
+      showAddLeave.value = true;
+    }
+
     function addLeave() {
       if (!leaveForm.student.trim() || !leaveForm.date || !leaveForm.time) return;
-      leaveRecords.value.unshift({
-        id: Date.now(),
-        date: leaveForm.date,
-        student: leaveForm.student.trim(),
-        time: leaveForm.time,
-        destination: leaveForm.destination,
-        returnTime: leaveForm.returnTime || '',
-        note: leaveForm.note || '',
-        returned: false
-      });
+      if (editingLeave.value) {
+        Object.assign(editingLeave.value, {
+          date: leaveForm.date, student: leaveForm.student.trim(), time: leaveForm.time,
+          destination: leaveForm.destination, returnTime: leaveForm.returnTime || '', note: leaveForm.note || ''
+        });
+      } else {
+        leaveRecords.value.unshift({
+          id: Date.now(),
+          date: leaveForm.date, student: leaveForm.student.trim(), time: leaveForm.time,
+          destination: leaveForm.destination, returnTime: leaveForm.returnTime || '',
+          note: leaveForm.note || '', returned: false
+        });
+      }
       showAddLeave.value = false;
+      editingLeave.value = null;
       leaveForm.date = ''; leaveForm.student = ''; leaveForm.time = ''; leaveForm.destination = '医务室'; leaveForm.returnTime = ''; leaveForm.note = '';
       saveData();
     }
@@ -2144,25 +2171,38 @@ createApp({
     // ====== 通知回执单 ======
     const noticeRecords = ref([]);
     const showAddNotice = ref(false);
+    const editingNotice = ref(null);
     const noticeForm = reactive({ name: '', date: '', deadline: '', total: 0, received: 0, unreceived: '' });
 
     const sortedNotices = computed(() => {
       return [...noticeRecords.value].sort((a, b) => b.date.localeCompare(a.date) || a.id - b.id);
     });
 
+    function editNotice(n) {
+      editingNotice.value = n;
+      noticeForm.date = n.date; noticeForm.name = n.name; noticeForm.deadline = n.deadline;
+      noticeForm.total = n.total; noticeForm.received = n.received; noticeForm.unreceived = n.unreceived || '';
+      showAddNotice.value = true;
+    }
+
     function addNotice() {
       if (!noticeForm.name.trim() || !noticeForm.date || !noticeForm.deadline) return;
-      noticeRecords.value.unshift({
-        id: Date.now(),
-        name: noticeForm.name.trim(),
-        date: noticeForm.date,
-        deadline: noticeForm.deadline,
-        total: noticeForm.total || 0,
-        received: noticeForm.received || 0,
-        unreceived: noticeForm.unreceived || '',
-        collected: false
-      });
+      if (editingNotice.value) {
+        Object.assign(editingNotice.value, {
+          name: noticeForm.name.trim(), date: noticeForm.date, deadline: noticeForm.deadline,
+          total: noticeForm.total || 0, received: noticeForm.received || 0,
+          unreceived: noticeForm.unreceived || ''
+        });
+      } else {
+        noticeRecords.value.unshift({
+          id: Date.now(),
+          name: noticeForm.name.trim(), date: noticeForm.date, deadline: noticeForm.deadline,
+          total: noticeForm.total || 0, received: noticeForm.received || 0,
+          unreceived: noticeForm.unreceived || '', collected: false
+        });
+      }
       showAddNotice.value = false;
+      editingNotice.value = null;
       noticeForm.name = ''; noticeForm.date = ''; noticeForm.deadline = ''; noticeForm.total = 0; noticeForm.received = 0; noticeForm.unreceived = '';
       saveData();
     }
@@ -2182,24 +2222,38 @@ createApp({
     // ====== 班规执行记录 ======
     const ruleRecords = ref([]);
     const showAddRule = ref(false);
+    const editingRule = ref(null);
     const ruleForm = reactive({ date: '', student: '', type: '加分', score: 1, reason: '', action: '' });
 
     const sortedRules = computed(() => {
       return [...ruleRecords.value].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
     });
 
+    function editRule(r) {
+      editingRule.value = r;
+      ruleForm.date = r.date; ruleForm.student = r.student; ruleForm.type = r.score >= 0 ? '加分' : '扣分';
+      ruleForm.score = Math.abs(r.score); ruleForm.reason = r.reason; ruleForm.action = r.action || '';
+      showAddRule.value = true;
+    }
+
     function addRule() {
       if (!ruleForm.student.trim() || !ruleForm.date || !ruleForm.reason.trim()) return;
-      ruleRecords.value.unshift({
-        id: Date.now(),
-        date: ruleForm.date,
-        student: ruleForm.student.trim(),
-        type: ruleForm.type,
-        score: ruleForm.type === '加分' ? Math.abs(ruleForm.score) : -Math.abs(ruleForm.score),
-        reason: ruleForm.reason.trim(),
-        action: ruleForm.action || ''
-      });
+      if (editingRule.value) {
+        Object.assign(editingRule.value, {
+          date: ruleForm.date, student: ruleForm.student.trim(),
+          type: ruleForm.type, score: ruleForm.type === '加分' ? Math.abs(ruleForm.score) : -Math.abs(ruleForm.score),
+          reason: ruleForm.reason.trim(), action: ruleForm.action || ''
+        });
+      } else {
+        ruleRecords.value.unshift({
+          id: Date.now(),
+          date: ruleForm.date, student: ruleForm.student.trim(), type: ruleForm.type,
+          score: ruleForm.type === '加分' ? Math.abs(ruleForm.score) : -Math.abs(ruleForm.score),
+          reason: ruleForm.reason.trim(), action: ruleForm.action || ''
+        });
+      }
       showAddRule.value = false;
+      editingRule.value = null;
       ruleForm.date = ''; ruleForm.student = ''; ruleForm.type = '加分'; ruleForm.score = 1; ruleForm.reason = ''; ruleForm.action = '';
       saveData();
     }
@@ -2214,22 +2268,33 @@ createApp({
     // ====== 集体荣誉榜 ======
     const honorRecords = ref([]);
     const showAddHonor = ref(false);
+    const editingHonor = ref(null);
     const honorForm = reactive({ date: '', name: '', level: '校级', students: '' });
 
     const sortedHonors = computed(() => {
       return [...honorRecords.value].sort((a, b) => b.date.localeCompare(a.date) || a.id - b.id);
     });
 
+    function editHonor(h) {
+      editingHonor.value = h;
+      honorForm.date = h.date; honorForm.name = h.name; honorForm.level = h.level; honorForm.students = h.students || '';
+      showAddHonor.value = true;
+    }
+
     function addHonor() {
       if (!honorForm.name.trim() || !honorForm.date) return;
-      honorRecords.value.unshift({
-        id: Date.now(),
-        date: honorForm.date,
-        name: honorForm.name.trim(),
-        level: honorForm.level,
-        students: honorForm.students || ''
-      });
+      if (editingHonor.value) {
+        Object.assign(editingHonor.value, {
+          date: honorForm.date, name: honorForm.name.trim(), level: honorForm.level, students: honorForm.students || ''
+        });
+      } else {
+        honorRecords.value.unshift({
+          id: Date.now(),
+          date: honorForm.date, name: honorForm.name.trim(), level: honorForm.level, students: honorForm.students || ''
+        });
+      }
       showAddHonor.value = false;
+      editingHonor.value = null;
       honorForm.date = ''; honorForm.name = ''; honorForm.level = '校级'; honorForm.students = '';
       saveData();
     }
@@ -2244,23 +2309,34 @@ createApp({
     // ====== 值日排程 ======
     const dutyRecords = ref([]);
     const showAddDuty = ref(false);
+    const editingDuty = ref(null);
     const dutyForm = reactive({ week: 1, dateRange: '', leader: '', members: '' });
 
     const sortedDuties = computed(() => {
       return [...dutyRecords.value].sort((a, b) => b.week - a.week);
     });
 
+    function editDuty(d) {
+      editingDuty.value = d;
+      dutyForm.week = d.week; dutyForm.dateRange = d.dateRange || ''; dutyForm.leader = d.leader; dutyForm.members = d.members;
+      showAddDuty.value = true;
+    }
+
     function addDuty() {
       if (!dutyForm.leader.trim() || !dutyForm.members.trim() || !dutyForm.week) return;
-      dutyRecords.value.unshift({
-        id: Date.now(),
-        week: dutyForm.week,
-        dateRange: dutyForm.dateRange || '',
-        leader: dutyForm.leader.trim(),
-        members: dutyForm.members.trim(),
-        done: false
-      });
+      if (editingDuty.value) {
+        Object.assign(editingDuty.value, {
+          week: dutyForm.week, dateRange: dutyForm.dateRange || '', leader: dutyForm.leader.trim(), members: dutyForm.members.trim()
+        });
+      } else {
+        dutyRecords.value.unshift({
+          id: Date.now(),
+          week: dutyForm.week, dateRange: dutyForm.dateRange || '', leader: dutyForm.leader.trim(),
+          members: dutyForm.members.trim(), done: false
+        });
+      }
       showAddDuty.value = false;
+      editingDuty.value = null;
       dutyForm.week = 1; dutyForm.dateRange = ''; dutyForm.leader = ''; dutyForm.members = '';
       saveData();
     }
@@ -2280,24 +2356,36 @@ createApp({
     // ====== 学业预警 ======
     const warningRecords = ref([]);
     const showAddWarning = ref(false);
+    const editingWarning = ref(null);
     const warningForm = reactive({ student: '', type: '单科下滑', detail: '', date: '', followup: '' });
 
     const sortedWarnings = computed(() => {
       return [...warningRecords.value].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
     });
 
+    function editWarning(w) {
+      editingWarning.value = w;
+      warningForm.date = w.date; warningForm.student = w.student; warningForm.type = w.type;
+      warningForm.detail = w.detail; warningForm.followup = w.followup || '';
+      showAddWarning.value = true;
+    }
+
     function addWarning() {
       if (!warningForm.student.trim() || !warningForm.detail.trim() || !warningForm.date) return;
-      warningRecords.value.unshift({
-        id: Date.now(),
-        student: warningForm.student.trim(),
-        type: warningForm.type,
-        detail: warningForm.detail.trim(),
-        date: warningForm.date,
-        followup: warningForm.followup || '',
-        communicated: false
-      });
+      if (editingWarning.value) {
+        Object.assign(editingWarning.value, {
+          date: warningForm.date, student: warningForm.student.trim(), type: warningForm.type,
+          detail: warningForm.detail.trim(), followup: warningForm.followup || ''
+        });
+      } else {
+        warningRecords.value.unshift({
+          id: Date.now(),
+          date: warningForm.date, student: warningForm.student.trim(), type: warningForm.type,
+          detail: warningForm.detail.trim(), followup: warningForm.followup || '', communicated: false
+        });
+      }
       showAddWarning.value = false;
+      editingWarning.value = null;
       warningForm.student = ''; warningForm.type = '单科下滑'; warningForm.detail = ''; warningForm.date = ''; warningForm.followup = '';
       saveData();
     }
@@ -2317,24 +2405,36 @@ createApp({
     // ====== 任课老师沟通 ======
     const teacherCommRecords = ref([]);
     const showAddComm = ref(false);
+    const editingComm = ref(null);
     const commForm = reactive({ date: '', teacher: '', method: '面谈', feedback: '', followup: '' });
 
     const sortedComms = computed(() => {
       return [...teacherCommRecords.value].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
     });
 
+    function editComm(c) {
+      editingComm.value = c;
+      commForm.date = c.date; commForm.teacher = c.teacher; commForm.method = c.method;
+      commForm.feedback = c.feedback; commForm.followup = c.followup || '';
+      showAddComm.value = true;
+    }
+
     function addComm() {
       if (!commForm.teacher.trim() || !commForm.feedback.trim() || !commForm.date) return;
-      teacherCommRecords.value.unshift({
-        id: Date.now(),
-        date: commForm.date,
-        teacher: commForm.teacher.trim(),
-        method: commForm.method,
-        feedback: commForm.feedback.trim(),
-        followup: commForm.followup || '',
-        resolved: false
-      });
+      if (editingComm.value) {
+        Object.assign(editingComm.value, {
+          date: commForm.date, teacher: commForm.teacher.trim(), method: commForm.method,
+          feedback: commForm.feedback.trim(), followup: commForm.followup || ''
+        });
+      } else {
+        teacherCommRecords.value.unshift({
+          id: Date.now(),
+          date: commForm.date, teacher: commForm.teacher.trim(), method: commForm.method,
+          feedback: commForm.feedback.trim(), followup: commForm.followup || '', resolved: false
+        });
+      }
       showAddComm.value = false;
+      editingComm.value = null;
       commForm.date = ''; commForm.teacher = ''; commForm.method = '面谈'; commForm.feedback = ''; commForm.followup = '';
       saveData();
     }
@@ -2703,21 +2803,21 @@ createApp({
       // Homework
       homework, showAddHomework, hwForm, hwFilter, hwFilters, filteredHomework, getPendingHomework, addHomework, markHomeworkDone, deleteHomework,
       // 主题班会
-      meetingRecords, showAddMeeting, meetingForm, sortedMeetings, addMeeting, deleteMeeting,
+      meetingRecords, showAddMeeting, editingMeeting, meetingForm, sortedMeetings, addMeeting, editMeeting, deleteMeeting,
       // 离班记录
-      leaveRecords, showAddLeave, leaveForm, sortedLeaves, addLeave, markReturned, deleteLeave,
+      leaveRecords, showAddLeave, editingLeave, leaveForm, sortedLeaves, addLeave, editLeave, markReturned, deleteLeave,
       // 通知回执
-      noticeRecords, showAddNotice, noticeForm, sortedNotices, addNotice, markCollected, deleteNotice,
+      noticeRecords, showAddNotice, editingNotice, noticeForm, sortedNotices, addNotice, editNotice, markCollected, deleteNotice,
       // 班规执行
-      ruleRecords, showAddRule, ruleForm, sortedRules, addRule, deleteRule,
+      ruleRecords, showAddRule, editingRule, ruleForm, sortedRules, addRule, editRule, deleteRule,
       // 荣誉榜
-      honorRecords, showAddHonor, honorForm, sortedHonors, addHonor, deleteHonor,
+      honorRecords, showAddHonor, editingHonor, honorForm, sortedHonors, addHonor, editHonor, deleteHonor,
       // 值日排程
-      dutyRecords, showAddDuty, dutyForm, sortedDuties, addDuty, markDutyDone, deleteDuty,
+      dutyRecords, showAddDuty, editingDuty, dutyForm, sortedDuties, addDuty, editDuty, markDutyDone, deleteDuty,
       // 学业预警
-      warningRecords, showAddWarning, warningForm, sortedWarnings, addWarning, markWarningCommunicated, deleteWarning,
+      warningRecords, showAddWarning, editingWarning, warningForm, sortedWarnings, addWarning, editWarning, markWarningCommunicated, deleteWarning,
       // 任课老师沟通
-      teacherCommRecords, showAddComm, commForm, sortedComms, addComm, markResolved, deleteComm,
+      teacherCommRecords, showAddComm, editingComm, commForm, sortedComms, addComm, editComm, markResolved, deleteComm,
       // Profile
       showEditProfile, teacherName, teacherInfo,
       exportData, importData, resetData,
