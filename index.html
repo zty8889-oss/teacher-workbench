@@ -462,6 +462,7 @@ textarea.input { resize: vertical; min-height: 60px; }
       <div v-show="classMgmtTab==='students'">
         <div class="page-actions">
           <input v-model="studentSearch" class="input" style="flex:1" placeholder="🔍 搜索学生姓名...">
+          <button class="btn-small" @click="showWordImport=true; wordImportType='students'">📥 导入</button>
           <button class="btn-small" @click="showAddStudent=true">+ 添加</button>
         </div>
         <div class="student-count" style="margin-bottom:8px">共 {{ filteredStudents.length }} 名学生</div>
@@ -477,7 +478,10 @@ textarea.input { resize: vertical; min-height: 60px; }
               <span v-if="s.phone">&nbsp;{{ s.phone }}</span>
             </div>
           </div>
-          <div class="student-arrow">›</div>
+          <div style="display:flex;gap:4px;align-items:center">
+            <span style="font-size:14px;color:var(--primary);cursor:pointer;padding:4px" @click.stop="editStudent(s)">✏️</span>
+            <span class="student-arrow">›</span>
+          </div>
         </div>
       </div>
 
@@ -869,8 +873,8 @@ textarea.input { resize: vertical; min-height: 60px; }
           <p style="font-size:13px; color:var(--text-secondary); margin-bottom:10px">选择 Excel 文件（.xlsx / .xls），系统自动读取第一个工作表中的表格数据。</p>
 
           <div style="display:flex; gap:8px; margin-bottom:14px; font-size:12px">
-            <a href="学生信息导入模板.xlsx" download style="flex:1; text-align:center; padding:8px; border:1.5px dashed var(--primary); border-radius:10px; color:var(--primary); text-decoration:none">👇 下载学生模板</a>
-            <a href="考试成绩导入模板.xlsx" download style="flex:1; text-align:center; padding:8px; border:1.5px dashed var(--primary); border-radius:10px; color:var(--primary); text-decoration:none">👇 下载成绩模板</a>
+            <a v-show="wordImportType==='students'" href="学生信息导入模板.xlsx" download style="flex:1; text-align:center; padding:8px; border:1.5px dashed var(--primary); border-radius:10px; color:var(--primary); text-decoration:none">👇 下载学生模板</a>
+            <a v-show="wordImportType==='exams'" href="考试成绩导入模板.xlsx" download style="flex:1; text-align:center; padding:8px; border:1.5px dashed var(--primary); border-radius:10px; color:var(--primary); text-decoration:none">👇 下载成绩模板</a>
           </div>
 
           <div v-if="!wordFileSelected" style="margin-bottom:14px">
@@ -892,7 +896,7 @@ textarea.input { resize: vertical; min-height: 60px; }
               </div>
             </div>
 
-            <div v-if="wordImportType==='exams'" style="margin-top:14px">
+            <div v-if="wordImportType==='exams'" style="margin-top:8px">
               <div class="form-row">
                 <div class="form-group w-50">
                   <label>考试名称</label>
@@ -929,7 +933,7 @@ textarea.input { resize: vertical; min-height: 60px; }
     <!-- 添加学生弹窗 -->
     <div v-if="showAddStudent" class="modal-overlay" @click.self="showAddStudent=false">
       <div class="modal modal-wide">
-        <div class="modal-header">添加学生</div>
+        <div class="modal-header">{{ selectedStudent?.id ? "✏️ 编辑学生" : "添加学生" }}</div>
         <div class="modal-body">
           <div class="form-row">
             <div class="form-group w-50">
@@ -1893,15 +1897,35 @@ createApp({
       return students.value.filter(s => s.name.toLowerCase().includes(q) || s.studentId.toLowerCase().includes(q));
     });
 
+    function editStudent(s) {
+      selectedStudent.value = s;
+      Object.assign(studentForm, {
+        name: s.name, gender: s.gender, studentId: s.studentId || '',
+        parent: s.parent || '', phone: s.phone || '',
+        parent2: s.parent2 || '', phone2: s.phone2 || '',
+        address: s.address || '', accommodation: s.accommodation || '',
+        healthNote: s.healthNote || '', note: s.note || ''
+      });
+      showAddStudent.value = true;
+    }
+
     function addStudent() {
       if (!studentForm.name.trim()) return;
       const colors = ['#4A90D9', '#27ae60', '#e74c3c', '#f39c12', '#9b59b6', '#1abc9c'];
-      students.value.push({
-        id: Date.now(),
-        ...studentForm,
-        avatarColor: colors[students.value.length % colors.length]
-      });
+      // 编辑模式：更新已有学生
+      const existing = students.value.find(s => s.id === selectedStudent.value?.id);
+      if (existing) {
+        Object.assign(existing, { ...studentForm });
+        selectedStudent.value = existing;
+      } else {
+        students.value.push({
+          id: Date.now(),
+          ...studentForm,
+          avatarColor: colors[students.value.length % colors.length]
+        });
+      }
       showAddStudent.value = false;
+      selectedStudent.value = {};
       Object.keys(studentForm).forEach(k => studentForm[k] = '');
       studentForm.gender = '男'; studentForm.accommodation = '';
       saveData();
@@ -2985,7 +3009,7 @@ createApp({
       getClassesByDay, getTodayClasses, todayClasses, saveClass, editClass, deleteClass, resetClassForm,
       // Students
       students, showAddStudent, showStudentDetail, selectedStudent, studentSearch, studentForm,
-      filteredStudents, addStudent, viewStudent, deleteStudent,
+      filteredStudents, addStudent, editStudent, viewStudent, deleteStudent,
       // Student Timeline
       detailTab, showAddRecord, recordForm, getRecordStats, getViolations, getPraises, sortedRecords, addRecord, deleteRecord,
       showAddTalk, talkForm, getTalks, addTalk, deleteTalk, startRecording, isRecording, recordingTime,
