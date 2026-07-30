@@ -553,33 +553,41 @@ textarea.input { resize: vertical; min-height: 60px; }
           </div>
         </div>
 
-        <!-- 班表 -->
+        <!-- 班表（表格视图） -->
         <div v-show="classDailySub==='schedule'">
           <div class="page-actions">
-            <span style="font-size:13px; color:var(--text-secondary)">共 {{ scheduleRecords.length }} 条课程</span>
+            <span style="font-size:13px; color:var(--text-secondary)">点击空格添加课程，点击已有课程编辑</span>
             <button class="btn-small" @click="showAddSchedule=true">+ 添加</button>
           </div>
-          <div style="display:flex;gap:4px;margin-bottom:10px;overflow-x:auto">
+          <!-- 周次选择 -->
+          <div style="display:flex;gap:3px;margin-bottom:10px;overflow-x:auto;padding:2px 0">
             <span v-for="w in [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]" :key="w" 
               :class="['filter-tab', {active: scheduleWeekFilter===w}]" @click="scheduleWeekFilter=w" 
-              style="padding:4px 10px;font-size:11px;flex-shrink:0">{{ w }}周</span>
-            <span :class="['filter-tab', {active: scheduleWeekFilter===0}]" @click="scheduleWeekFilter=0" style="padding:4px 10px;font-size:11px;flex-shrink:0">全部</span>
+              style="padding:3px 8px;font-size:11px;flex-shrink:0;min-width:36px;text-align:center">{{ w }}</span>
           </div>
-          <div v-if="filteredSchedule.length === 0" class="empty-state">暂无课程安排 📅</div>
-          <div v-for="s in filteredSchedule" :key="s.id" class="class-card">
-            <div class="class-time-block">
-              <div class="class-time-start">第{{ s.period }}节</div>
-              <div style="font-size:10px;color:var(--text-secondary)">周{{ s.weekday }}</div>
+          <!-- 课表表格 -->
+          <div style="background:var(--card);border-radius:14px;box-shadow:var(--shadow);overflow:hidden">
+            <!-- 表头 -->
+            <div style="display:grid;grid-template-columns:38px repeat(5,1fr);background:var(--primary-gradient);color:#fff;font-size:11px;font-weight:600">
+              <div style="padding:8px 4px;text-align:center;border-right:1px solid rgba(255,255,255,0.15)">节</div>
+              <div v-for="d in ['一','二','三','四','五']" :key="d" style="padding:8px 2px;text-align:center;border-right:1px solid rgba(255,255,255,0.15)">周{{ d }}</div>
             </div>
-            <div class="class-info">
-              <div style="font-size:14px;font-weight:600">{{ s.name }}</div>
-              <div class="class-detail">{{ s.teacher || '' }}<span v-if="s.location"> · {{ s.location }}</span></div>
-              <div style="font-size:11px;color:var(--text-tertiary)">第{{ s.week }}周</div>
-              <div v-if="s.note" style="font-size:11px;color:var(--text-secondary);margin-top:2px">📌 {{ s.note }}</div>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
-              <span style="cursor:pointer;color:var(--primary);font-size:12px" @click="editSchedule(s)">✏️</span>
-              <span style="cursor:pointer;color:var(--danger);font-size:12px" @click="deleteSchedule(s.id)">删除</span>
+            <!-- 每节课行 -->
+            <div v-for="p in 8" :key="p" style="display:grid;grid-template-columns:38px repeat(5,1fr);border-bottom:1px solid var(--border);font-size:12px">
+              <div style="padding:6px 2px;text-align:center;color:var(--text-secondary);font-weight:600;background:var(--bg);font-size:10px">{{ p }}</div>
+              <div v-for="d in ['一','二','三','四','五']" :key="d" 
+                style="padding:4px;min-height:52px;border-right:1px solid var(--border);cursor:pointer;transition:all .15s"
+                :style="{background: getScheduleCell(scheduleWeekFilter, d, p) ? 'var(--card)' : '#f8f9fc'}"
+                @click="clickScheduleCell(scheduleWeekFilter, d, p)">
+                <!-- 有课程 -->
+                <div v-if="getScheduleCell(scheduleWeekFilter, d, p)" style="height:100%">
+                  <div style="font-size:11px;font-weight:600;color:var(--primary);line-height:1.2">{{ getScheduleCell(scheduleWeekFilter, d, p).name }}</div>
+                  <div style="font-size:9px;color:var(--text-secondary);margin-top:1px">{{ getScheduleCell(scheduleWeekFilter, d, p).teacher || '' }}</div>
+                  <div style="font-size:9px;color:var(--text-tertiary)">{{ getScheduleCell(scheduleWeekFilter, d, p).location || '' }}</div>
+                </div>
+                <!-- 空课程 -->
+                <div v-else style="height:100%;display:flex;align-items:center;justify-content:center;color:var(--text-tertiary);font-size:18px">+</div>
+              </div>
             </div>
           </div>
         </div>
@@ -1290,31 +1298,12 @@ textarea.input { resize: vertical; min-height: 60px; }
       <div class="modal modal-wide">
         <div class="modal-header">{{ editingSchedule ? "✏️ 编辑课程" : "📅 添加课程" }}</div>
         <div class="modal-body">
-          <div class="form-row">
-            <div class="form-group w-50">
-              <label>周次 *</label>
-              <select v-model.number="scheduleForm.week" class="input">
-                <option v-for="w in 20" :key="w" :value="w">第{{ w }}周</option>
-              </select>
-            </div>
-            <div class="form-group w-50">
-              <label>星期几 *</label>
-              <select v-model="scheduleForm.weekday" class="input">
-                <option v-for="(d,i) in ['一','二','三','四','五']" :key="i" :value="d">周{{ d }}</option>
-              </select>
-            </div>
+          <div style="background:#f8f9fc;border-radius:10px;padding:10px;margin-bottom:12px;text-align:center;font-size:13px">
+            第{{ scheduleForm.week }}周 · 周{{ scheduleForm.weekday }} · 第{{ scheduleForm.period }}节
           </div>
-          <div class="form-row">
-            <div class="form-group w-50">
-              <label>节次 *</label>
-              <select v-model.number="scheduleForm.period" class="input">
-                <option v-for="p in 8" :key="p" :value="p">第{{ p }}节</option>
-              </select>
-            </div>
-            <div class="form-group w-50">
-              <label>课程名称 *</label>
-              <input v-model="scheduleForm.name" class="input" placeholder="如：语文、数学">
-            </div>
+          <div class="form-group">
+            <label>课程名称 *</label>
+            <input v-model="scheduleForm.name" class="input" placeholder="如：语文、数学、英语...">
           </div>
           <div class="form-row">
             <div class="form-group w-50">
@@ -1882,9 +1871,9 @@ createApp({
     const classMgmtTab = ref('students');
 
     const dailySubs = [
+      { key: 'schedule', label: '班表', icon: '📅' },
       { key: 'meeting', label: '班会台账', icon: '📋' },
       { key: 'leave', label: '离班记录', icon: '🚶' },
-      { key: 'schedule', label: '班表', icon: '📅' },
       { key: 'notice', label: '通知回执', icon: '📄' },
       { key: 'rule', label: '班规执行', icon: '📏' },
       { key: 'honor', label: '荣誉榜', icon: '🏆' },
@@ -2383,6 +2372,22 @@ createApp({
       }
       return list.sort((a, b) => a.week - b.week || '一二三四五'.indexOf(a.weekday) - '一二三四五'.indexOf(b.weekday) || a.period - b.period);
     });
+
+    function getScheduleCell(week, weekday, period) {
+      return scheduleRecords.value.find(s => s.week === week && s.weekday === weekday && s.period === period) || null;
+    }
+
+    function clickScheduleCell(week, weekday, period) {
+      const existing = getScheduleCell(week, weekday, period);
+      if (existing) {
+        editSchedule(existing);
+      } else {
+        scheduleForm.week = week; scheduleForm.weekday = weekday; scheduleForm.period = period;
+        editingSchedule.value = null;
+        scheduleForm.name = ''; scheduleForm.teacher = ''; scheduleForm.location = ''; scheduleForm.note = '';
+        showAddSchedule.value = true;
+      }
+    }
 
     function editSchedule(s) {
       editingSchedule.value = s;
@@ -3283,7 +3288,7 @@ createApp({
       // 值日排程
       dutyRecords, showAddDuty, editingDuty, dutyForm, sortedDuties, addDuty, editDuty, markDutyDone, deleteDuty,
       // 班表
-      scheduleRecords, showAddSchedule, editingSchedule, scheduleForm, scheduleWeekFilter, filteredSchedule, addSchedule, editSchedule, deleteSchedule,
+      scheduleRecords, showAddSchedule, editingSchedule, scheduleForm, scheduleWeekFilter, filteredSchedule, addSchedule, editSchedule, deleteSchedule, getScheduleCell, clickScheduleCell,
       // 学业预警
       warningRecords, showAddWarning, editingWarning, warningForm, sortedWarnings, addWarning, editWarning, markWarningCommunicated, deleteWarning,
       // 任课老师沟通
