@@ -1488,7 +1488,39 @@ createApp({
     // ====== 全局状态 ======
     const tab = ref('home');
     const hasNotch = ref(false);
-    const welcomeSub = ref('新的一天，加油！💪');
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const formatDate = computed(() => {
+      const d = new Date();
+      const weekdays = ['日','一','二','三','四','五','六'];
+      return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 周${weekdays[d.getDay()]}`;
+    });
+    const countdownDays = computed(() => {
+      const end = new Date('2027-01-30'); // 预设期末日期
+      const now = new Date();
+      const diff = Math.ceil((end - now) / (1000*60*60*24));
+      return diff > 0 ? diff : 0;
+    });
+    const showQuickMenu = ref(false);
+    const showContact = ref(false);
+
+    function getTodayClassCount() {
+      const day = new Date().getDay();
+      const idx = day === 0 ? 6 : day - 1;
+      return classes.value.filter(c => c.day === idx).length;
+    }
+    function getTodayClassList() {
+      const day = new Date().getDay();
+      const idx = day === 0 ? 6 : day - 1;
+      return classes.value.filter(c => c.day === idx).sort((a,b) => a.time.localeCompare(b.time));
+    }
+    function markClassDone(c) {
+      c.done = !c.done;
+      saveData();
+    }
+    function quickToggleTodo(id) {
+      const t = todos.value.find(x => x.id === id);
+      if (t) { t.done = !t.done; saveData(); }
+    }    const welcomeSub = ref('新的一天，加油！💪');
 
     const tabs = [
       { key: 'home', label: '首页', icon: '🏠' },
@@ -2305,7 +2337,7 @@ createApp({
       document.documentElement.setAttribute('data-theme', savedTheme);
     }
 
-    const APP_VERSION = '20260729.9';
+    const APP_VERSION = '20260729.10';
 
     const updating = ref(false);
     function checkUpdate() {
@@ -2549,6 +2581,8 @@ createApp({
 
     return {
       tab, hasNotch, welcomeSub, tabs, currentDate, timeGreeting,
+      todayStr, formatDate, countdownDays, showQuickMenu, showContact,
+      getTodayClassCount, getTodayClassList, markClassDone, quickToggleTodo,
       classSubTabs, classSubTab, detailTabs,
       // Todos
       todos, todoFilter, showAddTodo, newTodo, todoFilters, filteredTodos, toggleTodo, addTodo,
