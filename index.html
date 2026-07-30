@@ -539,6 +539,7 @@ textarea.input { resize: vertical; min-height: 60px; }
                 <span v-if="!r.returned" style="margin-left:8px;font-size:11px;color:var(--primary);cursor:pointer" @click="markReturned(r.id)">标记返回</span>
               </div>
             </div>
+            <span style="cursor:pointer;color:var(--primary);font-size:12px;margin-right:8px" @click="editLeave(r)">✏️</span>
             <span style="cursor:pointer;color:var(--danger);font-size:12px" @click="deleteLeave(r.id)">删除</span>
           </div>
         </div>
@@ -567,6 +568,7 @@ textarea.input { resize: vertical; min-height: 60px; }
             <div v-if="n.unreceived" style="font-size:11px;color:var(--danger)">未交：{{ n.unreceived }}</div>
             <div style="margin-top:8px;display:flex;gap:8px">
               <span style="font-size:11px;color:var(--primary);cursor:pointer" @click="markCollected(n.id)">标记已收齐</span>
+              <span style="font-size:11px;color:var(--danger);cursor:pointer" @click="editNotice(n)">✏️</span>
               <span style="font-size:11px;color:var(--danger);cursor:pointer" @click="deleteNotice(n.id)">删除</span>
             </div>
           </div>
@@ -588,6 +590,7 @@ textarea.input { resize: vertical; min-height: 60px; }
                 </div>
                 <div style="font-size:11px; color:var(--text-secondary);margin-top:2px">{{ r.date }} · {{ r.reason }}</div>
               </div>
+              <span style="cursor:pointer;color:var(--danger);font-size:12px" @click="editRule(r)">✏️</span>
               <span style="cursor:pointer;color:var(--danger);font-size:12px" @click="deleteRule(r.id)">删除</span>
             </div>
             <div v-if="r.action" class="record-body">处理：{{ r.action }}</div>
@@ -609,6 +612,7 @@ textarea.input { resize: vertical; min-height: 60px; }
               <span :class="['honor-level', {school: h.level==='校级'||!h.level, city: h.level==='市级以上'}]">{{ h.level || '校级' }}</span>
               <span v-if="h.students" style="font-size:11px;color:var(--text-secondary);margin-left:6px">参与：{{ h.students }}</span>
             </div>
+            <span style="cursor:pointer;color:var(--danger);font-size:12px" @click="editHonor(h)">✏️</span>
             <span style="cursor:pointer;color:var(--danger);font-size:12px" @click="deleteHonor(h.id)">删除</span>
           </div>
         </div>
@@ -632,6 +636,7 @@ textarea.input { resize: vertical; min-height: 60px; }
               <span v-else style="font-size:11px;color:var(--warning)">⏳ 待检查</span>
               <span style="display:flex;gap:8px">
                 <span v-if="!d.done" style="font-size:11px;color:var(--primary);cursor:pointer" @click="markDutyDone(d.id)">标记完成</span>
+                <span style="font-size:11px;color:var(--danger);cursor:pointer" @click="editDuty(d)">✏️</span>
                 <span style="font-size:11px;color:var(--danger);cursor:pointer" @click="deleteDuty(d.id)">删除</span>
               </span>
             </div>
@@ -713,6 +718,7 @@ textarea.input { resize: vertical; min-height: 60px; }
             </div>
             <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
               <span v-if="!w.communicated" style="font-size:11px;color:var(--primary);cursor:pointer" @click="markWarningCommunicated(w.id)">标记沟通</span>
+              <span style="font-size:11px;color:var(--danger);cursor:pointer" @click="editWarning(w)">✏️</span>
               <span style="font-size:11px;color:var(--danger);cursor:pointer" @click="deleteWarning(w.id)">删除</span>
             </div>
           </div>
@@ -736,6 +742,7 @@ textarea.input { resize: vertical; min-height: 60px; }
             <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
               <span v-if="c.resolved" class="comm-status">✅ 已解决</span>
               <span v-else style="font-size:11px;color:var(--primary);cursor:pointer" @click="markResolved(c.id)">标记已解决</span>
+              <span style="font-size:11px;color:var(--primary);cursor:pointer;margin-right:8px" @click="editComm(c)">✏️</span>
               <span style="font-size:11px;color:var(--danger);cursor:pointer" @click="deleteComm(c.id)">删除</span>
             </div>
           </div>
