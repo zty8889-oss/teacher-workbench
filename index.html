@@ -385,7 +385,89 @@ textarea.input { resize: vertical; min-height: 60px; }
 
       <!-- ===== 班级动态 ===== -->
       <div v-show="classSubTab==='overview'">
-        <p style="text-align:center; padding:40px; color:var(--text-secondary)">📊 班级动态 开发中...</p>
+        <!-- 区块1：今日课表网格 -->
+        <div class="section-card" style="padding:12px; overflow-x:auto">
+          <div class="section-header" style="margin-bottom:8px">
+            <h3 style="font-size:14px">📅 本周课表</h3>
+          </div>
+          <div style="position:relative">
+            <table style="width:100%; border-collapse:collapse; font-size:11px">
+              <thead>
+                <tr>
+                  <th style="padding:6px 4px; background:var(--bg); color:var(--text-secondary); border:1px solid var(--border); text-align:center; min-width:40px">节次</th>
+                  <th v-for="d in weekdays2" :key="d" style="padding:6px 4px; background:var(--bg); color:var(--text-secondary); border:1px solid var(--border); text-align:center" :style="{background: d === todayWeekdayName ? 'var(--primary)' : 'var(--bg)', color: d === todayWeekdayName ? '#fff' : 'var(--text-secondary)'}">{{ d }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="p in 8" :key="p">
+                  <td style="padding:6px 2px; border:1px solid var(--border); text-align:center; font-weight:600; color:var(--text-secondary); background:var(--bg); font-size:10px">{{ p }}</td>
+                  <td v-for="(d,di) in weekdays2" :key="di" style="padding:6px 2px; border:1px solid var(--border); text-align:center; font-size:10px" 
+                    :style="{background: getCellBg(di, p), color: getCellColor(di, p)}">
+                    {{ getCellClass(di, p) }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <!-- 当前上课信息 -->
+          <div v-if="currentClassInfo" style="margin-top:8px; padding:8px 12px; background:var(--primary); color:#fff; border-radius:10px; font-size:12px">
+            🔴 当前上课：第{{ currentClassInfo.period }}节 · {{ currentClassInfo.name }} {{ currentClassInfo.location ? '· '+currentClassInfo.location : '' }}
+          </div>
+        </div>
+
+        <!-- 区块2：今日出勤 -->
+        <div class="section-card" style="padding:14px">
+          <div class="section-header" style="margin-bottom:8px">
+            <h3 style="font-size:14px">📋 今日出勤</h3>
+          </div>
+          <div style="display:flex; gap:12px; margin-bottom:10px; font-size:13px">
+            <span>应到 <strong>{{ students.length }}</strong> 人</span>
+            <span style="color:var(--success)">实到 <strong>{{ students.length - todayAbsentCount }}</strong> 人</span>
+            <span style="color:var(--danger)">缺勤 <strong>{{ todayAbsentCount }}</strong> 人</span>
+          </div>
+          <div v-if="todayAttendanceList.length === 0" style="font-size:12px; color:var(--text-secondary); margin-bottom:8px">今日暂无缺勤记录 ✅</div>
+          <div v-for="a in todayAttendanceList" :key="a.id" style="display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid var(--border); font-size:12px">
+            <span :style="{color: a.type==='请假' ? 'var(--warning)' : 'var(--danger)'}">{{ a.type==='请假' ? '🟡' : '⚠️' }}</span>
+            <span style="font-weight:500">{{ a.student }}</span>
+            <span style="color:var(--text-secondary)">{{ a.type }} · {{ a.desc || '' }}</span>
+            <span style="margin-left:auto">
+              <span v-if="!a.resolved" class="btn-small" style="padding:2px 8px; font-size:10px" @click="resolveAttendance(a.id)">销假</span>
+              <span v-else style="color:var(--success); font-size:10px">✅ 已处理</span>
+            </span>
+          </div>
+          <div style="margin-top:10px">
+            <button class="btn-small" @click="showLeaveReg=true" style="font-size:11px">➕ 请假登记</button>
+          </div>
+        </div>
+
+        <!-- 区块3：教室状态 -->
+        <div class="section-card" style="padding:14px">
+          <div class="section-header" style="margin-bottom:8px">
+            <h3 style="font-size:14px">🏫 教室状态</h3>
+          </div>
+          <div style="font-size:13px; line-height:2">
+            <div>🧹 值日：<span v-if="todayDuty" style="font-weight:600">{{ todayDuty.leader ? '组长：'+todayDuty.leader : '' }} {{ todayDuty.members ? '组员：'+todayDuty.members : '' }}</span><span v-else style="color:var(--text-secondary)">暂无安排</span><span v-if="todayDuty?.done" style="color:var(--success); margin-left:6px">✅</span></div>
+            <div>📺 多媒体：<span style="color:var(--success)">正常 ✅</span></div>
+            <div>📢 今日事务：<span style="color:var(--text-secondary)">{{ todayEvents || '无特殊安排' }}</span></div>
+          </div>
+        </div>
+
+        <!-- 区块4：今日时间线 -->
+        <div class="section-card" style="padding:14px">
+          <div class="section-header" style="margin-bottom:8px">
+            <h3 style="font-size:14px">⏱️ 今日时间线</h3>
+          </div>
+          <div v-if="todayTimeline.length===0" class="empty-state" style="padding:15px">暂无今日事件</div>
+          <div v-for="ev in todayTimeline" :key="ev.id" style="display:flex; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); font-size:12px">
+            <div style="min-width:50px; font-weight:600; color:var(--primary)">{{ ev.time }}</div>
+            <div style="flex:1">
+              <span>{{ ev.icon }} {{ ev.text }}</span>
+              <span :style="{marginLeft:'6px', fontSize:'10px', color: ev.status === 'done' ? 'var(--success)' : ev.status === 'current' ? 'var(--danger)' : 'var(--text-tertiary)'}">
+                {{ ev.status === 'done' ? '✅' : ev.status === 'current' ? '🔴进行中' : '⏳' }}
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- ===== 日常管理 ===== -->
@@ -1002,7 +1084,52 @@ textarea.input { resize: vertical; min-height: 60px; }
       </div>
     </div>
 
-<!-- ====== 图片预览弹窗 ====== -->
+    <!-- ====== 请假登记弹窗 ====== -->
+    <div v-if="showLeaveReg" class="modal-overlay" @click.self="showLeaveReg=false">
+      <div class="modal">
+        <div class="modal-header">➕ 请假登记</div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>学生姓名</label>
+            <select v-model="leaveReg.student" class="input">
+              <option value="">请选择</option>
+              <option v-for="s in students" :key="s.id" :value="s.name">{{ s.name }}</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>类型</label>
+              <select v-model="leaveReg.type" class="input">
+                <option value="病假">病假</option><option value="事假">事假</option><option value="公假">公假</option>
+              </select>
+            </div>
+            <div class="form-group w-50">
+              <label>请假时间</label>
+              <input v-model="leaveReg.time" type="datetime-local" class="input">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>预计返校时间</label>
+            <input v-model="leaveReg.returnTime" type="datetime-local" class="input">
+          </div>
+          <div class="form-group">
+            <label>家长确认</label>
+            <select v-model="leaveReg.parentConfirm" class="input">
+              <option value="已确认">已确认</option><option value="未确认">未确认</option><option value="待联系">待联系</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>备注</label>
+            <textarea v-model="leaveReg.note" class="input" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showLeaveReg=false">取消</button>
+          <button class="btn-primary" @click="saveLeaveReg">保存</button>
+        </div>
+      </div>
+    </div>
+    <!-- ====== 图片预览弹窗 ====== -->
     <div v-if="showPhotoPreview" class="modal-overlay" @click.self="showPhotoPreview=false">
       <div class="modal" style="max-width:90vw">
         <div class="modal-body" style="text-align:center; padding:20px">
@@ -2010,6 +2137,7 @@ createApp({
           teacherComms: teacherComms.value,
           plans: plans.value,
           hwPools: hwPools.value,
+          attendances: attendances.value,
           teacherInfo: teacherInfo,
           teacherName: teacherName.value
         }));
@@ -2273,6 +2401,174 @@ createApp({
     const showTeacherCommForm = ref(false);
     const editingTeacherComm = ref(null);
     const teacherCommForm = reactive({ date: '', teacher: '', method: '面谈', feedback: '', follow: '', done: false });
+
+    // 班级动态数据
+    const weekdays2 = ['周一','周二','周三','周四','周五'];
+    const todayWeekdayName = weekdays2[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1];
+    const showLeaveReg = ref(false);
+    const leaveReg = reactive({ student: '', type: '病假', time: '', returnTime: '', parentConfirm: '已确认', note: '' });
+
+    // 考勤数据（手动录入的请假/缺勤）
+    const attendances = ref([]);
+
+    // 今日缺勤统计
+    const todayAbsentCount = computed(() => {
+      const today = new Date().toISOString().slice(0, 10);
+      return attendances.value.filter(a => a.date === today && !a.resolved).length;
+    });
+    const todayAttendanceList = computed(() => {
+      const today = new Date().toISOString().slice(0, 10);
+      return attendances.value.filter(a => a.date === today).sort((a, b) => a.time?.localeCompare(b.time || '') || 0);
+    });
+
+    // 课表网格函数
+    function getCellClass(dayIdx, period) {
+      const c = classes.value.find(cl => cl.day === dayIdx && parseInt(cl.time?.split(':')[0] || '0') + 1 === period);
+      return c ? c.name : '';
+    }
+    function getCellBg(dayIdx, period) {
+      const c = classes.value.find(cl => cl.day === dayIdx && parseInt(cl.time?.split(':')[0] || '0') + 1 === period);
+      if (!c) return 'transparent';
+      // 当前节次高亮
+      const now = new Date();
+      const day = now.getDay() === 0 ? 6 : now.getDay() - 1;
+      const hour = now.getHours();
+      if (dayIdx === day && hour >= 7 && hour <= 17) {
+        const currentPeriod = Math.max(1, Math.min(8, hour - 6));
+        if (period === currentPeriod) return 'rgba(91,127,255,0.15)';
+      }
+      return c.color ? (classColors[c.color] || '#f0f5ff') : '#f0f5ff';
+    }
+    function getCellColor(dayIdx, period) {
+      const c = classes.value.find(cl => cl.day === dayIdx && parseInt(cl.time?.split(':')[0] || '0') + 1 === period);
+      return c ? 'var(--text)' : 'var(--text-tertiary)';
+    }
+
+    // 当前上课信息
+    const currentClassInfo = computed(() => {
+      const now = new Date();
+      const day = now.getDay() === 0 ? 6 : now.getDay() - 1;
+      const hour = now.getHours();
+      const min = now.getMinutes();
+      // 粗略判断节次 (8:00-8:45第1节, 9:00-9:45第2节...)
+      const periodMap = [
+        { start: 7*60+30, end: 8*60+15, period: 1 },
+        { start: 8*60+25, end: 9*60+10, period: 2 },
+        { start: 9*60+20, end: 10*60+5, period: 3 },
+        { start: 10*60+15, end: 11*60+0, period: 4 },
+        { start: 11*60+10, end: 11*60+55, period: 5 },
+        { start: 14*60+0, end: 14*60+45, period: 6 },
+        { start: 14*60+55, end: 15*60+40, period: 7 },
+        { start: 15*60+50, end: 16*60+35, period: 8 },
+      ];
+      const nowMin = hour * 60 + min;
+      let currentPeriod = 0;
+      for (const p of periodMap) {
+        if (nowMin >= p.start && nowMin <= p.end) { currentPeriod = p.period; break; }
+      }
+      if (!currentPeriod) return null;
+      const c = classes.value.find(cl => cl.day === day && parseInt(cl.time?.split(':')[0] || '0') + 1 === currentPeriod);
+      return c ? { period: currentPeriod, ...c } : null;
+    });
+
+    // 今日值日
+    const todayDuty = computed(() => {
+      const now = new Date();
+      const thisWeek = Math.ceil((now - new Date(now.getFullYear(), 0, 1)) / (7 * 86400000));
+      return duties.value.find(d => parseInt(d.week) === thisWeek);
+    });
+
+    // 今日事务（可手动设置）
+    const todayEvents = ref('');
+
+    // 今日时间线
+    const todayTimeline = computed(() => {
+      const today = new Date().toISOString().slice(0, 10);
+      const events = [];
+
+      // 按课程表生成
+      const day = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
+      const todayCls = classes.value.filter(c => c.day === day).sort((a, b) => a.time.localeCompare(b.time));
+      const now = new Date();
+      const nowMin = now.getHours() * 60 + now.getMinutes();
+
+      for (const c of todayCls) {
+        const [h, m] = (c.time || '08:00').split(':').map(Number);
+        const timeMin = h * 60 + m;
+        const timeStr = c.time.substring(0, 5);
+        events.push({
+          id: 'c_' + c.id,
+          time: timeStr,
+          icon: '📚',
+          text: `${c.name} ${c.grade || ''}`,
+          status: c.done ? 'done' : (nowMin >= timeMin && nowMin < timeMin + 45 ? 'current' : 'pending')
+        });
+      }
+
+      // 今日考勤
+      const todayAtt = attendances.value.filter(a => a.date === today);
+      for (const a of todayAtt) {
+        events.push({
+          id: 'a_' + a.id,
+          time: a.time ? a.time.substring(11, 16) : '07:30',
+          icon: a.type === '请假' ? '🟡' : '⚠️',
+          text: `${a.student} ${a.type}${a.desc ? '（'+a.desc+'）' : ''}`,
+          status: a.resolved ? 'done' : 'pending'
+        });
+      }
+
+      // 今日违纪
+      const todayVios = violations.value.filter(v => v.date === today);
+      for (const v of todayVios) {
+        events.push({
+          id: 'v_' + v.id,
+          time: '08:05',
+          icon: '⚠️',
+          text: `${v.student} ${v.vioType}`,
+          status: 'pending'
+        });
+      }
+
+      // 排序
+      events.sort((a, b) => a.time.localeCompare(b.time));
+      return events;
+    });
+
+    // 请假登记
+    function saveLeaveReg() {
+      if (!leaveReg.student) { alert('请选择学生'); return; }
+      const now = new Date();
+      const today = now.toISOString().slice(0, 10);
+      attendances.value.unshift({
+        id: Date.now(),
+        date: today,
+        student: leaveReg.student,
+        type: leaveReg.type,
+        time: leaveReg.time || now.toISOString(),
+        returnTime: leaveReg.returnTime || '',
+        parentConfirm: leaveReg.parentConfirm,
+        desc: leaveReg.note || leaveReg.type,
+        resolved: false,
+        note: leaveReg.note
+      });
+      // 也记录到违纪/异常
+      violations.value.unshift({
+        id: Date.now() + 1,
+        date: today,
+        student: leaveReg.student,
+        vioType: '请假',
+        desc: leaveReg.type + (leaveReg.note ? '：'+leaveReg.note : ''),
+        action: '家长' + (leaveReg.parentConfirm === '已确认' ? '已确认' : '未确认')
+      });
+      showLeaveReg.value = false;
+      resetLeaveReg();
+      saveData();
+    }
+    function resetLeaveReg() { leaveReg.student=''; leaveReg.type='病假'; leaveReg.time=''; leaveReg.returnTime=''; leaveReg.parentConfirm='已确认'; leaveReg.note=''; }
+    function resolveAttendance(id) {
+      const a = attendances.value.find(x => x.id === id);
+      if (a) { a.resolved = true; saveData(); }
+    }
 
     // 图片预览
     const showPhotoPreview = ref(false);
@@ -2835,7 +3131,7 @@ createApp({
       document.documentElement.setAttribute('data-theme', savedTheme);
     }
 
-    const APP_VERSION = '20260729.12';
+    const APP_VERSION = '20260729.13';
 
     const updating = ref(false);
     function checkUpdate() {
@@ -3072,6 +3368,7 @@ createApp({
       if (data.teacherComms) teacherComms.value = data.teacherComms;
       if (data.plans) plans.value = data.plans;
       if (data.hwPools) hwPools.value = data.hwPools;
+      if (data.attendances) attendances.value = data.attendances;
       if (data.teacherInfo) Object.assign(teacherInfo, data.teacherInfo);
       if (data.teacherName) teacherName.value = data.teacherName;
     }
@@ -3132,6 +3429,10 @@ createApp({
       stuVioSearch, filteredStuViolations, stuPraiseSearch, filteredStuPraises,
       showPhotoPreview, previewPhotoUrl, previewPhoto, addPhotos,
       classSubTab, classSubTabs, teachSubTab, teachSubTabs,
+      weekdays2, todayWeekdayName, getCellClass, getCellBg, getCellColor,
+      currentClassInfo, todayTimeline, todayDuty, todayEvents,
+      attendances, todayAbsentCount, todayAttendanceList,
+      showLeaveReg, leaveReg, saveLeaveReg, resetLeaveReg, resolveAttendance,
       dailySubTab, dailySubTabs, studentSubTab, studentSubTabs, studySubTab, studySubTabs,
       switchTab,
       // Reset
