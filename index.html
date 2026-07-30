@@ -937,36 +937,54 @@ textarea.input { resize: vertical; min-height: 60px; }
               <input v-model="studentForm.name" class="input" placeholder="学生姓名">
             </div>
             <div class="form-group w-50">
-              <label>学号</label>
-              <input v-model="studentForm.studentId" class="input" placeholder="学号">
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group w-50">
               <label>性别</label>
               <select v-model="studentForm.gender" class="input">
                 <option value="男">男</option>
                 <option value="女">女</option>
               </select>
             </div>
+          </div>
+          <div class="form-row">
             <div class="form-group w-50">
-              <label>家长</label>
-              <input v-model="studentForm.parent" class="input" placeholder="家长姓名">
+              <label>学号</label>
+              <input v-model="studentForm.studentId" class="input" placeholder="学号">
+            </div>
+            <div class="form-group w-50">
+              <label>住宿情况</label>
+              <select v-model="studentForm.accommodation" class="input">
+                <option value="">请选择</option>
+                <option value="住校">住校</option>
+                <option value="走读">走读</option>
+              </select>
             </div>
           </div>
           <div class="form-row">
             <div class="form-group w-50">
-              <label>家长电话</label>
-              <input v-model="studentForm.phone" class="input" placeholder="手机号" type="tel">
+              <label>家长1姓名</label>
+              <input v-model="studentForm.parent" class="input" placeholder="家长姓名">
             </div>
             <div class="form-group w-50">
-              <label>住址</label>
-              <input v-model="studentForm.address" class="input" placeholder="家庭住址">
+              <label>家长1电话</label>
+              <input v-model="studentForm.phone" class="input" placeholder="11位手机号" type="tel">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>家长2姓名</label>
+              <input v-model="studentForm.parent2" class="input" placeholder="家长姓名">
+            </div>
+            <div class="form-group w-50">
+              <label>家长2电话</label>
+              <input v-model="studentForm.phone2" class="input" placeholder="备用号码" type="tel">
             </div>
           </div>
           <div class="form-group">
-            <label>备注</label>
-            <textarea v-model="studentForm.note" class="input" placeholder="备注信息" rows="2"></textarea>
+            <label>家庭住址</label>
+            <input v-model="studentForm.address" class="input" placeholder="家庭住址（走读生建议填写）">
+          </div>
+          <div class="form-group">
+            <label>特殊体质/病史</label>
+            <input v-model="studentForm.healthNote" class="input" placeholder="如：哮喘、过敏史">
           </div>
         </div>
         <div class="modal-footer">
@@ -1715,10 +1733,9 @@ createApp({
 
 
     const detailTabs = [
-      { key: 'info', label: '📋 基础信息' },
       { key: 'violation', label: '⚠️ 违纪' },
       { key: 'praise', label: '🌟 表扬' },
-      { key: 'talk', label: '💬 谈话' },
+      { key: 'talk', label: '💬 谈心' },
     ];
 
     const currentDate = computed(() => {
