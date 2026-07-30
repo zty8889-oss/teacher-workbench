@@ -357,6 +357,15 @@ textarea.input { resize: vertical; min-height: 60px; }
 .offclass-dest { font-size: 11px; padding: 1px 8px; border-radius: 8px; background: #F0F5FF; color: var(--primary); display: inline-block; margin: 2px 0; }
 .offclass-note { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
 .offclass-returned { font-size: 11px; color: var(--success); font-weight: 500; }
+
+/* ===== 左侧边栏布局 ===== */
+.left-sidebar-layout { display: flex; gap: 8px; min-height: 240px; }
+.left-sidebar { width: 64px; display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
+.left-sidebar-item { width: 64px; height: 64px; border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: var(--text-secondary); cursor: pointer; transition: all .2s; background: var(--card); border: 1px solid var(--border); gap: 2px; }
+.left-sidebar-item:active { transform: scale(.92); }
+.left-sidebar-item .sidebar-icon { font-size: 22px; line-height: 1; }
+.left-sidebar-item.active { background: var(--primary-gradient); color: #fff; border-color: transparent; box-shadow: 0 2px 10px rgba(91,127,255,0.2); }
+.left-sidebar-content { flex: 1; min-width: 0; overflow: hidden; }
 </style>
 </head>
 <body>
@@ -474,10 +483,14 @@ textarea.input { resize: vertical; min-height: 60px; }
 
       <!-- ========== 日常管理 ========== -->
       <div v-show="classMgmtTab==='daily'">
-        <div class="daily-sub-tabs">
-          <div v-for="ds in dailySubs" :key="ds.key" :class="['daily-sub-tab', {active: classDailySub===ds.key}]" @click="classDailySub=ds.key">{{ ds.icon }} {{ ds.label }}</div>
-        </div>
-
+        <div class="left-sidebar-layout">
+          <div class="left-sidebar">
+            <div v-for="ds in dailySubs" :key="ds.key" :class="['left-sidebar-item', {active: classDailySub===ds.key}]" @click="classDailySub=ds.key">
+              <span class="sidebar-icon">{{ ds.icon }}</span>
+              {{ ds.label }}
+            </div>
+          </div>
+          <div class="left-sidebar-content">
         <!-- 主题班会台账 -->
         <div v-show="classDailySub==='meeting'">
           <div class="page-actions">
@@ -622,15 +635,20 @@ textarea.input { resize: vertical; min-height: 60px; }
               </span>
             </div>
           </div>
+          </div>
         </div>
       </div>
 
       <!-- ========== 学业关怀 ========== -->
       <div v-show="classMgmtTab==='grades'">
-        <div class="daily-sub-tabs">
-          <div v-for="gs in gradeSubs" :key="gs.key" :class="['daily-sub-tab', {active: classGradeSub===gs.key}]" @click="classGradeSub=gs.key">{{ gs.icon }} {{ gs.label }}</div>
-        </div>
-
+        <div class="left-sidebar-layout">
+          <div class="left-sidebar">
+            <div v-for="gs in gradeSubs" :key="gs.key" :class="['left-sidebar-item', {active: classGradeSub===gs.key}]" @click="classGradeSub=gs.key">
+              <span class="sidebar-icon">{{ gs.icon }}</span>
+              {{ gs.label }}
+            </div>
+          </div>
+          <div class="left-sidebar-content">
         <!-- 班级成绩总览 -->
         <div v-show="classGradeSub==='overview'">
           <div class="page-actions">
@@ -718,6 +736,8 @@ textarea.input { resize: vertical; min-height: 60px; }
               <span v-else style="font-size:11px;color:var(--primary);cursor:pointer" @click="markResolved(c.id)">标记已解决</span>
               <span style="font-size:11px;color:var(--danger);cursor:pointer" @click="deleteComm(c.id)">删除</span>
             </div>
+          </div>
+          </div>
           </div>
         </div>
       </div>
