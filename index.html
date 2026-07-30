@@ -2546,7 +2546,14 @@ createApp({
 
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+        // 自动检测浏览器支持的音频格式
+        const types = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4', ''];
+        let mimeType = '';
+        for (const t of types) {
+          if (MediaRecorder.isTypeSupported(t)) { mimeType = t; break; }
+        }
+        const options = mimeType ? { mimeType } : {};
+        mediaRecorder = new MediaRecorder(stream, options);
         audioChunks = [];
         recordingTime.value = 0;
 
@@ -2555,7 +2562,7 @@ createApp({
         };
 
         mediaRecorder.onstop = () => {
-          const blob = new Blob(audioChunks, { type: 'audio/webm' });
+          const blob = new Blob(audioChunks, { type: mimeType || 'audio/webm' });
           const reader = new FileReader();
           reader.onload = () => {
             talkForm.audioUrl = reader.result;
@@ -2564,7 +2571,7 @@ createApp({
           stream.getTracks().forEach(t => t.stop());
         };
 
-        mediaRecorder.start();
+        mediaRecorder.start(100); // 每100ms收集一次数据，防止录制空白
         isRecording.value = true;
         recordTimer = setInterval(() => { recordingTime.value++; }, 1000);
       } catch(e) {
