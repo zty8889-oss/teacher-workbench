@@ -509,14 +509,14 @@ textarea.input { resize: vertical; min-height: 60px; }
                 <div style="font-size:11px; color:var(--text-secondary);margin-top:2px">
                   <span class="record-tag">{{ m.type }}</span>
                   <span>{{ m.date }}</span>
-                  <span v-if="m.absent"> · 缺勤{{ m.absent }}人</span>
+
                 </div>
               </div>
               <span style="cursor:pointer;color:var(--primary);font-size:12px;margin-right:10px" @click="editMeeting(m)">✏️</span>
               <span style="cursor:pointer;color:var(--danger);font-size:12px" @click="deleteMeeting(m.id)">删除</span>
             </div>
             <div v-if="m.summary" class="record-body">{{ m.summary }}</div>
-            <div v-if="m.absentList" style="font-size:11px;color:var(--warning)">缺勤：{{ m.absentList }}</div>
+
             <div v-if="m.archived" style="font-size:11px;color:var(--success);margin-top:4px">✅ 已归档</div>
             <div v-if="m.photos && m.photos.length" class="record-photos">
               <div v-for="(p, pi) in m.photos" :key="pi" style="display:inline-block">
@@ -1340,13 +1340,12 @@ textarea.input { resize: vertical; min-height: 60px; }
             <div class="form-group w-50">
               <label>主题类型 *</label>
               <select v-model="meetingForm.type" class="input">
-                <option value="防溺水">防溺水</option>
-                <option value="防诈骗">防诈骗</option>
-                <option value="防欺凌">防欺凌</option>
-                <option value="消防安全">消防安全</option>
+                <option value="安全教育">安全教育</option>
+                <option value="学习激励">学习激励</option>
+                <option value="纪律规范">纪律规范</option>
                 <option value="心理健康">心理健康</option>
-                <option value="考前动员">考前动员</option>
-                <option value="其他">其他</option>
+                <option value="职业规划">职业规划</option>
+                <option value="主题活动">主题活动</option>
               </select>
             </div>
           </div>
@@ -1354,16 +1353,7 @@ textarea.input { resize: vertical; min-height: 60px; }
             <label>具体主题 *</label>
             <input v-model="meetingForm.topic" class="input" placeholder="如：珍爱生命 预防溺水">
           </div>
-          <div class="form-row">
-            <div class="form-group w-50">
-              <label>缺勤人数</label>
-              <input v-model.number="meetingForm.absent" type="number" class="input" min="0">
-            </div>
-            <div class="form-group w-50">
-              <label>缺勤名单</label>
-              <input v-model="meetingForm.absentList" class="input" placeholder="用逗号隔开">
-            </div>
-          </div>
+
           <div class="form-group">
             <label>班会内容摘要</label>
             <textarea v-model="meetingForm.summary" class="input" rows="3" placeholder="简要记录班会内容、学生反应等"></textarea>
@@ -2455,7 +2445,7 @@ createApp({
     const meetingRecords = ref([]);
     const showAddMeeting = ref(false);
     const editingMeeting = ref(null);
-    const meetingForm = reactive({ date: '', type: '防溺水', topic: '', absent: 0, absentList: '', summary: '', archived: false, photos: [] });
+    const meetingForm = reactive({ date: '', type: '安全教育', topic: '', summary: '', archived: false, photos: [] });
 
     const sortedMeetings = computed(() => {
       return [...meetingRecords.value].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
@@ -2464,7 +2454,6 @@ createApp({
     function editMeeting(m) {
       editingMeeting.value = m;
       meetingForm.date = m.date; meetingForm.type = m.type; meetingForm.topic = m.topic;
-      meetingForm.absent = m.absent; meetingForm.absentList = m.absentList || '';
       meetingForm.summary = m.summary || ''; meetingForm.archived = m.archived;
       meetingForm.photos = m.photos ? [...m.photos] : [];
       showAddMeeting.value = true;
@@ -2475,7 +2464,6 @@ createApp({
       if (editingMeeting.value) {
         Object.assign(editingMeeting.value, {
           date: meetingForm.date, type: meetingForm.type, topic: meetingForm.topic.trim(),
-          absent: meetingForm.absent || 0, absentList: meetingForm.absentList || '',
           summary: meetingForm.summary || '', archived: meetingForm.archived,
           photos: meetingForm.photos ? [...meetingForm.photos] : []
         });
@@ -2483,14 +2471,13 @@ createApp({
         meetingRecords.value.unshift({
           id: Date.now(),
           date: meetingForm.date, type: meetingForm.type, topic: meetingForm.topic.trim(),
-          absent: meetingForm.absent || 0, absentList: meetingForm.absentList || '',
           summary: meetingForm.summary || '', archived: meetingForm.archived,
           photos: meetingForm.photos ? [...meetingForm.photos] : []
         });
       }
       showAddMeeting.value = false;
       editingMeeting.value = null;
-      meetingForm.date = ''; meetingForm.type = '防溺水'; meetingForm.topic = ''; meetingForm.absent = 0; meetingForm.absentList = ''; meetingForm.summary = ''; meetingForm.archived = false; meetingForm.photos = [];
+      meetingForm.date = ''; meetingForm.type = '安全教育'; meetingForm.topic = ''; meetingForm.summary = ''; meetingForm.archived = false; meetingForm.photos = [];
       saveData();
     }
 
