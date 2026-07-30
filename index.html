@@ -458,7 +458,7 @@ textarea.input { resize: vertical; min-height: 60px; }
         </div>
       </div>
 
-      <!-- ========== 学生管理 ========== -->
+      <!-- ========== 学生档案 ========== -->
       <div v-show="classMgmtTab==='students'">
         <div class="page-actions">
           <input v-model="studentSearch" class="input" style="flex:1" placeholder="🔍 搜索学生姓名...">
@@ -1061,30 +1061,52 @@ textarea.input { resize: vertical; min-height: 60px; }
               </div>
             </div>
             <div class="detail-grid">
+              <div class="detail-item"><label>姓名</label><span>{{ selectedStudent.name || '—' }}</span></div>
+              <div class="detail-item"><label>性别</label><span>{{ selectedStudent.gender || '—' }}</span></div>
+              <div class="detail-item"><label>学号</label><span>{{ selectedStudent.studentId || '—' }}</span></div>
+              <div class="detail-item"><label>住宿情况</label><span>{{ selectedStudent.accommodation || '—' }}</span></div>
               <div class="detail-item"><label>家长电话1</label><span>{{ selectedStudent.phone || '—' }}</span></div>
               <div class="detail-item"><label>家长电话2</label><span>{{ selectedStudent.phone2 || '—' }}</span></div>
               <div class="detail-item"><label>家庭住址</label><span>{{ selectedStudent.address || '—' }}</span></div>
-              <div class="detail-item"><label>住宿情况</label><span>{{ selectedStudent.accommodation || '—' }}</span></div>
               <div class="detail-item full"><label>特殊体质/病史</label><span>{{ selectedStudent.healthNote || '无' }}</span></div>
             </div>
           </div>
 
           <!-- 标签：信息/成长记录 -->
           <div class="filter-tabs" style="margin-bottom:10px">
-            <div v-for="dt in detailTabs" :key="dt.key" :class="['filter-tab', {active: detailTab===dt.key}]" @click="detailTab=dt.key" v-show="dt.key!=='grades' && dt.key!=='info'">{{ dt.label }}</div>
+            <div v-for="dt in detailTabs" :key="dt.key" :class="['filter-tab', {active: detailTab===dt.key}]" @click="detailTab=dt.key">{{ dt.label }}</div>
           </div>
 
-          <!-- 成长记录 -->
-          <div v-show="detailTab==='records'">
+          <!-- 违纪记录 -->
+          <div v-show="detailTab==='violation'">
             <div class="page-actions" style="margin-bottom:8px">
-              <span style="font-size:12px;color:var(--text-secondary)">表扬 {{ getRecordStats(selectedStudent).good }} · 违纪 {{ getRecordStats(selectedStudent).bad }}</span>
-              <button class="btn-small" @click="showAddRecord=true">+ 记录</button>
+              <span style="font-size:12px;color:var(--text-secondary)">共 {{ getViolations(selectedStudent).length }} 条违纪</span>
+              <button class="btn-small" @click="showAddRecord=true; recordForm.type='criticism'">+ 违纪</button>
             </div>
-            <div v-if="!selectedStudent.records || selectedStudent.records.length === 0" style="text-align:center;padding:20px;color:var(--text-secondary)">暂无成长记录</div>
-            <div v-for="r in sortedRecords" :key="r.id" class="record-card" :class="{praise: r.type==='praise', danger: r.type==='criticism'}">
+            <div v-if="getViolations(selectedStudent).length === 0" style="text-align:center;padding:20px;color:var(--text-secondary)">暂无违纪记录 ✅</div>
+            <div v-for="r in getViolations(selectedStudent)" :key="r.id" class="record-card danger">
               <div class="record-header">
                 <div>
-                  <div class="record-title">{{ r.type==='praise' ? '🌟 表扬' : '⚠️ 违纪' }}</div>
+                  <div class="record-title">⚠️ {{ r.subType || '违纪' }}</div>
+                  <div style="font-size:11px;color:var(--text-secondary);margin-top:2px">{{ r.date }}</div>
+                </div>
+                <span style="cursor:pointer;color:var(--danger);font-size:12px" @click="deleteRecord(selectedStudent, r.id)">删除</span>
+              </div>
+              <div class="record-body">{{ r.text }}</div>
+              <div v-if="r.action" class="record-body" style="color:var(--primary);margin-top:4px">处理：{{ r.action }}</div>
+            </div>
+          </div>
+          <!-- 表扬记录 -->
+          <div v-show="detailTab==='praise'">
+            <div class="page-actions" style="margin-bottom:8px">
+              <span style="font-size:12px;color:var(--text-secondary)">共 {{ getPraises(selectedStudent).length }} 条表扬</span>
+              <button class="btn-small" @click="showAddRecord=true; recordForm.type='praise'">+ 表扬</button>
+            </div>
+            <div v-if="getPraises(selectedStudent).length === 0" style="text-align:center;padding:20px;color:var(--text-secondary)">暂无表扬记录 🌟</div>
+            <div v-for="r in getPraises(selectedStudent)" :key="r.id" class="record-card praise">
+              <div class="record-header">
+                <div>
+                  <div class="record-title">🌟 {{ r.subType || '表扬' }}</div>
                   <div style="font-size:11px;color:var(--text-secondary);margin-top:2px">{{ r.date }}</div>
                 </div>
                 <span style="cursor:pointer;color:var(--danger);font-size:12px" @click="deleteRecord(selectedStudent, r.id)">删除</span>
@@ -1093,17 +1115,7 @@ textarea.input { resize: vertical; min-height: 60px; }
             </div>
           </div>
 
-          <!-- 安全记录 -->
-          <div v-show="detailTab==='safety'">
-            <div v-if="safetyRecords.length === 0" style="text-align:center;padding:20px;color:var(--text-secondary)">暂无安全记录</div>
-            <div v-for="sr in safetyRecords" :key="sr.id" class="safety-card">
-              <div class="safety-icon">🛡️</div>
-              <div class="safety-body">
-                <div class="safety-title">{{ sr.title }}</div>
-                <div class="safety-meta">{{ sr.type }} · {{ sr.date }} · {{ sr.students }}人</div>
-              </div>
-            </div>
-          </div>
+
         </div>
       </div>
     </div>
@@ -1616,7 +1628,7 @@ createApp({
     ];
 
     const mgmtTabs = [
-      { key: 'students', label: '学生管理', icon: '👨🎓' },
+      { key: 'students', label: '学生档案', icon: '👨🎓' },
       { key: 'daily', label: '日常管理', icon: '📋' },
       { key: 'grades', label: '学业关怀', icon: '📊' },
     ];
@@ -1641,10 +1653,9 @@ createApp({
 
 
     const detailTabs = [
-      { key: 'info', label: '信息' },
-      { key: 'records', label: '成长' },
-      { key: 'safety', label: '安全' },
-      { key: 'grades', label: '成绩' },
+      { key: 'info', label: '📋 基础信息' },
+      { key: 'violation', label: '⚠️ 违纪' },
+      { key: 'praise', label: '🌟 表扬' },
     ];
 
     const currentDate = computed(() => {
@@ -1794,7 +1805,7 @@ createApp({
     const showStudentDetail = ref(false);
     const selectedStudent = ref({});
     const studentSearch = ref('');
-    const studentForm = reactive({ name: '', studentId: '', gender: '男', parent: '', phone: '', address: '', note: '' });
+    const studentForm = reactive({ name: '', studentId: '', gender: '男', parent: '', phone: '', phone2: '', address: '', accommodation: '', healthNote: '', note: '' });
 
     const filteredStudents = computed(() => {
       if (!studentSearch.value.trim()) return students.value;
@@ -1812,7 +1823,7 @@ createApp({
       });
       showAddStudent.value = false;
       Object.keys(studentForm).forEach(k => studentForm[k] = '');
-      studentForm.gender = '男';
+      studentForm.gender = '男'; studentForm.accommodation = '';
       saveData();
     }
 
@@ -1822,7 +1833,15 @@ createApp({
     // ====== Student Timeline ======
     const detailTab = ref('info');
     const showAddRecord = ref(false);
-    const recordForm = reactive({ type: 'praise', date: '', text: '' });
+    const recordForm = reactive({ type: 'praise', date: '', text: '', subType: '', action: '' });
+
+    function getViolations(student) {
+      return (student.records || []).filter(r => r.type === 'criticism').sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
+    }
+
+    function getPraises(student) {
+      return (student.records || []).filter(r => r.type === 'praise').sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
+    }
 
     function getRecordStats(student) {
       const records = student.records || [];
@@ -1838,19 +1857,21 @@ createApp({
     }
 
     function addRecord() {
-      if (!recordForm.text.trim()) return;
+      if (!recordForm.text.trim() || !recordForm.date) return;
       const student = students.value.find(s => s.id === selectedStudent.value.id);
       if (!student) return;
       if (!student.records) student.records = [];
       student.records.push({
         id: 'r' + Date.now(),
-        date: recordForm.date || new Date().toISOString().slice(0, 10),
+        date: recordForm.date,
         type: recordForm.type,
-        text: recordForm.text.trim()
+        subType: recordForm.subType || '',
+        text: recordForm.text.trim(),
+        action: recordForm.action || ''
       });
       selectedStudent.value = student;
       showAddRecord.value = false;
-      recordForm.type = 'praise'; recordForm.date = ''; recordForm.text = '';
+      recordForm.type = 'praise'; recordForm.date = ''; recordForm.text = ''; recordForm.subType = ''; recordForm.action = '';
       saveData();
     }
 
@@ -2800,7 +2821,7 @@ createApp({
       students, showAddStudent, showStudentDetail, selectedStudent, studentSearch, studentForm,
       filteredStudents, addStudent, viewStudent, deleteStudent,
       // Student Timeline
-      detailTab, showAddRecord, recordForm, getRecordStats, sortedRecords, addRecord, deleteRecord,
+      detailTab, showAddRecord, recordForm, getRecordStats, getViolations, getPraises, sortedRecords, addRecord, deleteRecord,
       // Safety
       safetyRecords, showAddSafety, safetyForm, addSafety, deleteSafety,
       // Exams
