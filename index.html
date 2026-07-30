@@ -2434,19 +2434,20 @@ createApp({
         if (!file) return;
         const reader = new FileReader();
         reader.onload = (ev) => {
-          if (!formField.value) formField.value = [];
-          formField.value.push(ev.target.result);
-          if (maxPhotos && formField.value.length > maxPhotos) {
-            formField.value = formField.value.slice(-maxPhotos);
+          if (!Array.isArray(formField)) return;
+          formField.push(ev.target.result);
+          if (maxPhotos && formField.length > maxPhotos) {
+            formField.splice(0, formField.length - maxPhotos);
           }
+          saveData();
         };
         reader.readAsDataURL(file);
       };
       input.click();
     }
     function removePhoto(formField, index) {
-      if (formField.value) {
-        formField.value.splice(index, 1);
+      if (Array.isArray(formField)) {
+        formField.splice(index, 1);
       }
     }
 
@@ -2580,7 +2581,7 @@ createApp({
           id: Date.now(),
           name: noticeForm.name.trim(), date: noticeForm.date, deadline: noticeForm.deadline,
           total: noticeForm.total || 0, received: noticeForm.received || 0,
-          unreceived: noticeForm.unreceived || '', photos: noticeForm.photos ? [...noticeForm.photos] : [], collected: false, photos: noticeForm.photos ? [...noticeForm.photos] : []
+          unreceived: noticeForm.unreceived || '', collected: false, photos: noticeForm.photos ? [...noticeForm.photos] : []
         });
       }
       showAddNotice.value = false;
