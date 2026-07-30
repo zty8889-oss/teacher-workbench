@@ -1084,6 +1084,15 @@ textarea.input { resize: vertical; min-height: 60px; }
       </div>
     </div>
 
+  </main>
+
+  <!-- 底部导航栏 -->
+  <nav class="tab-bar">
+    <div v-for="tb in tabs" :key="tb.key" :class="['tab-item', {active: tab===tb.key}]" @click="switchTab(tb.key)">
+      <span class="tab-icon" v-html="tb.icon"></span>
+      <span class="tab-label">{{ tb.label }}</span>
+    </div>
+  </nav>
     <!-- ====== 请假登记弹窗 ====== -->
     <div v-if="showLeaveReg" class="modal-overlay" @click.self="showLeaveReg=false">
       <div class="modal">
@@ -1943,16 +1952,7 @@ textarea.input { resize: vertical; min-height: 60px; }
         </div>
       </div>
     </div>
-  </main>
-
-  <!-- 底部导航栏 -->
-  <nav class="tab-bar">
-    <div v-for="tb in tabs" :key="tb.key" :class="['tab-item', {active: tab===tb.key}]" @click="switchTab(tb.key)">
-      <span class="tab-icon" v-html="tb.icon"></span>
-      <span class="tab-label">{{ tb.label }}</span>
     </div>
-  </nav>
-</div>
 
 <script>
 const { createApp, ref, reactive, computed, nextTick } = Vue;
@@ -3131,7 +3131,7 @@ createApp({
       document.documentElement.setAttribute('data-theme', savedTheme);
     }
 
-    const APP_VERSION = '20260729.14';
+    const APP_VERSION = '20260729.15';
 
     const updating = ref(false);
     function checkUpdate() {
@@ -3441,7 +3441,4 @@ createApp({
   }
 }).mount('#app');
 </script>
-    <!-- ===== 底部导航栏 ===== -->
-    </nav>
-</body>
 </html>
