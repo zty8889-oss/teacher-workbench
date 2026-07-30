@@ -734,14 +734,104 @@ textarea.input { resize: vertical; min-height: 60px; }
       <div class="class-sub-tabs">
         <span v-for="st in teachSubTabs" :key="st.key" :class="['sub-tab', {active: teachSubTab===st.key}]" @click="teachSubTab=st.key">{{ st.label }}</span>
       </div>
+
+      <!-- 学期教学计划 -->
       <div v-show="teachSubTab==='plan'">
-        <p style="text-align:center; padding:40px; color:var(--text-secondary)">📅 学期教学计划 开发中...</p>
+        <div class="page-actions">
+          <button class="btn-small" @click="openPlanForm(null)">+ 新增</button>
+          <span class="student-count">{{ filteredPlans.length }} 条</span>
+          <select v-model="planClassFilter" class="input" style="width:auto; padding:6px 10px; font-size:12px; margin-left:auto">
+            <option value="">全部班级</option>
+            <option v-for="c in planClasses" :key="c" :value="c">{{ c }}</option>
+          </select>
+        </div>
+        <div v-if="filteredPlans.length===0" class="empty-state">暂无教学计划，点击「新增」录入</div>
+        <div v-for="p in filteredPlans" :key="p.id" class="section-card" style="padding:12px">
+          <div style="display:flex; justify-content:space-between; align-items:center">
+            <div>
+              <span style="font-weight:600; font-size:13px">{{ p.content }}</span>
+              <span style="font-size:11px; color:var(--text-secondary); margin-left:6px">{{ p.class }} · 第{{ p.week }}周 {{ p.date }}</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px">
+              <span v-if="p.done" style="font-size:11px; color:var(--success)">✅ 已上</span>
+              <span v-else class="btn-small" style="padding:2px 8px; font-size:10px" @click.stop="p.done=true; saveData()">上课</span>
+              <span style="color:var(--primary); cursor:pointer; font-size:12px" @click="openPlanForm(p)">✏️</span>
+              <span style="color:var(--danger); cursor:pointer; font-size:12px" @click="deletePlan(p.id)">✕</span>
+            </div>
+          </div>
+        </div>
       </div>
+
+      <!-- 作业待办池 -->
       <div v-show="teachSubTab==='hw'">
-        <p style="text-align:center; padding:40px; color:var(--text-secondary)">📝 作业待办池 开发中...</p>
+        <div class="page-actions">
+          <button class="btn-small" @click="openHWPoolForm(null)">+ 布置作业</button>
+          <span class="student-count">{{ filteredHWPools.length }} 条</span>
+          <select v-model="hwPoolFilter" class="input" style="width:auto; padding:6px 10px; font-size:12px; margin-left:auto">
+            <option value="">全部</option>
+            <option value="pending">待讲评</option>
+            <option value="done">已讲评</option>
+          </select>
+        </div>
+        <div v-if="filteredHWPools.length===0" class="empty-state">暂无作业记录</div>
+        <div v-for="h in filteredHWPools" :key="h.id" class="hw-card" style="padding:14px">
+          <div class="hw-header" style="margin-bottom:4px">
+            <div class="hw-title" style="font-size:13px">{{ h.content }}</div>
+            <span :class="['hw-status', h.done ? 'done' : 'pending']" style="font-size:10px">{{ h.done ? '✅已讲评' : '⏳待讲评' }}</span>
+          </div>
+          <div class="hw-meta" style="font-size:11px">{{ h.class }} · {{ h.assignDate }} 布置</div>
+          <div style="font-size:10px; color:var(--text-secondary); margin-bottom:6px">下次上课: {{ h.nextDate }} · 提醒: {{ h.remindDate }}</div>
+          <div style="display:flex; gap:6px">
+            <span v-if="!h.done" class="btn-small" style="padding:3px 10px; font-size:10px" @click="h.done=true; saveData()">标记已讲评</span>
+            <span style="color:var(--primary); cursor:pointer; font-size:11px" @click="openHWPoolForm(h)">✏️</span>
+            <span style="color:var(--danger); cursor:pointer; font-size:11px" @click="deleteHWPool(h.id)">✕</span>
+          </div>
+        </div>
       </div>
+
+      <!-- 学科成绩 -->
       <div v-show="teachSubTab==='scores'">
-        <p style="text-align:center; padding:40px; color:var(--text-secondary)">📊 学科成绩（沿用现有成绩模块）</p>
+        <div class="page-actions">
+          <button class="btn-small" @click="showAddExam=true">+ 录入考试</button>
+          <span class="student-count">共 {{ exams.length }} 次考试</span>
+        </div>
+        <div v-if="exams.length===0" class="empty-state">暂无成绩数据</div>
+        <div v-for="ex in exams" :key="ex.id" class="exam-card">
+          <div class="exam-header" @click="ex.open = !ex.open">
+            <div class="exam-title">{{ ex.name }}</div>
+            <div class="exam-date">{{ ex.date }}</div>
+            <div class="exam-toggle" style="display:flex; align-items:center; gap:6px">
+              <span style="font-size:12px; color:var(--primary); cursor:pointer" @click.stop="editExam(ex)">✏️</span>
+              <span style="font-size:12px; color:var(--danger); cursor:pointer" @click.stop="deleteExam(ex.id)">🗑️</span>
+              <span>{{ ex.open ? '▼' : '▶' }}</span>
+            </div>
+          </div>
+          <div v-if="ex.open" class="exam-body">
+            <div class="filter-tabs" style="margin-bottom:10px; gap:4px">
+              <span v-for="sub in (ex.subjects || [])" :key="sub" :class="['filter-tab', {active: ex.subjectFilter === sub}]" @click.stop="ex.subjectFilter = (ex.subjectFilter === sub ? '' : sub)" style="font-size:11px; padding:4px 10px">{{ sub }}</span>
+              <span class="filter-tab" :class="{active: !ex.subjectFilter}" @click.stop="ex.subjectFilter=''" style="font-size:11px; padding:4px 10px">📊 总分</span>
+            </div>
+            <div class="exam-stats">
+              <div class="exam-stat"><label>平均分</label><span>{{ ex.subjectFilter ? avgSubject(ex, ex.subjectFilter) : avgScore(ex) }}</span></div>
+              <div class="exam-stat"><label>最高分</label><span>{{ ex.subjectFilter ? maxSubject(ex, ex.subjectFilter) : maxScore(ex) }}</span></div>
+              <div class="exam-stat"><label>最低分</label><span>{{ ex.subjectFilter ? minSubject(ex, ex.subjectFilter) : minScore(ex) }}</span></div>
+              <div class="exam-stat"><label>及格率</label><span>{{ ex.subjectFilter ? passSubject(ex, ex.subjectFilter) : passRate(ex) }}%</span></div>
+            </div>
+            <div class="score-list" style="max-height:300px">
+              <div v-for="s in ex.scores" :key="s.id" class="score-item" style="flex-wrap:wrap">
+                <span class="score-name" style="min-width:50px; font-weight:600">{{ s.name }}</span>
+                <template v-if="ex.subjectFilter">
+                  <span class="score-val" :style="{color:getScoreColor((s.subjects?.[ex.subjectFilter]||0)/100*100)}">{{ s.subjects?.[ex.subjectFilter] || '-' }}</span>
+                </template>
+                <template v-else>
+                  <span v-for="sub in (ex.subjects || [])" :key="sub" style="font-size:11px; margin:0 4px; color:var(--text-secondary)">{{ sub }}:<span :style="{color:getScoreColor((s.subjects?.[sub]||0)/100*100),fontWeight:600}">{{ s.subjects?.[sub]||'-' }}</span></span>
+                  <span style="font-size:12px; font-weight:700; margin-left:6px; color:var(--text)">总分:{{ s.total||'-' }}</span>
+                </template>
+                <span style="color:var(--danger); cursor:pointer; font-size:12px; margin-left:auto" @click.stop="deleteScore(ex.id, s.id)">✕</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -831,7 +921,88 @@ textarea.input { resize: vertical; min-height: 60px; }
         </div>
       </div>
 
-          <!-- ====== 图片预览弹窗 ====== -->
+              <!-- ====== 教学计划表单弹窗 ====== -->
+    <div v-if="showPlanForm" class="modal-overlay" @click.self="showPlanForm=false">
+      <div class="modal modal-wide">
+        <div class="modal-header">{{ editingPlan ? '编辑计划' : '新增教学计划' }}</div>
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>班级</label>
+              <input v-model="planForm.class" class="input" placeholder="如：高二3班">
+            </div>
+            <div class="form-group w-50">
+              <label>周次</label>
+              <input v-model="planForm.week" type="number" class="input" placeholder="1">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>星期几</label>
+              <select v-model="planForm.day" class="input">
+                <option value="一">周一</option><option value="二">周二</option><option value="三">周三</option>
+                <option value="四">周四</option><option value="五">周五</option>
+              </select>
+            </div>
+            <div class="form-group w-50">
+              <label>节次</label>
+              <select v-model="planForm.period" class="input">
+                <option v-for="i in 8" :key="i" :value="i">第{{ i }}节</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>具体日期</label>
+            <input v-model="planForm.date" type="date" class="input">
+          </div>
+          <div class="form-group">
+            <label>教学内容</label>
+            <input v-model="planForm.content" class="input" placeholder="如：第三章第2节 等差数列">
+          </div>
+          <div class="form-group">
+            <label>备注</label>
+            <textarea v-model="planForm.note" class="input" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showPlanForm=false; editingPlan=null">取消</button>
+          <button class="btn-primary" @click="savePlan">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== 作业待办池表单弹窗 ====== -->
+    <div v-if="showHWPoolForm" class="modal-overlay" @click.self="showHWPoolForm=false">
+      <div class="modal">
+        <div class="modal-header">{{ editingHWPool ? '编辑作业' : '布置作业' }}</div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>关联班级</label>
+            <input v-model="hwPoolForm.class" class="input" placeholder="如：高二3班">
+          </div>
+          <div class="form-group">
+            <label>作业内容</label>
+            <textarea v-model="hwPoolForm.content" class="input" rows="3" placeholder="如：P45 第3题、第5题"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>布置日期</label>
+              <input v-model="hwPoolForm.assignDate" type="date" class="input">
+            </div>
+            <div class="form-group w-50">
+              <label>下次上课日期</label>
+              <input v-model="hwPoolForm.nextDate" type="date" class="input">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showHWPoolForm=false; editingHWPool=null">取消</button>
+          <button class="btn-primary" @click="saveHWPool">保存</button>
+        </div>
+      </div>
+    </div>
+
+<!-- ====== 图片预览弹窗 ====== -->
     <div v-if="showPhotoPreview" class="modal-overlay" @click.self="showPhotoPreview=false">
       <div class="modal" style="max-width:90vw">
         <div class="modal-body" style="text-align:center; padding:20px">
@@ -1837,6 +2008,8 @@ createApp({
           watches: watches.value,
           warns: warns.value,
           teacherComms: teacherComms.value,
+          plans: plans.value,
+          hwPools: hwPools.value,
           teacherInfo: teacherInfo,
           teacherName: teacherName.value
         }));
@@ -2060,6 +2233,35 @@ createApp({
     const editingWatch = ref(null);
     const watchForm = reactive({ student: '', reason: '成绩下滑', note: '' });
 
+    // 学期教学计划
+    const plans = ref([]);
+    const showPlanForm = ref(false);
+    const editingPlan = ref(null);
+    const planForm = reactive({ class: '', week: '', day: '一', period: 1, date: '', content: '', done: false, note: '' });
+    const planClassFilter = ref('');
+    const planClasses = computed(() => {
+      const set = new Set(plans.value.map(p => p.class).filter(Boolean));
+      return [...set];
+    });
+    const filteredPlans = computed(() => {
+      let list = plans.value;
+      if (planClassFilter.value) list = list.filter(p => p.class === planClassFilter.value);
+      return list.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+    });
+
+    // 作业待办池
+    const hwPools = ref([]);
+    const showHWPoolForm = ref(false);
+    const editingHWPool = ref(null);
+    const hwPoolForm = reactive({ class: '', content: '', assignDate: '', nextDate: '', done: false });
+    const hwPoolFilter = ref('');
+    const filteredHWPools = computed(() => {
+      let list = hwPools.value;
+      if (hwPoolFilter.value === 'pending') list = list.filter(h => !h.done);
+      else if (hwPoolFilter.value === 'done') list = list.filter(h => h.done);
+      return list.sort((a, b) => (b.assignDate || '').localeCompare(a.assignDate || ''));
+    });
+
     // 学业预警
     const warns = ref([]);
     const showWarnForm = ref(false);
@@ -2236,6 +2438,41 @@ createApp({
     }
     function deleteDuty(id) { duties.value = duties.value.filter(x => x.id !== id); saveData(); }
     function markDutyDone(id) { const d = duties.value.find(x => x.id === id); if(d) { d.done = true; saveData(); } }
+
+    // ====== 教学计划 ======
+    function resetPlanForm() { planForm.class=''; planForm.week=''; planForm.day='一'; planForm.period=1; planForm.date=''; planForm.content=''; planForm.done=false; planForm.note=''; }
+    function openPlanForm(item) {
+      editingPlan.value = item;
+      if (item) { Object.assign(planForm, item); }
+      else { resetPlanForm(); }
+      showPlanForm.value = true;
+    }
+    function savePlan() {
+      if (!planForm.content.trim()) return;
+      const data = { id: editingPlan.value ? editingPlan.value.id : Date.now(), ...planForm };
+      if (editingPlan.value) { Object.assign(editingPlan.value, data); }
+      else { plans.value.unshift(data); }
+      showPlanForm.value = false; editingPlan.value = null; saveData();
+    }
+    function deletePlan(id) { plans.value = plans.value.filter(x => x.id !== id); saveData(); }
+
+    // ====== 作业待办池 ======
+    function resetHWPoolForm() { hwPoolForm.class=''; hwPoolForm.content=''; hwPoolForm.assignDate=''; hwPoolForm.nextDate=''; hwPoolForm.done=false; }
+    function openHWPoolForm(item) {
+      editingHWPool.value = item;
+      if (item) { Object.assign(hwPoolForm, item); }
+      else { resetHWPoolForm(); hwPoolForm.assignDate = new Date().toISOString().slice(0,10); }
+      showHWPoolForm.value = true;
+    }
+    function saveHWPool() {
+      if (!hwPoolForm.content.trim()) return;
+      const remindDate = hwPoolForm.nextDate ? new Date(new Date(hwPoolForm.nextDate).getTime() - 86400000).toISOString().slice(0,10) : '';
+      const data = { id: editingHWPool.value ? editingHWPool.value.id : Date.now(), ...hwPoolForm, remindDate };
+      if (editingHWPool.value) { Object.assign(editingHWPool.value, data); }
+      else { hwPools.value.unshift(data); }
+      showHWPoolForm.value = false; editingHWPool.value = null; saveData();
+    }
+    function deleteHWPool(id) { hwPools.value = hwPools.value.filter(x => x.id !== id); saveData(); }
 
     // ====== 特别关注 ======
     function resetWatchForm() { watchForm.student=''; watchForm.reason='成绩下滑'; watchForm.note=''; }
@@ -2598,7 +2835,7 @@ createApp({
       document.documentElement.setAttribute('data-theme', savedTheme);
     }
 
-    const APP_VERSION = '20260729.11';
+    const APP_VERSION = '20260729.12';
 
     const updating = ref(false);
     function checkUpdate() {
@@ -2833,6 +3070,8 @@ createApp({
       if (data.watches) watches.value = data.watches;
       if (data.warns) warns.value = data.warns;
       if (data.teacherComms) teacherComms.value = data.teacherComms;
+      if (data.plans) plans.value = data.plans;
+      if (data.hwPools) hwPools.value = data.hwPools;
       if (data.teacherInfo) Object.assign(teacherInfo, data.teacherInfo);
       if (data.teacherName) teacherName.value = data.teacherName;
     }
@@ -2888,6 +3127,8 @@ createApp({
       watches, showWatchForm, editingWatch, watchForm, openWatchForm, saveWatch, deleteWatch,
       warns, showWarnForm, editingWarn, warnForm, openWarnForm, saveWarn, deleteWarn, markWarnDone,
       teacherComms, showTeacherCommForm, editingTeacherComm, teacherCommForm, openTeacherCommForm, saveTeacherComm, deleteTeacherComm, markTeacherCommDone,
+      plans, showPlanForm, editingPlan, planForm, planClassFilter, planClasses, filteredPlans, openPlanForm, savePlan, deletePlan,
+      hwPools, showHWPoolForm, editingHWPool, hwPoolForm, hwPoolFilter, filteredHWPools, openHWPoolForm, saveHWPool, deleteHWPool,
       stuVioSearch, filteredStuViolations, stuPraiseSearch, filteredStuPraises,
       showPhotoPreview, previewPhotoUrl, previewPhoto, addPhotos,
       classSubTab, classSubTabs, teachSubTab, teachSubTabs,
