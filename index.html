@@ -287,65 +287,96 @@ textarea.input { resize: vertical; min-height: 60px; }
   <main class="app-main">
     <!-- 首页 -->
     <div v-show="tab==='home'">
-      <div class="welcome-card">
-        <div class="welcome-text">
-          <h2>{{ teacherName || '教师' }}，{{ timeGreeting }}</h2>
-          <p>{{ welcomeSub }}</p>
-        </div>
-        <div class="welcome-avatar">{{ (teacherName || '教').charAt(0) }}</div>
+      <!-- 顶部状态栏 -->
+      <div class="status-bar" style="display:flex; justify-content:space-between; align-items:center; padding:12px 0 8px; border-bottom:1px solid var(--border); margin-bottom:12px">
+        <div style="font-size:13px; color:var(--text-secondary)">{{ formatDate }}</div>
+        <div style="font-size:13px; font-weight:600; color:var(--primary)">{{ teacherName || '教师' }} {{ timeGreeting }}</div>
+        <div style="font-size:12px; color:var(--danger)">📅 距期末 {{ countdownDays }}天</div>
       </div>
 
+      <!-- 数据徽章 -->
       <div class="stats-grid">
-        <div class="stat-card" @click="tab='classes'; classSubTab='students'">
-          <div class="stat-icon">👨‍🎓</div>
-          <div class="stat-num">{{ students.length }}</div>
-          <div class="stat-label">学生人数</div>
-        </div>
-        <div class="stat-card" @click="tab='classes'; classSubTab='homework'">
-          <div class="stat-icon">📝</div>
-          <div class="stat-num">{{ getPendingHomework() }}</div>
-          <div class="stat-label">待批作业</div>
-        </div>
-        <div class="stat-card" @click="tab='classes'; classSubTab='students'">
-          <div class="stat-icon">📊</div>
-          <div class="stat-num">{{ exams.length }}</div>
-          <div class="stat-label">考试记录</div>
-        </div>
-        <div class="stat-card" @click="tab='schedule'">
-          <div class="stat-icon">📅</div>
-          <div class="stat-num">{{ getTodayClasses().length }}</div>
+        <div class="stat-card" @click="tab='class'; classSubTab='daily'; dailySubTab='meeting'" style="padding:12px 4px">
+          <div class="stat-num" style="font-size:20px">{{ getTodayClassCount() }}</div>
           <div class="stat-label">今日课程</div>
         </div>
+        <div class="stat-card" @click="tab='profile'" style="padding:12px 4px">
+          <div class="stat-num" style="font-size:20px">{{ todos.filter(t=>!t.done && t.date===todayStr).length }}</div>
+          <div class="stat-label">待办事项</div>
+        </div>
+        <div class="stat-card" @click="tab='class'; classSubTab='daily'">
+          <div class="stat-num" style="font-size:20px">{{ meetings.length + violations.length + leaves.length }}</div>
+          <div class="stat-label">今日留痕</div>
+        </div>
+        <div class="stat-card" @click="showContact=true">
+          <div class="stat-icon" style="font-size:20px">📞</div>
+          <div class="stat-label">通讯录</div>
+        </div>
       </div>
 
+      <!-- 今日课程安排 -->
       <div class="section-card">
         <div class="section-header">
-          <h3>📅 今日课程</h3>
-          <div class="section-more" @click="tab='schedule'">查看全部 ›</div>
+          <h3>📅 今日我的课程</h3>
         </div>
-        <div v-if="todayClasses.length === 0" class="empty-state">今天没有课程安排 🎉</div>
-        <div v-for="c in todayClasses" :key="c.id" class="today-class-item">
-          <div class="class-time">{{ c.time }}</div>
-          <div class="class-name">{{ c.name }}</div>
-          <div class="class-location">{{ c.location || '' }}</div>
+        <div v-if="getTodayClassList().length === 0" class="empty-state" style="padding:20px">今日无新课 ✨ 安心备课/批改作业吧</div>
+        <div v-for="c in getTodayClassList()" :key="c.id" class="today-class-item" style="padding:12px 0">
+          <div class="class-time" style="font-size:15px; min-width:44px">{{ c.time }}</div>
+          <div style="flex:1">
+            <div class="class-name" style="font-size:14px; font-weight:600">{{ c.name }}</div>
+            <div class="class-location" style="font-size:11px; color:var(--text-secondary)">{{ c.grade || '' }} {{ c.location || '' }}</div>
+          </div>
+          <span v-if="c.done" style="font-size:12px; color:var(--success)">✅ 已上</span>
+          <span v-else class="btn-small" style="padding:4px 12px; font-size:12px" @click.stop="markClassDone(c)">上课</span>
         </div>
       </div>
 
+      <!-- 今日待办 -->
       <div class="section-card">
         <div class="section-header">
-          <h3>✅ 待办事项</h3>
-          <div class="section-more" @click="tab='todo'">管理 ›</div>
+          <h3>✅ 今日待办</h3>
+          <div class="section-more" @click="showAddTodo=true" style="font-size:12px">+ 添加</div>
         </div>
-        <div v-if="todos.filter(t=>!t.done).length === 0" class="empty-state">暂无待办，轻松一下 🎉</div>
-        <div v-for="t in todos.filter(t=>!t.done).slice(0,3)" :key="t.id" class="todo-item">
+        <div v-if="todos.filter(t=>!t.done && t.date===todayStr).length === 0" class="empty-state" style="padding:20px">暂无待办，轻松一下 🎉</div>
+        <div v-for="t in todos.filter(t=>!t.done && t.date===todayStr).slice(0,5)" :key="t.id" class="todo-item" style="padding:10px 0">
           <span :class="['todo-priority', {high:'p-high',medium:'p-medium',low:'p-low'}[t.priority]]">{{ {high:'高',medium:'中',low:'低'}[t.priority] }}</span>
-          <span class="todo-text">{{ t.text }}</span>
-          <span class="todo-date">{{ t.date }}</span>
+          <span class="todo-text" style="font-size:13px">{{ t.text }}</span>
+          <span class="todo-date" style="font-size:11px">{{ t.date }}</span>
+          <span style="color:var(--success); cursor:pointer; font-size:16px; margin-left:4px" @click="quickToggleTodo(t.id)">✓</span>
+        </div>
+      </div>
+
+      <!-- 右下角悬浮按钮 -->
+      <div style="position:fixed; right:20px; bottom:80px; z-index:50; display:flex; flex-direction:column; gap:8px; align-items:flex-end">
+        <div v-if="showQuickMenu" style="display:flex; flex-direction:column; gap:6px; align-items:flex-end">
+          <span class="btn-small" style="padding:6px 14px; font-size:12px; box-shadow:0 2px 8px rgba(0,0,0,0.15)" @click="showQuickMenu=false; tab='class'; classSubTab='daily'; dailySubTab='meeting'">📸 班会留痕</span>
+          <span class="btn-small" style="padding:6px 14px; font-size:12px; box-shadow:0 2px 8px rgba(0,0,0,0.15); background:var(--danger)" @click="showQuickMenu=false; openVioForm(null)">📝 录违纪</span>
+          <span class="btn-small" style="padding:6px 14px; font-size:12px; box-shadow:0 2px 8px rgba(0,0,0,0.15); background:var(--success)" @click="showQuickMenu=false; openPraiseForm(null)">⭐ 记表扬</span>
+          <span class="btn-small" style="padding:6px 14px; font-size:12px; box-shadow:0 2px 8px rgba(0,0,0,0.15)" @click="showQuickMenu=false; showAddTodo=true">📋 加待办</span>
+        </div>
+        <div style="width:48px; height:48px; border-radius:50%; background:var(--primary-gradient); color:#fff; display:flex; align-items:center; justify-content:center; font-size:22px; box-shadow:0 4px 16px rgba(91,127,255,0.4); cursor:pointer" @click="showQuickMenu=!showQuickMenu">
+          {{ showQuickMenu ? '✕' : '➕' }}
+        </div>
+      </div>
+
+      <!-- 通讯录弹窗 -->
+      <div v-if="showContact" class="modal-overlay" @click.self="showContact=false">
+        <div class="modal modal-wide">
+          <div class="modal-header">📞 通讯录（{{ students.length }}人）</div>
+          <div class="modal-body" style="max-height:60vh; overflow-y:auto">
+            <div v-for="s in students" :key="s.id" style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); font-size:13px">
+              <span style="font-weight:500">{{ s.name }}</span>
+              <span style="color:var(--primary)">{{ s.phone || '无电话' }}</span>
+            </div>
+            <div v-if="students.length===0" class="empty-state">暂无学生数据</div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-primary" @click="showContact=false">关闭</button>
+          </div>
         </div>
       </div>
     </div>
 
-        <!-- ===== 班级管理 ===== -->
     <div v-show="tab==='class'">
       <!-- 班级二级导航 -->
       <div class="class-sub-tabs">
