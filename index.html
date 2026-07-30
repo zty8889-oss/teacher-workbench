@@ -557,6 +557,7 @@ textarea.input { resize: vertical; min-height: 60px; }
         <div v-show="classDailySub==='schedule'">
           <div class="page-actions">
             <span style="font-size:13px; color:var(--text-secondary)">点击空格添加课程，点击已有课程编辑</span>
+            <button class="btn-small" @click="showWordImport=true; wordImportType='schedule'">📥 导入</button>
             <button class="btn-small" @click="showAddSchedule=true">+ 添加</button>
           </div>
           <!-- 周次选择 -->
@@ -953,6 +954,7 @@ textarea.input { resize: vertical; min-height: 60px; }
           <div style="display:flex; gap:8px; margin-bottom:14px; font-size:12px">
             <a v-show="wordImportType==='students'" href="学生信息导入模板.xlsx" download style="flex:1; text-align:center; padding:8px; border:1.5px dashed var(--primary); border-radius:10px; color:var(--primary); text-decoration:none">👇 下载学生模板</a>
             <a v-show="wordImportType==='exams'" href="考试成绩导入模板.xlsx" download style="flex:1; text-align:center; padding:8px; border:1.5px dashed var(--primary); border-radius:10px; color:var(--primary); text-decoration:none">👇 下载成绩模板</a>
+            <a v-show="wordImportType==='schedule'" href="班表导入模板.xlsx" download style="flex:1; text-align:center; padding:8px; border:1.5px dashed var(--primary); border-radius:10px; color:var(--primary); text-decoration:none">👇 下载班表模板</a>
           </div>
 
           <div v-if="!wordFileSelected" style="margin-bottom:14px">
@@ -3141,6 +3143,56 @@ createApp({
       return newStudents;
     }
 
+
+
+    function parseScheduleExcel(data) {
+      const newSchedule = [];
+      if (data.length < 2) return newSchedule;
+
+      const headers = data[0].map(h => String(h || '').trim());
+      const weekIdx = getColumnIndex(headers, ['周次', '周']);
+      const dayIdx = getColumnIndex(headers, ['星期', '周几', 'weekday']);
+      const periodIdx = getColumnIndex(headers, ['节次', '节', '第几节']);
+      const nameIdx = getColumnIndex(headers, ['课程', '课程名', '科目', '课程名称', 'name']);
+      const teacherIdx = getColumnIndex(headers, ['老师', '教师', '任课老师', 'teacher']);
+      const locIdx = getColumnIndex(headers, ['地点', '位置', '上课地点', 'location']);
+      const noteIdx = getColumnIndex(headers, ['备注', 'note']);
+
+      if (weekIdx === -1 || dayIdx === -1 || periodIdx === -1 || nameIdx === -1) return newSchedule;
+
+      const weekdays = ['一','二','三','四','五','六','日'];
+      for (let r = 1; r < data.length; r++) {
+        const row = data[r];
+        const week = parseInt(String(row[weekIdx] || '').trim());
+        let day = String(row[dayIdx] || '').trim();
+        const period = parseInt(String(row[periodIdx] || '').trim());
+        const name = String(row[nameIdx] || '').trim();
+        if (!week || !day || !period || !name) continue;
+        // Normalize weekday
+        if (!isNaN(parseInt(day))) {
+          day = weekdays[parseInt(day) - 1] || day;
+        } else {
+          day = day.replace('周','').replace('星期','');
+        }
+        if (week < 1 || week > 20 || !['一','二','三','四','五'].includes(day) || period < 1 || period > 8) continue;
+        // Check duplicate
+        const exists = scheduleRecords.value.some(s => s.week === week && s.weekday === day && s.period === period);
+        if (exists) continue;
+        newSchedule.push({
+          id: Date.now() + r + Math.random(),
+          week: week,
+          weekday: day,
+          period: period,
+          name: name,
+          teacher: teacherIdx >= 0 ? String(row[teacherIdx] || '').trim() : '',
+          location: locIdx >= 0 ? String(row[locIdx] || '').trim() : '',
+          note: noteIdx >= 0 ? String(row[noteIdx] || '').trim() : ''
+        });
+      }
+      return newSchedule;
+    }
+
+
     function parseExamExcel(data, fullScore) {
       const scores = [];
       const subjects = [];
@@ -3240,6 +3292,18 @@ createApp({
             wordImportResult.value = {
               success: true,
               msg: `成功导入 ${result.scores.length} 条成绩（${result.subjects.length}科）📊`
+            };
+          }
+        } else if (wordImportType.value === 'schedule') {
+          const newSchedule = parseScheduleExcel(data);
+          if (newSchedule.length === 0) {
+            wordImportResult.value = { success: false, msg: '未找到可导入的课程数据，请确认表头包含：周次、星期、节次、课程名称' };
+          } else {
+            scheduleRecords.value.push(...newSchedule);
+            saveData();
+            wordImportResult.value = {
+              success: true,
+              msg: `成功导入 ${newSchedule.length} 条课程 📅`
             };
           }
         }
