@@ -1453,18 +1453,6 @@ tabStyle.textContent = `
 `;
 document.head.appendChild(tabStyle);
 
-// ====== 版本自检：放在 Vue 启动前，避免冲突 ======
-(function() {
-  const APP_VER = '20260729.16';
-  const lastVer = localStorage.getItem('teacher-app-version');
-  if (lastVer && lastVer !== APP_VER) {
-    localStorage.setItem('teacher-app-version', APP_VER);
-    window.location.href = window.location.pathname.split('?')[0] + '?v=' + Date.now();
-  } else if (!lastVer) {
-    localStorage.setItem('teacher-app-version', APP_VER);
-  }
-})();
-
 createApp({
   setup() {
     // ====== 全局状态 ======
@@ -2614,9 +2602,8 @@ createApp({
     const updating = ref(false);
     function checkUpdate() {
       updating.value = true;
-      localStorage.setItem('teacher-app-version', 'update-' + Date.now());
       setTimeout(() => {
-        window.location.href = window.location.pathname.split('?')[0] + '?v=' + Date.now();
+        window.location.href = window.location.pathname + '?v=' + Date.now();
       }, 500);
     }
 
