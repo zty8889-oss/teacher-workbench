@@ -675,33 +675,42 @@ textarea.input { resize: vertical; min-height: 60px; }
           </div>
         </div>
 
-        <!-- 值日排程 -->
+        <!-- 值日排程（表格） -->
         <div v-show="classDailySub==='duty'">
           <div class="page-actions">
-            <span style="font-size:13px; color:var(--text-secondary)">共 {{ dutyRecords.length }} 组</span>
+            <span style="font-size:13px; color:var(--text-secondary)">点击表格行编辑值日安排</span>
             <button class="btn-small" @click="showAddDuty=true">+ 排班</button>
           </div>
-          <div v-if="dutyRecords.length === 0" class="empty-state">暂无值日安排 🧹</div>
-          <div v-for="d in sortedDuties" :key="d.id" class="duty-card">
-            <div class="duty-header">
-              <div class="duty-week">第{{ d.week }}周</div>
-              <div class="duty-range">📅 {{ d.dateRange || '—' }}</div>
+          <div v-if="sortedDuties.length === 0" class="empty-state">暂无值日安排 🧹</div>
+          <div v-if="sortedDuties.length > 0" style="background:var(--card);border-radius:14px;box-shadow:var(--shadow);overflow:hidden">
+            <div style="display:grid;grid-template-columns:44px 1fr 1fr 1.2fr 44px;background:var(--primary-gradient);color:#fff;font-size:11px;font-weight:600">
+              <div style="padding:8px 4px;text-align:center;border-right:1px solid rgba(255,255,255,0.15)">周</div>
+              <div style="padding:8px 4px;text-align:center;border-right:1px solid rgba(255,255,255,0.15)">组长</div>
+              <div style="padding:8px 4px;text-align:center;border-right:1px solid rgba(255,255,255,0.15)">组员</div>
+              <div style="padding:8px 4px;text-align:center;border-right:1px solid rgba(255,255,255,0.15)">日期</div>
+              <div style="padding:8px 4px;text-align:center">状态</div>
             </div>
-            <div class="duty-members"><strong>组长：</strong>{{ d.leader }}</div>
-            <div class="duty-members"><strong>组员：</strong>{{ d.members }}</div>
-            <div v-if="d.photos && d.photos.length" class="record-photos">
-              <div v-for="(p, pi) in d.photos" :key="pi" style="display:inline-block">
-                <img :src="p" style="width:60px;height:60px;border-radius:8px;object-fit:cover;margin:2px;cursor:pointer" @click="previewImage(p)">
+            <div v-for="d in sortedDuties" :key="d.id" 
+              style="display:grid;grid-template-columns:44px 1fr 1fr 1.2fr 44px;border-bottom:1px solid var(--border);font-size:12px;cursor:pointer;transition:all.15s"
+              :style="{background: d.done ? '#f0fff5' : ''}" @click="editDuty(d)">
+              <div style="padding:8px 2px;text-align:center;color:var(--text-secondary);font-weight:600;background:var(--bg)">{{ d.week }}</div>
+              <div style="padding:8px 6px;border-right:1px solid var(--border);font-weight:500">{{ d.leader }}</div>
+              <div style="padding:8px 6px;border-right:1px solid var(--border);color:var(--text-secondary);font-size:11px">{{ d.members }}</div>
+              <div style="padding:8px 6px;border-right:1px solid var(--border);color:var(--text-secondary);font-size:11px">{{ d.dateRange || '—' }}</div>
+              <div style="padding:8px 2px;text-align:center;font-size:14px">{{ d.done ? '✅' : '⏳' }}</div>
+            </div>
+          </div>
+          <div v-if="sortedDuties.length > 0" style="margin-top:6px;padding:8px 12px;background:var(--card);border-radius:14px;box-shadow:var(--shadow)">
+            <div style="font-size:11px;color:var(--text-secondary);margin-bottom:6px">📷 值日照片</div>
+            <div v-for="d in sortedDuties" :key="'p'+d.id">
+              <div v-if="d.photos && d.photos.length" style="display:flex;gap:4px;align-items:center;margin-bottom:4px">
+                <span style="font-size:11px;color:var(--text-secondary);min-width:30px">{{ d.week }}周</span>
+                <div class="record-photos" style="margin:0">
+                  <div v-for="(p, pi) in d.photos" :key="pi" style="display:inline-block">
+                    <img :src="p" style="width:50px;height:50px;border-radius:6px;object-fit:cover;margin:1px;cursor:pointer" @click="previewImage(p)">
+                  </div>
+                </div>
               </div>
-            </div>
-            <div class="duty-footer">
-              <span v-if="d.done" style="font-size:11px;color:var(--success)">✅ 已完成</span>
-              <span v-else style="font-size:11px;color:var(--warning)">⏳ 待检查</span>
-              <span style="display:flex;gap:8px">
-                <span v-if="!d.done" style="font-size:11px;color:var(--primary);cursor:pointer" @click="markDutyDone(d.id)">标记完成</span>
-                <span style="font-size:11px;color:var(--danger);cursor:pointer" @click="editDuty(d)">✏️</span>
-                <span style="font-size:11px;color:var(--danger);cursor:pointer" @click="deleteDuty(d.id)">删除</span>
-              </span>
             </div>
           </div>
         </div>
