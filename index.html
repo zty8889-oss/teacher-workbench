@@ -1065,8 +1065,8 @@ textarea.input { resize: vertical; min-height: 60px; }
               <div class="detail-item"><label>性别</label><span>{{ selectedStudent.gender || '—' }}</span></div>
               <div class="detail-item"><label>学号</label><span>{{ selectedStudent.studentId || '—' }}</span></div>
               <div class="detail-item"><label>住宿情况</label><span>{{ selectedStudent.accommodation || '—' }}</span></div>
-              <div class="detail-item"><label>家长电话1</label><span>{{ selectedStudent.phone || '—' }}</span></div>
-              <div class="detail-item"><label>家长电话2</label><span>{{ selectedStudent.phone2 || '—' }}</span></div>
+              <div class="detail-item"><label>家长1</label><span>{{ (selectedStudent.parent || '—') + ' ' + (selectedStudent.phone || '') }}</span></div>
+              <div class="detail-item"><label>家长2</label><span>{{ (selectedStudent.parent2 || '—') + ' ' + (selectedStudent.phone2 || '') }}</span></div>
               <div class="detail-item"><label>家庭住址</label><span>{{ selectedStudent.address || '—' }}</span></div>
               <div class="detail-item full"><label>特殊体质/病史</label><span>{{ selectedStudent.healthNote || '无' }}</span></div>
             </div>
@@ -1112,6 +1112,26 @@ textarea.input { resize: vertical; min-height: 60px; }
                 <span style="cursor:pointer;color:var(--danger);font-size:12px" @click="deleteRecord(selectedStudent, r.id)">删除</span>
               </div>
               <div class="record-body">{{ r.text }}</div>
+            </div>
+          </div>
+          <!-- 谈话记录 -->
+          <div v-show="detailTab==='talk'">
+            <div class="page-actions" style="margin-bottom:8px">
+              <span style="font-size:12px;color:var(--text-secondary)">共 {{ getTalks(selectedStudent).length }} 次谈话</span>
+              <button class="btn-small" @click="showAddTalk=true">+ 谈话</button>
+            </div>
+            <div v-if="getTalks(selectedStudent).length === 0" style="text-align:center;padding:20px;color:var(--text-secondary)">暂无谈话记录 💬</div>
+            <div v-for="t in getTalks(selectedStudent)" :key="t.id" class="comm-card">
+              <div class="comm-header">
+                <div class="comm-teacher">📅 {{ t.date }}</div>
+              </div>
+              <div class="comm-content">{{ t.content }}</div>
+              <div v-if="t.audioUrl" style="margin-top:8px">
+                <audio :src="t.audioUrl" controls style="width:100%;height:36px;border-radius:8px"></audio>
+              </div>
+              <div style="margin-top:6px;text-align:right">
+                <span style="font-size:11px;color:var(--danger);cursor:pointer" @click="deleteTalk(selectedStudent, t.id)">删除</span>
+              </div>
             </div>
           </div>
 
@@ -1527,6 +1547,48 @@ textarea.input { resize: vertical; min-height: 60px; }
       </div>
     </div>
 
+
+    <!-- 谈话记录弹窗（含录音） -->
+    <div v-if="showAddTalk" class="modal-overlay" @click.self="showAddTalk=false">
+      <div class="modal modal-wide">
+        <div class="modal-header">💬 谈话记录</div>
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>日期 *</label>
+              <input v-model="talkForm.date" type="date" class="input">
+            </div>
+            <div class="form-group w-50">
+              <label>学生姓名</label>
+              <input :value="selectedStudent.name" class="input" disabled style="opacity:.7">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>谈话内容 *</label>
+            <textarea v-model="talkForm.content" class="input" rows="4" placeholder="记录谈话内容..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>🎤 录音</label>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+              <button class="btn-small" @click="startRecording" :style="{background: isRecording ? 'var(--danger)' : 'var(--primary-gradient)'}">
+                {{ isRecording ? '⏹ 停止录音' : '🎙 开始录音' }}
+              </button>
+              <span v-if="isRecording" style="color:var(--danger);font-weight:600;animation:pulse 1s infinite">● 录音中...</span>
+              <span v-if="recordingTime > 0 && !isRecording" style="color:var(--success);font-size:12px">✅ 已录制 {{ recordingTime }}s</span>
+              <button v-if="talkForm.audioUrl" class="btn-small" @click="talkForm.audioUrl=''" style="background:var(--border);color:var(--text)">🗑 清除录音</button>
+            </div>
+            <div v-if="talkForm.audioUrl" style="margin-top:8px">
+              <audio :src="talkForm.audioUrl" controls style="width:100%;height:40px;border-radius:8px"></audio>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showAddTalk=false">取消</button>
+          <button class="btn-primary" @click="addTalk">保存</button>
+        </div>
+      </div>
+    </div>
+
     <!-- 编辑资料弹窗 -->
     <div v-if="showEditProfile" class="modal-overlay" @click.self="showEditProfile=false">
       <div class="modal modal-wide">
@@ -1656,6 +1718,7 @@ createApp({
       { key: 'info', label: '📋 基础信息' },
       { key: 'violation', label: '⚠️ 违纪' },
       { key: 'praise', label: '🌟 表扬' },
+      { key: 'talk', label: '💬 谈话' },
     ];
 
     const currentDate = computed(() => {
@@ -1805,7 +1868,7 @@ createApp({
     const showStudentDetail = ref(false);
     const selectedStudent = ref({});
     const studentSearch = ref('');
-    const studentForm = reactive({ name: '', studentId: '', gender: '男', parent: '', phone: '', phone2: '', address: '', accommodation: '', healthNote: '', note: '' });
+    const studentForm = reactive({ name: '', studentId: '', gender: '男', parent: '', phone: '', parent2: '', phone2: '', address: '', accommodation: '', healthNote: '', note: '' });
 
     const filteredStudents = computed(() => {
       if (!studentSearch.value.trim()) return students.value;
@@ -2430,6 +2493,85 @@ createApp({
       }
     }
 
+
+    // ====== 谈话记录 + 录音 ======
+    const showAddTalk = ref(false);
+    const talkForm = reactive({ date: '', content: '', audioUrl: '' });
+    const isRecording = ref(false);
+    const recordingTime = ref(0);
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let recordTimer = null;
+
+    function getTalks(student) {
+      return (student.talks || []).sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+    }
+
+    function addTalk() {
+      if (!talkForm.content.trim() || !talkForm.date) return;
+      const student = students.value.find(s => s.id === selectedStudent.value.id);
+      if (!student) return;
+      if (!student.talks) student.talks = [];
+      student.talks.push({
+        id: 't' + Date.now(),
+        date: talkForm.date,
+        content: talkForm.content.trim(),
+        audioUrl: talkForm.audioUrl || ''
+      });
+      selectedStudent.value = student;
+      showAddTalk.value = false;
+      talkForm.date = ''; talkForm.content = ''; talkForm.audioUrl = '';
+      saveData();
+    }
+
+    function deleteTalk(student, talkId) {
+      const s = students.value.find(x => x.id === student.id);
+      if (s && s.talks) {
+        s.talks = s.talks.filter(t => t.id !== talkId);
+        selectedStudent.value = s;
+        saveData();
+      }
+    }
+
+    async function startRecording() {
+      if (isRecording.value) {
+        // Stop recording
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+          mediaRecorder.stop();
+        }
+        clearInterval(recordTimer);
+        isRecording.value = false;
+        return;
+      }
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+        audioChunks = [];
+        recordingTime.value = 0;
+
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data.size > 0) audioChunks.push(e.data);
+        };
+
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(audioChunks, { type: 'audio/webm' });
+          const reader = new FileReader();
+          reader.onload = () => {
+            talkForm.audioUrl = reader.result;
+          };
+          reader.readAsDataURL(blob);
+          stream.getTracks().forEach(t => t.stop());
+        };
+
+        mediaRecorder.start();
+        isRecording.value = true;
+        recordTimer = setInterval(() => { recordingTime.value++; }, 1000);
+      } catch(e) {
+        alert('无法访问麦克风，请确保已授权录音权限：' + e.message);
+      }
+    }
+
     // ====== 任课老师沟通 ======
     const teacherCommRecords = ref([]);
     const showAddComm = ref(false);
@@ -2822,6 +2964,7 @@ createApp({
       filteredStudents, addStudent, viewStudent, deleteStudent,
       // Student Timeline
       detailTab, showAddRecord, recordForm, getRecordStats, getViolations, getPraises, sortedRecords, addRecord, deleteRecord,
+      showAddTalk, talkForm, getTalks, addTalk, deleteTalk, startRecording, isRecording, recordingTime,
       // Safety
       safetyRecords, showAddSafety, safetyForm, addSafety, deleteSafety,
       // Exams
