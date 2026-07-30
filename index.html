@@ -345,353 +345,282 @@ textarea.input { resize: vertical; min-height: 60px; }
       </div>
     </div>
 
-    <!-- 待办事项 -->
-    <div v-show="tab==='todo'">
-      <div class="section-card">
-        <div class="section-header">
-          <h3>✅ 待办事项</h3>
-          <button class="btn-small" @click="showAddTodo=true">{{ showAddTodo ? '' : '+ 添加' }}</button>
-        </div>
-
-        <div class="filter-tabs">
-          <span v-for="f in todoFilters" :key="f.key" :class="['filter-tab', {active: todoFilter===f.key}]" @click="todoFilter=f.key">{{ f.label }}</span>
-        </div>
-
-        <div v-if="filteredTodos.length === 0" class="empty-state">暂无待办事项 ✅</div>
-        <div v-for="t in filteredTodos" :key="t.id" class="todo-card">
-          <div :class="['todo-check', {done: t.done}]" @click="toggleTodo(t.id)">{{ t.done ? '✓' : '' }}</div>
-          <div :class="['todo-body', {done: t.done}]">
-            <div class="todo-text">{{ t.text }}</div>
-            <div class="todo-meta">
-              <span :class="['todo-priority', {high:'p-high',medium:'p-medium',low:'p-low'}[t.priority]]">{{ {high:'高优先级',medium:'中优先级',low:'低优先级'}[t.priority] }}</span>
-              <span class="todo-meta-date">📅 {{ t.date }}</span>
-            </div>
-          </div>
-          <div class="todo-delete" @click="todos = todos.filter(x => x.id !== t.id); saveData();">✕</div>
-        </div>
-      </div>
-
-      <!-- 添加待办弹窗 -->
-      <div v-if="showAddTodo" class="modal-overlay" @click.self="showAddTodo=false">
-        <div class="modal">
-          <div class="modal-header">添加待办</div>
-          <div class="modal-body">
-            <div class="form-group">
-              <label>待办内容</label>
-              <input v-model="newTodo.text" class="input" placeholder="需要做什么？">
-            </div>
-            <div class="form-row">
-              <div class="form-group w-50">
-                <label>优先级</label>
-                <select v-model="newTodo.priority" class="input">
-                  <option value="high">高优先级</option>
-                  <option value="medium">中优先级</option>
-                  <option value="low">低优先级</option>
-                </select>
-              </div>
-              <div class="form-group w-50">
-                <label>截止日期</label>
-                <input v-model="newTodo.date" type="date" class="input">
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button class="btn-cancel" @click="showAddTodo=false">取消</button>
-            <button class="btn-primary" @click="addTodo">保存</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 课程表 -->
-    <div v-show="tab==='schedule'">
-      <div class="section-card">
-        <div class="section-header">
-          <h3>📅 课程表</h3>
-          <button class="btn-small" @click="showAddClass=true">+ 添加课程</button>
-        </div>
-        <div class="weekday-tabs">
-          <span v-for="(d, i) in weekdays" :key="i" :class="['weekday-tab', {active: weekday===i}]" @click="weekday=i">{{ d }}</span>
-        </div>
-        <div v-if="getClassesByDay(weekday).length === 0" class="empty-state">{{ weekdays[weekday] }}没有课程安排</div>
-        <div v-for="c in getClassesByDay(weekday)" :key="c.id" class="class-card" :style="{borderLeftColor: classColors[c.color || 0]}" @click="editClass(c)">
-          <div class="class-time-block">
-            <div class="class-time-start">{{ c.time }}</div>
-            <div class="class-time-end">{{ c.endTime || '' }}</div>
-          </div>
-          <div class="class-info">
-            <div class="class-name">{{ c.name }}</div>
-            <div class="class-detail">{{ c.grade }} · {{ c.location }}</div>
-          </div>
-          <div class="class-delete" @click.stop="deleteClass(c.id)">✕</div>
-        </div>
-      </div>
-
-      <!-- 添加课程弹窗 -->
-      <div v-if="showAddClass" class="modal-overlay" @click.self="showAddClass=false">
-        <div class="modal">
-          <div class="modal-header">{{ editingClass ? '编辑课程' : '添加课程' }}</div>
-          <div class="modal-body">
-            <div class="form-row">
-              <div class="form-group w-50">
-                <label>星期</label>
-                <select v-model="classForm.day" class="input">
-                  <option v-for="(d, i) in weekdays" :key="i" :value="i">{{ d }}</option>
-                </select>
-              </div>
-              <div class="form-group w-50">
-                <label>颜色</label>
-                <div class="color-picker">
-                  <div v-for="(clr, ci) in classColors" :key="ci" :class="['color-dot', {active: classForm.color===ci}]" :style="{background: clr}" @click="classForm.color=ci"></div>
-                </div>
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group w-50">
-                <label>开始时间</label>
-                <input v-model="classForm.time" type="time" class="input">
-              </div>
-              <div class="form-group w-50">
-                <label>结束时间</label>
-                <input v-model="classForm.endTime" type="time" class="input">
-              </div>
-            </div>
-            <div class="form-group">
-              <label>课程名称</label>
-              <input v-model="classForm.name" class="input" placeholder="如：语文">
-            </div>
-            <div class="form-row">
-              <div class="form-group w-50">
-                <label>年级/班级</label>
-                <input v-model="classForm.grade" class="input" placeholder="如：三年级2班">
-              </div>
-              <div class="form-group w-50">
-                <label>地点</label>
-                <input v-model="classForm.location" class="input" placeholder="如：301教室">
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button class="btn-cancel" @click="showAddClass=false; editingClass=null; resetClassForm()">取消</button>
-            <button class="btn-primary" @click="saveClass">保存</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 班级管理 -->
-    <div v-show="tab==='classes'">
+        <!-- ===== 班级管理 ===== -->
+    <div v-show="tab==='class'">
+      <!-- 班级二级导航 -->
       <div class="class-sub-tabs">
         <span v-for="st in classSubTabs" :key="st.key" :class="['sub-tab', {active: classSubTab===st.key}]" @click="classSubTab=st.key">{{ st.label }}</span>
       </div>
 
-      <!-- 学生管理 -->
-      <div v-show="classSubTab==='students'" class="sub-page">
-        <div class="page-actions">
-          <button class="btn-small" @click="showAddStudent=true">+ 添加学生</button>
-          <span class="student-count">共 {{ students.length }} 人</span>
+      <!-- ===== 班级动态 ===== -->
+      <div v-show="classSubTab==='overview'">
+        <p style="text-align:center; padding:40px; color:var(--text-secondary)">📊 班级动态 开发中...</p>
+      </div>
+
+      <!-- ===== 日常管理 ===== -->
+      <div v-show="classSubTab==='daily'">
+        <div class="daily-sub-tabs" style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:12px;">
+          <span v-for="st in dailySubTabs" :key="st.key" :class="['filter-tab', {active: dailySubTab===st.key}]" @click="dailySubTab=st.key" style="font-size:11px; padding:5px 10px">{{ st.icon }} {{ st.label }}</span>
         </div>
-        <div class="search-bar">
-          <input v-model="studentSearch" class="input" placeholder="🔍 搜索学生姓名或学号">
-        </div>
-        <div v-for="s in filteredStudents" :key="s.id" class="student-card" @click="viewStudent(s)">
-          <div class="student-avatar" :style="{background: s.avatarColor || '#4A90D9'}">{{ s.name.charAt(0) }}</div>
-          <div class="student-info">
-            <div class="student-name">{{ s.name }}</div>
-            <div class="student-meta">{{ s.studentId }} · {{ s.gender }} · {{ s.parent }}</div>
+
+        <!-- 主题班会台账 -->
+        <div v-show="dailySubTab==='meeting'">
+          <div class="page-actions">
+            <button class="btn-small" @click="openMeetingForm(null)">+ 新增班会</button>
+            <span class="student-count">共 {{ meetings.length }} 条</span>
           </div>
-          <div class="student-arrow">›</div>
+          <div v-if="meetings.length===0" class="empty-state">暂无班会记录</div>
+          <div v-for="m in meetings" :key="m.id" class="section-card" style="padding:14px">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start">
+              <div>
+                <span style="font-size:12px; background:var(--primary); color:#fff; border-radius:8px; padding:2px 8px">{{ m.themeType }}</span>
+                <span style="font-size:11px; color:var(--text-secondary); margin-left:8px">{{ m.date }}</span>
+              </div>
+              <span style="color:var(--danger); cursor:pointer; font-size:12px" @click="deleteMeeting(m.id)">✕</span>
+            </div>
+            <p style="font-size:14px; font-weight:600; margin:8px 0 4px">{{ m.title }}</p>
+            <p style="font-size:12px; color:var(--text-secondary); margin-bottom:6px">{{ m.content }}</p>
+            <div v-if="m.photos && m.photos.length" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px">
+              <img v-for="(p,pi) in m.photos" :key="pi" :src="p" style="width:60px; height:60px; border-radius:8px; object-fit:cover" @click="previewPhoto(p)">
+            </div>
+            <div v-if="m.absent" style="font-size:11px; color:var(--warning); margin-top:4px">缺勤: {{ m.absent }}</div>
+          </div>
+        </div>
+
+        <!-- 违纪/异常记录 -->
+        <div v-show="dailySubTab==='violation'">
+          <div class="page-actions">
+            <button class="btn-small" @click="openVioForm(null)">+ 新增记录</button>
+            <span class="student-count">共 {{ violations.length }} 条</span>
+          </div>
+          <div v-if="violations.length===0" class="empty-state">暂无违纪记录</div>
+          <div v-for="v in violations" :key="v.id" class="section-card" style="padding:14px">
+            <div style="display:flex; justify-content:space-between">
+              <span style="font-weight:600">{{ v.student }}</span>
+              <span style="font-size:11px; color:var(--text-secondary)">{{ v.date }}</span>
+            </div>
+            <span style="font-size:11px; color:var(--danger); background:#FFF0F0; border-radius:6px; padding:2px 8px; display:inline-block; margin:4px 0">{{ v.vioType }}</span>
+            <p style="font-size:12px; color:var(--text-secondary)">{{ v.desc }}</p>
+            <p v-if="v.action" style="font-size:12px; color:var(--text)">处理：{{ v.action }}</p>
+            <span style="color:var(--danger); cursor:pointer; font-size:11px; float:right" @click="deleteViolation(v.id)">✕ 删除</span>
+          </div>
+        </div>
+
+        <!-- 表扬/进步记录 -->
+        <div v-show="dailySubTab==='praise'">
+          <div class="page-actions">
+            <button class="btn-small" @click="openPraiseForm(null)">+ 新增表扬</button>
+            <span class="student-count">共 {{ praises.length }} 条</span>
+          </div>
+          <div v-if="praises.length===0" class="empty-state">暂无表扬记录</div>
+          <div v-for="p in praises" :key="p.id" class="section-card" style="padding:14px; border-left:3px solid var(--success)">
+            <div style="display:flex; justify-content:space-between">
+              <span style="font-weight:600">⭐ {{ p.student }}</span>
+              <span style="font-size:11px; color:var(--text-secondary)">{{ p.date }}</span>
+            </div>
+            <span style="font-size:11px; color:var(--success); background:#F0FFF5; border-radius:6px; padding:2px 8px; display:inline-block; margin:4px 0">{{ p.praiseType }}</span>
+            <p style="font-size:12px; color:var(--text-secondary)">{{ p.reason }}</p>
+            <div v-if="p.photos && p.photos.length" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px">
+              <img v-for="(ph,pi) in p.photos" :key="pi" :src="ph" style="width:60px; height:60px; border-radius:8px; object-fit:cover" @click="previewPhoto(ph)">
+            </div>
+            <span style="color:var(--danger); cursor:pointer; font-size:11px; float:right" @click="deletePraise(p.id)">✕ 删除</span>
+          </div>
+        </div>
+
+        <!-- 临时离班记录 -->
+        <div v-show="dailySubTab==='leave'">
+          <div class="page-actions">
+            <button class="btn-small" @click="openLeaveForm(null)">+ 新增记录</button>
+            <span class="student-count">共 {{ leaves.length }} 条</span>
+          </div>
+          <div v-if="leaves.length===0" class="empty-state">暂无离班记录</div>
+          <div v-for="l in leaves" :key="l.id" class="section-card" style="padding:14px">
+            <div style="display:flex; justify-content:space-between">
+              <span style="font-weight:600">{{ l.student }}</span>
+              <span style="font-size:11px; color:var(--text-secondary)">{{ l.date }} {{ l.time }}</span>
+            </div>
+            <span style="font-size:12px; color:var(--text-secondary)">去向: {{ l.toWhere }} | 预计{{ l.expectedReturn||'无' }} {{ l.returned ? '✅已返' : '⏳未返' }}</span>
+            <div style="margin-top:4px">
+              <span v-if="!l.returned" class="btn-small" style="padding:3px 10px; font-size:11px" @click="markReturned(l.id)">标记已返回</span>
+              <span style="color:var(--danger); cursor:pointer; font-size:11px; margin-left:8px" @click="deleteLeave(l.id)">✕ 删除</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 通知回执单 -->
+        <div v-show="dailySubTab==='notice'">
+          <div class="page-actions">
+            <button class="btn-small" @click="openNoticeForm(null)">+ 新增通知</button>
+            <span class="student-count">共 {{ notices.length }} 条</span>
+          </div>
+          <div v-if="notices.length===0" class="empty-state">暂无通知记录</div>
+          <div v-for="n in notices" :key="n.id" class="section-card" style="padding:14px">
+            <div style="display:flex; justify-content:space-between">
+              <span style="font-weight:600">{{ n.name }}</span>
+              <span style="font-size:11px; color:var(--text-secondary)">{{ n.date }}</span>
+            </div>
+            <p style="font-size:12px; color:var(--text-secondary); margin:4px 0">截止: {{ n.deadline }} | 应交{{ n.total }} 实交{{ n.done }} 未交: {{ n.missing || '无' }}</p>
+            <div v-if="n.done >= n.total" style="font-size:11px; color:var(--success)">✅ 已收齐</div>
+            <div v-if="n.photos && n.photos.length" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px">
+              <img v-for="(ph,pi) in n.photos" :key="pi" :src="ph" style="width:60px; height:60px; border-radius:8px; object-fit:cover" @click="previewPhoto(ph)">
+            </div>
+            <span style="color:var(--danger); cursor:pointer; font-size:11px; float:right" @click="deleteNotice(n.id)">✕ 删除</span>
+          </div>
+        </div>
+
+        <!-- 班规执行记录 -->
+        <div v-show="dailySubTab==='rule'">
+          <div class="page-actions">
+            <button class="btn-small" @click="openRuleForm(null)">+ 新增记录</button>
+            <span class="student-count">共 {{ rules.length }} 条</span>
+          </div>
+          <div v-if="rules.length===0" class="empty-state">暂无班规执行记录</div>
+          <div v-for="r in rules" :key="r.id" class="section-card" style="padding:14px">
+            <div style="display:flex; justify-content:space-between">
+              <span style="font-weight:600">{{ r.student }}</span>
+              <span style="font-size:11px; color:var(--text-secondary)">{{ r.date }}</span>
+            </div>
+            <span :style="{fontSize:'11px', background: r.type==='加分' ? '#F0FFF5' : '#FFF0F0', color: r.type==='加分' ? 'var(--success)' : 'var(--danger)', borderRadius:'6px', padding:'2px 8px', display:'inline-block', margin:'4px 0'}">{{ r.type }} {{ r.score }}</span>
+            <p style="font-size:12px; color:var(--text-secondary)">{{ r.reason }}</p>
+            <div v-if="r.photos && r.photos.length" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px">
+              <img v-for="(ph,pi) in r.photos" :key="pi" :src="ph" style="width:60px; height:60px; border-radius:8px; object-fit:cover" @click="previewPhoto(ph)">
+            </div>
+            <span style="color:var(--danger); cursor:pointer; font-size:11px; float:right" @click="deleteRule(r.id)">✕ 删除</span>
+          </div>
+        </div>
+
+        <!-- 集体荣誉榜 -->
+        <div v-show="dailySubTab==='honor'">
+          <div class="page-actions">
+            <button class="btn-small" @click="openHonorForm(null)">+ 新增荣誉</button>
+            <span class="student-count">共 {{ honors.length }} 条</span>
+          </div>
+          <div v-if="honors.length===0" class="empty-state">暂无荣誉记录</div>
+          <div v-for="h in honors" :key="h.id" class="section-card" style="padding:14px; border-left:3px solid var(--warning)">
+            <div style="display:flex; justify-content:space-between">
+              <span style="font-weight:600">🏆 {{ h.name }}</span>
+              <span style="font-size:11px; color:var(--text-secondary)">{{ h.date }}</span>
+            </div>
+            <span style="font-size:11px; color:var(--text-secondary)">级别: {{ h.level || '未设置' }} | 参与: {{ h.students }}</span>
+            <div v-if="h.photos && h.photos.length" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px">
+              <img v-for="(ph,pi) in h.photos" :key="pi" :src="ph" style="width:60px; height:60px; border-radius:8px; object-fit:cover" @click="previewPhoto(ph)">
+            </div>
+            <span style="color:var(--danger); cursor:pointer; font-size:11px; float:right" @click="deleteHonor(h.id)">✕ 删除</span>
+          </div>
+        </div>
+
+        <!-- 值日排程 -->
+        <div v-show="dailySubTab==='duty'">
+          <div class="page-actions">
+            <button class="btn-small" @click="openDutyForm(null)">+ 新增值日</button>
+            <span class="student-count">共 {{ duties.length }} 条</span>
+          </div>
+          <div v-if="duties.length===0" class="empty-state">暂无值日记录</div>
+          <div v-for="d in duties" :key="d.id" class="section-card" style="padding:14px">
+            <div style="display:flex; justify-content:space-between">
+              <span style="font-weight:600">🧹 第{{ d.week }}周</span>
+              <span v-if="d.done" style="font-size:11px; color:var(--success)">✅ 已完成</span>
+              <span v-else style="font-size:11px; color:var(--warning)">⏳ 待检查</span>
+            </div>
+            <p style="font-size:12px; color:var(--text-secondary)">组长: {{ d.leader }} | 组员: {{ d.members }}</p>
+            <div v-if="d.photos && d.photos.length" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px">
+              <img v-for="(ph,pi) in d.photos" :key="pi" :src="ph" style="width:60px; height:60px; border-radius:8px; object-fit:cover" @click="previewPhoto(ph)">
+            </div>
+            <div style="margin-top:4px">
+              <span v-if="!d.done" class="btn-small" style="padding:3px 10px; font-size:11px" @click="markDutyDone(d.id)">标记已完成</span>
+              <span style="color:var(--danger); cursor:pointer; font-size:11px; margin-left:8px" @click="deleteDuty(d.id)">✕ 删除</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- 学生详情弹窗 -->
-      <div v-if="showStudentDetail" class="modal-overlay" @click.self="showStudentDetail=false">
-        <div class="modal modal-wide">
-          <div class="modal-header">{{ selectedStudent.name }}</div>
-          <div class="modal-body">
-            <div class="detail-avatar" :style="{background: selectedStudent.avatarColor || '#4A90D9'}">{{ selectedStudent.name.charAt(0) }}</div>
+      <!-- ===== 学生档案 ===== -->
+      <div v-show="classSubTab==='student'">
+        <div class="daily-sub-tabs" style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:12px">
+          <span v-for="st in studentSubTabs" :key="st.key" :class="['filter-tab', {active: studentSubTab===st.key}]" @click="studentSubTab=st.key" style="font-size:11px; padding:5px 10px">{{ st.icon }} {{ st.label }}</span>
+        </div>
 
-            <!-- 信息卡片 -->
-            <div class="detail-grid">
-              <div class="detail-item"><label>姓名</label><span>{{ selectedStudent.name }}</span></div>
-              <div class="detail-item"><label>学号</label><span>{{ selectedStudent.studentId }}</span></div>
-              <div class="detail-item"><label>性别</label><span>{{ selectedStudent.gender }}</span></div>
-              <div class="detail-item"><label>家长</label><span>{{ selectedStudent.parent }}</span></div>
-              <div class="detail-item"><label>家长电话</label><span>{{ selectedStudent.phone }}</span></div>
-              <div class="detail-item"><label>住址</label><span>{{ selectedStudent.address }}</span></div>
-              <div class="detail-item full"><label>备注</label><span>{{ selectedStudent.note || '无' }}</span></div>
-            </div>
-
-            <!-- 标签页 -->
-            <div class="filter-tabs" style="margin-top:16px">
-              <span v-for="dt in detailTabs" :key="dt.key" :class="['filter-tab', {active: detailTab===dt.key}]" @click="detailTab=dt.key">{{ dt.label }}</span>
-            </div>
-
-            <!-- 成长记录 -->
-            <div v-if="detailTab==='records'">
-              <div class="page-actions" style="margin-top:8px">
-                <button class="btn-small" @click="showAddRecord=true">+ 添加记录</button>
-                <span class="student-count">{{ getRecordStats(selectedStudent).good }}件好事 {{ getRecordStats(selectedStudent).bad }}件待改进</span>
-              </div>
-              <div v-if="sortedRecords(selectedStudent).length === 0" class="empty-state">暂无成长记录</div>
-              <div v-for="r in sortedRecords(selectedStudent)" :key="r.id" style="display:flex; align-items:flex-start; gap:10px; padding:10px 0; border-bottom:1px solid var(--border)">
-                <span>{{ {praise:'🌟 表扬',criticism:'📌 待改进',general:'📝 日常'}[r.type] }}</span>
-                <div style="flex:1; font-size:13px; color:var(--text-secondary)">
-                  <div>{{ r.text }}</div>
-                  <div style="margin-top:4px; font-size:11px; color:var(--text-tertiary)">{{ r.date }}</div>
-                </div>
-                <span style="color:var(--text-tertiary); cursor:pointer; font-size:11px" @click="deleteRecord(selectedStudent, r.id)">删除</span>
-              </div>
-            </div>
-
-            <!-- 安全教育 -->
-            <div v-if="detailTab==='safety'">
-              <div class="page-actions" style="margin-top:8px">
-                <button class="btn-small" @click="showAddSafety=true">+ 添加记录</button>
-              </div>
-              <div v-if="safetyRecords.length === 0" class="empty-state">暂无安全教育记录</div>
-              <div v-for="(sr, i) in safetyRecords" :key="sr.id" class="safety-card">
-                <div class="safety-icon">{{ {消防:'🔥',交通:'🚗',防溺水:'💧',食品:'🍔',网络:'💻',其他:'📋'}[sr.type] || '📋' }}</div>
-                <div class="safety-body">
-                  <div class="safety-title">{{ sr.title }}</div>
-                  <div class="safety-meta">{{ sr.type }} · {{ sr.date }} · {{ sr.students }}人参与</div>
-                </div>
-                <div class="safety-delete" @click="deleteSafety(sr.id)">✕</div>
-              </div>
-            </div>
-
-            <!-- 成绩 -->
-            <div v-if="detailTab==='grades'">
-              <div v-if="exams.length === 0" class="empty-state">暂无成绩数据</div>
-              <div v-for="(ex, i) in exams" :key="ex.id" class="exam-card">
-                <div class="exam-header" @click="ex.open = !ex.open">
-                  <div class="exam-title">{{ ex.name }}</div>
-                  <div class="exam-date">{{ ex.date }}</div>
-                  <div class="exam-toggle">
-                    {{ ex.open ? '▼' : '▶' }}
-                  </div>
-                </div>
-                <div v-if="ex.open" class="exam-body">
-                  <div class="exam-stats">
-                    <div class="exam-stat"><label>平均分</label><span>{{ avgScore(ex) }}</span></div>
-                    <div class="exam-stat"><label>最高分</label><span>{{ maxScore(ex) }}</span></div>
-                    <div class="exam-stat"><label>最低分</label><span>{{ minScore(ex) }}</span></div>
-                    <div class="exam-stat"><label>及格率</label><span>{{ passRate(ex) }}%</span></div>
-                  </div>
-                  <div class="exam-chart" ref="chartContainer" :data-exam-id="ex.id">
-                    <div v-for="(s, si) in ex.scores" :key="si"
-                      class="chart-bar"
-                      :style="{
-                        height: '100px',
-                        background: getScoreColor((s.total || 0) / ((ex.subjects?.length || 1) * 100) * 100)
-                      }"
-                      :title="s.name + ': ' + (s.total || '-')"></div>
-                  </div>
-                  <div class="score-list">
-                    <div v-for="s in ex.scores" :key="s.id" class="score-item" style="flex-wrap:wrap">
-                      <span class="score-name" style="min-width:50px; font-weight:600">{{ s.name }}</span>
-                      <span v-for="sub in (ex.subjects || [])" :key="sub" style="font-size:11px; margin:0 4px; color:var(--text-secondary)">
-                        {{ sub }}:<span :style="{color: getScoreColor((s.subjects?.[sub] || 0) / 100 * 100), fontWeight:600}">{{ s.subjects?.[sub] || '-' }}</span>
-                      </span>
-                      <span style="font-size:12px; font-weight:700; margin-left:6px; color:var(--text)">总分:{{ s.total || '-' }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+        <!-- 基础信息卡（复用原有学生管理） -->
+        <div v-show="studentSubTab==='info'">
+          <div class="page-actions">
+            <button class="btn-small" @click="showAddStudent=true">+ 添加学生</button>
+            <span class="student-count">共 {{ students.length }} 人</span>
           </div>
-          <div class="modal-footer">
-            <button class="btn-cancel" @click="deleteStudent(selectedStudent.id); showStudentDetail=false;">删除学生</button>
-            <button class="btn-primary" @click="showStudentDetail=false">关闭</button>
+          <div class="search-bar">
+            <input v-model="studentSearch" class="input" placeholder="🔍 搜索学生姓名或学号">
+          </div>
+          <div v-for="s in filteredStudents" :key="s.id" class="student-card" @click="viewStudent(s)">
+            <div class="student-avatar" :style="{background: s.avatarColor || '#4A90D9'}">{{ s.name.charAt(0) }}</div>
+            <div class="student-info">
+              <div class="student-name">{{ s.name }}</div>
+              <div class="student-meta">{{ s.studentId }} · {{ s.gender }} · {{ s.parent }}</div>
+            </div>
+            <div class="student-arrow">›</div>
+          </div>
+        </div>
+
+        <!-- 违纪记录（共用violations） -->
+        <div v-show="studentSubTab==='vio'">
+          <p style="text-align:center; padding:20px; color:var(--text-secondary)">请到「日常管理 → 违纪/异常记录」查看与录入</p>
+        </div>
+
+        <!-- 表扬记录（共用praises） -->
+        <div v-show="studentSubTab==='praise'">
+          <p style="text-align:center; padding:20px; color:var(--text-secondary)">请到「日常管理 → 表扬/进步记录」查看与录入</p>
+        </div>
+
+        <!-- 特别关注清单 -->
+        <div v-show="studentSubTab==='watch'">
+          <div class="page-actions">
+            <button class="btn-small" @click="openWatchForm(null)">+ 添加关注</button>
+            <span class="student-count">共 {{ watches.length }} 人</span>
+          </div>
+          <div v-if="watches.length===0" class="empty-state">暂无特别关注学生</div>
+          <div v-for="w in watches" :key="w.id" class="section-card" style="padding:14px; border-left:3px solid var(--danger)">
+            <div style="display:flex; justify-content:space-between">
+              <span style="font-weight:600">{{ w.student }}</span>
+              <span style="font-size:11px; color:var(--danger); background:#FFF0F0; border-radius:6px; padding:2px 8px">{{ w.reason }}</span>
+            </div>
+            <p style="font-size:12px; color:var(--text-secondary); margin-top:4px">{{ w.note }}</p>
+            <span style="color:var(--danger); cursor:pointer; font-size:11px; float:right" @click="deleteWatch(w.id)">✕ 移除</span>
           </div>
         </div>
       </div>
 
-      <!-- 考试成绩 -->
-      <div v-show="classSubTab==='grades'" class="sub-page">
-        <div class="page-actions">
-          <button class="btn-small" @click="showAddExam=true">+ 录入考试</button>
-          <span class="student-count">共 {{ exams.length }} 次考试</span>
+      <!-- ===== 学业关怀 ===== -->
+      <div v-show="classSubTab==='study'">
+        <div class="daily-sub-tabs" style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:12px">
+          <span v-for="st in studySubTabs" :key="st.key" :class="['filter-tab', {active: studySubTab===st.key}]" @click="studySubTab=st.key" style="font-size:11px; padding:5px 10px">{{ st.icon }} {{ st.label }}</span>
         </div>
-        <div v-if="exams.length === 0" class="empty-state">暂无成绩数据</div>
-        <div v-for="(ex, i) in exams" :key="ex.id" class="exam-card">
-          <div class="exam-header" @click="ex.open = !ex.open">
-            <div class="exam-title">{{ ex.name }}</div>
-            <div class="exam-date">{{ ex.date }}</div>
-            <div class="exam-toggle" style="display:flex; align-items:center; gap:6px">
-              <span style="font-size:12px; color:var(--primary); cursor:pointer" @click.stop="editExam(ex)">✏️</span>
-              <span style="font-size:12px; color:var(--danger); cursor:pointer" @click.stop="deleteExam(ex.id)">🗑️</span>
-              <span>{{ ex.open ? '▼' : '▶' }}</span>
-            </div>
-          </div>
-          <div v-if="ex.open" class="exam-body">
-            <!-- 科目选择标签 -->
-            <div class="filter-tabs" style="margin-bottom:10px; gap:4px">
-              <span v-for="sub in (ex.subjects || [])" :key="sub"
-                :class="['filter-tab', {active: ex.subjectFilter === sub}]"
-                @click.stop="ex.subjectFilter = (ex.subjectFilter === sub ? '' : sub)"
-                style="font-size:11px; padding:4px 10px">{{ sub }}</span>
-              <span class="filter-tab" :class="{active: !ex.subjectFilter}" @click.stop="ex.subjectFilter=''"
-                style="font-size:11px; padding:4px 10px">📊 总分</span>
-            </div>
-            <div class="exam-stats">
-              <div class="exam-stat"><label>平均分</label><span>{{ ex.subjectFilter ? avgSubject(ex, ex.subjectFilter) : avgScore(ex) }}</span></div>
-              <div class="exam-stat"><label>最高分</label><span>{{ ex.subjectFilter ? maxSubject(ex, ex.subjectFilter) : maxScore(ex) }}</span></div>
-              <div class="exam-stat"><label>最低分</label><span>{{ ex.subjectFilter ? minSubject(ex, ex.subjectFilter) : minScore(ex) }}</span></div>
-              <div class="exam-stat"><label>及格率</label><span>{{ ex.subjectFilter ? passSubject(ex, ex.subjectFilter) : passRate(ex) }}%</span></div>
-            </div>
-            <div class="exam-chart" ref="chartContainer" :data-exam-id="ex.id">
-              <div v-for="(s, si) in ex.scores" :key="si"
-                class="chart-bar"
-                :style="{
-                  height: '100px',
-                  background: getScoreColor((ex.subjectFilter ? (s.subjects?.[ex.subjectFilter] || 0) : (s.total || 0)) / ((ex.fullScore || 100) * (ex.subjectFilter ? 1 : 1)) * 100)
-                }"
-                :title="s.name + ': ' + (ex.subjectFilter ? (s.subjects?.[ex.subjectFilter] || '-') : (s.total || '-'))"></div>
-            </div>
-            <div class="score-list" style="max-height:300px">
-              <div v-for="s in ex.scores" :key="s.id" class="score-item" style="flex-wrap:wrap">
-                <span class="score-name" style="min-width:50px; font-weight:600">{{ s.name }}</span>
-                <template v-if="ex.subjectFilter">
-                  <span class="score-val" :style="{color: getScoreColor((s.subjects?.[ex.subjectFilter] || 0) / 100 * 100)}">{{ s.subjects?.[ex.subjectFilter] || '-' }}</span>
-                </template>
-                <template v-else>
-                  <span v-for="sub in (ex.subjects || [])" :key="sub" style="font-size:11px; margin:0 4px; color:var(--text-secondary)">
-                    {{ sub }}:<span :style="{color: getScoreColor((s.subjects?.[sub] || 0) / 100 * 100), fontWeight:600}">{{ s.subjects?.[sub] || '-' }}</span>
-                  </span>
-                  <span style="font-size:12px; font-weight:700; margin-left:6px; color:var(--text)">总分:{{ s.total || '-' }}</span>
-                </template>
-                <span style="color:var(--danger); cursor:pointer; font-size:12px; margin-left:auto" @click.stop="deleteScore(ex.id, s.id)">✕</span>
-              </div>
-            </div>
-          </div>
+        <div v-show="studySubTab==='overview'">
+          <p style="text-align:center; padding:40px; color:var(--text-secondary)">📈 班级成绩总览 开发中...</p>
         </div>
-      </div>
-
-      <!-- 作业 -->
-      <div v-show="classSubTab==='homework'" class="sub-page">
-        <div class="page-actions">
-          <button class="btn-primary" @click="showAddHomework = true">+ 布置作业</button>
+        <div v-show="studySubTab==='warn'">
+          <p style="text-align:center; padding:40px; color:var(--text-secondary)">⚠️ 学业预警 开发中...</p>
         </div>
-        <div class="filter-tabs">
-          <span v-for="f in hwFilters" :key="f.key" :class="['filter-tab', {active: hwFilter===f.key}]" @click="hwFilter=f.key">{{ f.label }}</span>
-        </div>
-        <div v-if="filteredHomework.length === 0" class="empty-state">暂无作业记录</div>
-        <div v-for="hw in filteredHomework" :key="hw.id" class="hw-card">
-          <div class="hw-header">
-            <div class="hw-title">{{ hw.title }}</div>
-            <span :class="['hw-status', hw.status]">{{ {pending:'待批改', done:'已批改'}[hw.status] }}</span>
-          </div>
-          <div class="hw-meta">{{ hw.subject }} · {{ hw.date }} · {{ hw.submitted }}/{{ students.length }}人提交</div>
-          <div v-if="hw.status==='pending'" class="hw-actions">
-            <button class="btn-small" @click="markHomeworkDone(hw.id)">标记已批改</button>
-            <button class="btn-small btn-danger" @click="deleteHomework(hw.id)">删除</button>
-          </div>
+        <div v-show="studySubTab==='comm'">
+          <p style="text-align:center; padding:40px; color:var(--text-secondary)">💬 任课老师沟通 开发中...</p>
         </div>
       </div>
     </div>
 
-    <!-- 我的 -->
+    <!-- ===== 教学任务 ===== -->
+    <div v-show="tab==='teaching'">
+      <div class="class-sub-tabs">
+        <span v-for="st in teachSubTabs" :key="st.key" :class="['sub-tab', {active: teachSubTab===st.key}]" @click="teachSubTab=st.key">{{ st.label }}</span>
+      </div>
+      <div v-show="teachSubTab==='plan'">
+        <p style="text-align:center; padding:40px; color:var(--text-secondary)">📅 学期教学计划 开发中...</p>
+      </div>
+      <div v-show="teachSubTab==='hw'">
+        <p style="text-align:center; padding:40px; color:var(--text-secondary)">📝 作业待办池 开发中...</p>
+      </div>
+      <div v-show="teachSubTab==='scores'">
+        <p style="text-align:center; padding:40px; color:var(--text-secondary)">📊 学科成绩（沿用现有成绩模块）</p>
+      </div>
+    </div>
+
+<!-- 我的 -->
     <div v-show="tab==='profile'">
       <div class="profile-header">
         <div class="profile-avatar-large">{{ (teacherName || '教').charAt(0) }}</div>
@@ -777,7 +706,425 @@ textarea.input { resize: vertical; min-height: 60px; }
         </div>
       </div>
 
-      <!-- ====== 重置确认弹窗（双重保护） ====== -->
+          <!-- ====== 图片预览弹窗 ====== -->
+    <div v-if="showPhotoPreview" class="modal-overlay" @click.self="showPhotoPreview=false">
+      <div class="modal" style="max-width:90vw">
+        <div class="modal-body" style="text-align:center; padding:20px">
+          <img :src="previewPhotoUrl" style="max-width:100%; max-height:70vh; border-radius:12px">
+        </div>
+        <div class="modal-footer">
+          <button class="btn-primary" @click="showPhotoPreview=false">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== 主题班会表单弹窗 ====== -->
+    <div v-if="showMeetingForm" class="modal-overlay" @click.self="showMeetingForm=false">
+      <div class="modal modal-wide">
+        <div class="modal-header">{{ editingMeeting ? '编辑班会' : '新增班会记录' }}</div>
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>日期</label>
+              <input v-model="meetingForm.date" type="date" class="input">
+            </div>
+            <div class="form-group w-50">
+              <label>主题类型</label>
+              <select v-model="meetingForm.themeType" class="input">
+                <option value="防溺水">防溺水</option><option value="防诈骗">防诈骗</option><option value="防欺凌">防欺凌</option>
+                <option value="消防安全">消防安全</option><option value="心理健康">心理健康</option><option value="考前动员">考前动员</option><option value="其他">其他</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>具体主题</label>
+            <input v-model="meetingForm.title" class="input" placeholder="如：珍爱生命 预防溺水">
+          </div>
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>缺勤人数</label>
+              <input v-model="meetingForm.absent" type="number" class="input" placeholder="0">
+            </div>
+            <div class="form-group w-50">
+              <label>缺勤名单</label>
+              <input v-model="meetingForm.absentList" class="input" placeholder="用逗号隔开">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>班会内容摘要</label>
+            <textarea v-model="meetingForm.content" class="input" rows="3" placeholder="简要记录班会内容..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>照片（选填，点击选择）</label>
+            <input type="file" accept="image/*" multiple @change="addPhotos($event, 'meeting')" class="input" style="padding:8px">
+            <div v-if="meetingForm.photos && meetingForm.photos.length" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px">
+              <div v-for="(p,pi) in meetingForm.photos" :key="pi" style="position:relative">
+                <img :src="p" style="width:60px; height:60px; border-radius:8px; object-fit:cover">
+                <span style="position:absolute; top:-4px; right:-4px; background:var(--danger); color:#fff; border-radius:50%; width:16px; height:16px; font-size:10px; text-align:center; cursor:pointer" @click="meetingForm.photos.splice(pi,1)">✕</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showMeetingForm=false; editingMeeting=null">取消</button>
+          <button class="btn-primary" @click="saveMeeting">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== 违纪记录表单弹窗 ====== -->
+    <div v-if="showVioForm" class="modal-overlay" @click.self="showVioForm=false">
+      <div class="modal">
+        <div class="modal-header">{{ editingVio ? '编辑违纪' : '新增违纪记录' }}</div>
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>日期</label>
+              <input v-model="vioForm.date" type="date" class="input">
+            </div>
+            <div class="form-group w-50">
+              <label>学生姓名</label>
+              <input v-model="vioForm.student" class="input" placeholder="学生姓名">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>违纪类型</label>
+            <select v-model="vioForm.vioType" class="input">
+              <option value="迟到">迟到</option><option value="旷课">旷课</option><option value="课堂睡觉">课堂睡觉</option>
+              <option value="玩手机">玩手机</option><option value="顶撞老师">顶撞老师</option><option value="打架冲突">打架冲突</option>
+              <option value="请假">请假</option><option value="其他">其他</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>具体描述</label>
+            <textarea v-model="vioForm.desc" class="input" rows="2" placeholder="描述具体情况"></textarea>
+          </div>
+          <div class="form-group">
+            <label>处理方式</label>
+            <textarea v-model="vioForm.action" class="input" rows="2" placeholder="如：谈话教育+告知家长"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showVioForm=false; editingVio=null">取消</button>
+          <button class="btn-primary" @click="saveVio">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== 表扬记录表单弹窗 ====== -->
+    <div v-if="showPraiseForm" class="modal-overlay" @click.self="showPraiseForm=false">
+      <div class="modal">
+        <div class="modal-header">{{ editingPraise ? '编辑表扬' : '新增表扬记录' }}</div>
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>日期</label>
+              <input v-model="praiseForm.date" type="date" class="input">
+            </div>
+            <div class="form-group w-50">
+              <label>学生姓名</label>
+              <input v-model="praiseForm.student" class="input" placeholder="学生姓名">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>表扬类型</label>
+            <select v-model="praiseForm.praiseType" class="input">
+              <option value="学习进步">学习进步</option><option value="好人好事">好人好事</option>
+              <option value="课堂表现">课堂表现</option><option value="班级贡献">班级贡献</option><option value="其他">其他</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>具体事由</label>
+            <textarea v-model="praiseForm.reason" class="input" rows="2" placeholder="请描述具体表现"></textarea>
+          </div>
+          <div class="form-group">
+            <label>佐证照片</label>
+            <input type="file" accept="image/*" multiple @change="addPhotos($event, 'praise')" class="input" style="padding:8px">
+            <div v-if="praiseForm.photos && praiseForm.photos.length" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px">
+              <div v-for="(p,pi) in praiseForm.photos" :key="pi" style="position:relative">
+                <img :src="p" style="width:60px; height:60px; border-radius:8px; object-fit:cover">
+                <span style="position:absolute; top:-4px; right:-4px; background:var(--danger); color:#fff; border-radius:50%; width:16px; height:16px; font-size:10px; text-align:center; cursor:pointer" @click="praiseForm.photos.splice(pi,1)">✕</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showPraiseForm=false; editingPraise=null">取消</button>
+          <button class="btn-primary" @click="savePraise">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== 离班记录表单弹窗 ====== -->
+    <div v-if="showLeaveForm" class="modal-overlay" @click.self="showLeaveForm=false">
+      <div class="modal">
+        <div class="modal-header">{{ editingLeave ? '编辑离班' : '新增离班记录' }}</div>
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>日期</label>
+              <input v-model="leaveForm.date" type="date" class="input">
+            </div>
+            <div class="form-group w-50">
+              <label>学生姓名</label>
+              <input v-model="leaveForm.student" class="input" placeholder="学生姓名">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>离班时间</label>
+              <input v-model="leaveForm.time" type="time" class="input">
+            </div>
+            <div class="form-group w-50">
+              <label>去向</label>
+              <select v-model="leaveForm.toWhere" class="input">
+                <option value="医务室">医务室</option><option value="厕所">厕所</option><option value="办公室">办公室</option><option value="其他">其他</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>预计返回时间</label>
+            <input v-model="leaveForm.expectedReturn" type="time" class="input">
+          </div>
+          <div class="form-group">
+            <label>备注</label>
+            <textarea v-model="leaveForm.note" class="input" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showLeaveForm=false; editingLeave=null">取消</button>
+          <button class="btn-primary" @click="saveLeave">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== 通知回执表单弹窗 ====== -->
+    <div v-if="showNoticeForm" class="modal-overlay" @click.self="showNoticeForm=false">
+      <div class="modal">
+        <div class="modal-header">{{ editingNotice ? '编辑通知' : '新增通知' }}</div>
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>通知名称</label>
+              <input v-model="noticeForm.name" class="input" placeholder="如：暑期防溺水承诺书">
+            </div>
+            <div class="form-group w-50">
+              <label>下发日期</label>
+              <input v-model="noticeForm.date" type="date" class="input">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>回收截止日期</label>
+              <input v-model="noticeForm.deadline" type="date" class="input">
+            </div>
+            <div class="form-group w-50">
+              <label>应交人数</label>
+              <input v-model="noticeForm.total" type="number" class="input">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>实交人数</label>
+              <input v-model="noticeForm.done" type="number" class="input" placeholder="0">
+            </div>
+            <div class="form-group w-50">
+              <label>未交名单</label>
+              <input v-model="noticeForm.missing" class="input" placeholder="用逗号隔开">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>回执照片</label>
+            <input type="file" accept="image/*" multiple @change="addPhotos($event, 'notice')" class="input" style="padding:8px">
+            <div v-if="noticeForm.photos && noticeForm.photos.length" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px">
+              <div v-for="(p,pi) in noticeForm.photos" :key="pi" style="position:relative">
+                <img :src="p" style="width:60px; height:60px; border-radius:8px; object-fit:cover">
+                <span style="position:absolute; top:-4px; right:-4px; background:var(--danger); color:#fff; border-radius:50%; width:16px; height:16px; font-size:10px; text-align:center; cursor:pointer" @click="noticeForm.photos.splice(pi,1)">✕</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showNoticeForm=false; editingNotice=null">取消</button>
+          <button class="btn-primary" @click="saveNotice">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== 班规执行表单弹窗 ====== -->
+    <div v-if="showRuleForm" class="modal-overlay" @click.self="showRuleForm=false">
+      <div class="modal">
+        <div class="modal-header">{{ editingRule ? '编辑记录' : '新增班规执行记录' }}</div>
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>日期</label>
+              <input v-model="ruleForm.date" type="date" class="input">
+            </div>
+            <div class="form-group w-50">
+              <label>学生姓名</label>
+              <input v-model="ruleForm.student" class="input" placeholder="学生姓名">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>类别</label>
+              <select v-model="ruleForm.type" class="input">
+                <option value="加分">加分</option><option value="扣分">扣分</option>
+              </select>
+            </div>
+            <div class="form-group w-50">
+              <label>分值</label>
+              <input v-model="ruleForm.score" type="text" class="input" placeholder="如：+1 或 -2">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>事由</label>
+            <textarea v-model="ruleForm.reason" class="input" rows="2" placeholder="如：自习课说话"></textarea>
+          </div>
+          <div class="form-group">
+            <label>处理方式</label>
+            <input v-model="ruleForm.action" class="input" placeholder="如：口头警告">
+          </div>
+          <div class="form-group">
+            <label>佐证照片</label>
+            <input type="file" accept="image/*" multiple @change="addPhotos($event, 'rule')" class="input" style="padding:8px">
+            <div v-if="ruleForm.photos && ruleForm.photos.length" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px">
+              <div v-for="(p,pi) in ruleForm.photos" :key="pi" style="position:relative">
+                <img :src="p" style="width:60px; height:60px; border-radius:8px; object-fit:cover">
+                <span style="position:absolute; top:-4px; right:-4px; background:var(--danger); color:#fff; border-radius:50%; width:16px; height:16px; font-size:10px; text-align:center; cursor:pointer" @click="ruleForm.photos.splice(pi,1)">✕</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showRuleForm=false; editingRule=null">取消</button>
+          <button class="btn-primary" @click="saveRule">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== 荣誉表单弹窗 ====== -->
+    <div v-if="showHonorForm" class="modal-overlay" @click.self="showHonorForm=false">
+      <div class="modal">
+        <div class="modal-header">{{ editingHonor ? '编辑荣誉' : '新增荣誉' }}</div>
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>获奖日期</label>
+              <input v-model="honorForm.date" type="date" class="input">
+            </div>
+            <div class="form-group w-50">
+              <label>荣誉名称</label>
+              <input v-model="honorForm.name" class="input" placeholder="如：流动红旗">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>级别</label>
+              <select v-model="honorForm.level" class="input">
+                <option value="">请选择</option><option value="校级">校级</option><option value="年级">年级</option><option value="市级以上">市级以上</option>
+              </select>
+            </div>
+            <div class="form-group w-50">
+              <label>相关学生</label>
+              <input v-model="honorForm.students" class="input" placeholder="主要参与学生">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>荣誉照片</label>
+            <input type="file" accept="image/*" multiple @change="addPhotos($event, 'honor')" class="input" style="padding:8px">
+            <div v-if="honorForm.photos && honorForm.photos.length" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px">
+              <div v-for="(p,pi) in honorForm.photos" :key="pi" style="position:relative">
+                <img :src="p" style="width:60px; height:60px; border-radius:8px; object-fit:cover">
+                <span style="position:absolute; top:-4px; right:-4px; background:var(--danger); color:#fff; border-radius:50%; width:16px; height:16px; font-size:10px; text-align:center; cursor:pointer" @click="honorForm.photos.splice(pi,1)">✕</span>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>备注</label>
+            <textarea v-model="honorForm.note" class="input" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showHonorForm=false; editingHonor=null">取消</button>
+          <button class="btn-primary" @click="saveHonor">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== 值日排程表单弹窗 ====== -->
+    <div v-if="showDutyForm" class="modal-overlay" @click.self="showDutyForm=false">
+      <div class="modal">
+        <div class="modal-header">{{ editingDuty ? '编辑值日' : '新增值日安排' }}</div>
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>周次</label>
+              <input v-model="dutyForm.week" type="number" class="input" placeholder="如：1">
+            </div>
+            <div class="form-group w-50">
+              <label>值日组长</label>
+              <input v-model="dutyForm.leader" class="input" placeholder="组长姓名">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>组员名单</label>
+            <input v-model="dutyForm.members" class="input" placeholder="用顿号隔开">
+          </div>
+          <div class="form-group">
+            <label>值日照片</label>
+            <input type="file" accept="image/*" multiple @change="addPhotos($event, 'duty')" class="input" style="padding:8px">
+            <div v-if="dutyForm.photos && dutyForm.photos.length" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px">
+              <div v-for="(p,pi) in dutyForm.photos" :key="pi" style="position:relative">
+                <img :src="p" style="width:60px; height:60px; border-radius:8px; object-fit:cover">
+                <span style="position:absolute; top:-4px; right:-4px; background:var(--danger); color:#fff; border-radius:50%; width:16px; height:16px; font-size:10px; text-align:center; cursor:pointer" @click="dutyForm.photos.splice(pi,1)">✕</span>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>备注</label>
+            <textarea v-model="dutyForm.note" class="input" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showDutyForm=false; editingDuty=null">取消</button>
+          <button class="btn-primary" @click="saveDuty">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== 特别关注表单弹窗 ====== -->
+    <div v-if="showWatchForm" class="modal-overlay" @click.self="showWatchForm=false">
+      <div class="modal">
+        <div class="modal-header">{{ editingWatch ? '编辑关注' : '添加特别关注' }}</div>
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>学生姓名</label>
+              <input v-model="watchForm.student" class="input" placeholder="学生姓名">
+            </div>
+            <div class="form-group w-50">
+              <label>关注原因</label>
+              <select v-model="watchForm.reason" class="input">
+                <option value="成绩下滑">成绩下滑</option><option value="行为异常">行为异常</option>
+                <option value="家庭变故">家庭变故</option><option value="心理健康">心理健康</option><option value="其他">其他</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>备注</label>
+            <textarea v-model="watchForm.note" class="input" rows="3" placeholder="详细说明关注原因和跟进措施"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showWatchForm=false; editingWatch=null">取消</button>
+          <button class="btn-primary" @click="saveWatch">保存</button>
+        </div>
+      </div>
+    </div>
+
+<!-- ====== 重置确认弹窗（双重保护） ====== -->
       <div v-if="showResetConfirm" class="modal-overlay" @click.self="showResetConfirm=false">
         <div class="modal">
           <div class="modal-header">⚠️ 危险操作</div>
@@ -1152,11 +1499,42 @@ createApp({
     ];
 
     const classSubTabs = [
-      { key: 'students', label: '👨‍🎓 学生' },
-      { key: 'grades', label: '📊 成绩' },
-      { key: 'homework', label: '📝 作业' },
+      { key: 'overview', label: '📊 班级动态' },
+      { key: 'daily', label: '📋 日常管理' },
+      { key: 'student', label: '👤 学生档案' },
+      { key: 'study', label: '📈 学业关怀' },
     ];
-    const classSubTab = ref('students');
+    const classSubTab = ref('overview');
+    const teachSubTabs = [
+      { key: 'plan', label: '📅 学期计划' },
+      { key: 'hw', label: '📝 作业池' },
+      { key: 'scores', label: '📊 学科成绩' },
+    ];
+    const teachSubTab = ref('plan');
+    const dailySubTabs = [
+      { key: 'meeting', label: '班会', icon: '📸' },
+      { key: 'violation', label: '违纪', icon: '⚠️' },
+      { key: 'praise', label: '表扬', icon: '⭐' },
+      { key: 'leave', label: '离班', icon: '🚶' },
+      { key: 'notice', label: '回执', icon: '📋' },
+      { key: 'rule', label: '班规', icon: '📏' },
+      { key: 'honor', label: '荣誉', icon: '🏆' },
+      { key: 'duty', label: '值日', icon: '🧹' },
+    ];
+    const dailySubTab = ref('meeting');
+    const studentSubTabs = [
+      { key: 'info', label: '信息卡', icon: '👤' },
+      { key: 'vio', label: '违纪', icon: '⚠️' },
+      { key: 'praise', label: '表扬', icon: '⭐' },
+      { key: 'watch', label: '关注', icon: '🔍' },
+    ];
+    const studentSubTab = ref('info');
+    const studySubTabs = [
+      { key: 'overview', label: '总览', icon: '📈' },
+      { key: 'warn', label: '预警', icon: '⚠️' },
+      { key: 'comm', label: '沟通', icon: '💬' },
+    ];
+    const studySubTab = ref('overview');
 
     const detailTabs = [
       { key: 'info', label: '信息' },
@@ -1205,6 +1583,15 @@ createApp({
           safetyRecords: safetyRecords.value,
           exams: exams.value,
           homework: homework.value,
+          meetings: meetings.value,
+          violations: violations.value,
+          praises: praises.value,
+          leaves: leaves.value,
+          notices: notices.value,
+          rules: rules.value,
+          honors: honors.value,
+          duties: duties.value,
+          watches: watches.value,
           teacherInfo: teacherInfo,
           teacherName: teacherName.value
         }));
@@ -1372,6 +1759,249 @@ createApp({
         saveData();
       }
     }
+
+// ====== 班主任工作台：日常管理数据 ======
+    // 主题班会
+    const meetings = ref([]);
+    const showMeetingForm = ref(false);
+    const editingMeeting = ref(null);
+    const meetingForm = reactive({ date: '', themeType: '防溺水', title: '', absent: '', absentList: '', content: '', photos: [] });
+
+    // 违纪记录
+    const violations = ref([]);
+    const showVioForm = ref(false);
+    const editingVio = ref(null);
+    const vioForm = reactive({ date: '', student: '', vioType: '迟到', desc: '', action: '' });
+
+    // 表扬记录
+    const praises = ref([]);
+    const showPraiseForm = ref(false);
+    const editingPraise = ref(null);
+    const praiseForm = reactive({ date: '', student: '', praiseType: '学习进步', reason: '', photos: [] });
+
+    // 离班记录
+    const leaves = ref([]);
+    const showLeaveForm = ref(false);
+    const editingLeave = ref(null);
+    const leaveForm = reactive({ date: '', student: '', time: '', toWhere: '医务室', expectedReturn: '', returned: false, note: '' });
+
+    // 通知回执
+    const notices = ref([]);
+    const showNoticeForm = ref(false);
+    const editingNotice = ref(null);
+    const noticeForm = reactive({ name: '', date: '', deadline: '', total: 0, done: 0, missing: '', photos: [] });
+
+    // 班规执行
+    const rules = ref([]);
+    const showRuleForm = ref(false);
+    const editingRule = ref(null);
+    const ruleForm = reactive({ date: '', student: '', type: '加分', score: '+1', reason: '', action: '', photos: [] });
+
+    // 集体荣誉
+    const honors = ref([]);
+    const showHonorForm = ref(false);
+    const editingHonor = ref(null);
+    const honorForm = reactive({ date: '', name: '', level: '', students: '', photos: [], note: '' });
+
+    // 值日排程
+    const duties = ref([]);
+    const showDutyForm = ref(false);
+    const editingDuty = ref(null);
+    const dutyForm = reactive({ week: '', leader: '', members: '', photos: [], note: '' });
+
+    // 特别关注
+    const watches = ref([]);
+    const showWatchForm = ref(false);
+    const editingWatch = ref(null);
+    const watchForm = reactive({ student: '', reason: '成绩下滑', note: '' });
+
+    // 图片预览
+    const showPhotoPreview = ref(false);
+    const previewPhotoUrl = ref('');
+
+    function previewPhoto(url) {
+      previewPhotoUrl.value = url;
+      showPhotoPreview.value = true;
+    }
+
+    // 通用图片添加（base64）
+    function addPhotos(event, target) {
+      const files = event.target.files;
+      if (!files.length) return;
+      const formMap = { meeting: meetingForm, praise: praiseForm, notice: noticeForm, rule: ruleForm, honor: honorForm, duty: dutyForm };
+      const form = formMap[target];
+      if (!form) return;
+      for (const file of files) {
+        if (file.size > 5 * 1024 * 1024) { alert('图片超过5MB，请压缩后上传'); continue; }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          form.photos.push(e.target.result);
+        };
+        reader.readAsDataURL(file);
+      }
+      event.target.value = '';
+    }
+
+    // ====== 主题班会 ======
+    function resetMeetingForm() { meetingForm.date=''; meetingForm.themeType='防溺水'; meetingForm.title=''; meetingForm.absent=''; meetingForm.absentList=''; meetingForm.content=''; meetingForm.photos=[]; }
+    function openMeetingForm(item) {
+      editingMeeting.value = item;
+      if (item) { Object.assign(meetingForm, { date: item.date, themeType: item.themeType, title: item.title, absent: item.absent, absentList: item.absentList||'', content: item.content, photos: [...(item.photos||[])] }); }
+      else { resetMeetingForm(); meetingForm.date = new Date().toISOString().slice(0,10); }
+      showMeetingForm.value = true;
+    }
+    function saveMeeting() {
+      if (!meetingForm.title.trim()) return;
+      const data = { id: editingMeeting.value ? editingMeeting.value.id : Date.now(), ...meetingForm };
+      if (editingMeeting.value) { Object.assign(editingMeeting.value, data); }
+      else { meetings.value.unshift(data); }
+      showMeetingForm.value = false; editingMeeting.value = null; saveData();
+    }
+    function deleteMeeting(id) { meetings.value = meetings.value.filter(x => x.id !== id); saveData(); }
+
+    // ====== 违纪记录 ======
+    function resetVioForm() { vioForm.date=''; vioForm.student=''; vioForm.vioType='迟到'; vioForm.desc=''; vioForm.action=''; }
+    function openVioForm(item) {
+      editingVio.value = item;
+      if (item) { Object.assign(vioForm, item); }
+      else { resetVioForm(); vioForm.date = new Date().toISOString().slice(0,10); }
+      showVioForm.value = true;
+    }
+    function saveVio() {
+      if (!vioForm.student.trim()) return;
+      const data = { id: editingVio.value ? editingVio.value.id : Date.now(), ...vioForm };
+      if (editingVio.value) { Object.assign(editingVio.value, data); }
+      else { violations.value.unshift(data); }
+      showVioForm.value = false; editingVio.value = null; saveData();
+    }
+    function deleteViolation(id) { violations.value = violations.value.filter(x => x.id !== id); saveData(); }
+
+    // ====== 表扬记录 ======
+    function resetPraiseForm() { praiseForm.date=''; praiseForm.student=''; praiseForm.praiseType='学习进步'; praiseForm.reason=''; praiseForm.photos=[]; }
+    function openPraiseForm(item) {
+      editingPraise.value = item;
+      if (item) { Object.assign(praiseForm, { ...item, photos: [...(item.photos||[])] }); }
+      else { resetPraiseForm(); praiseForm.date = new Date().toISOString().slice(0,10); }
+      showPraiseForm.value = true;
+    }
+    function savePraise() {
+      if (!praiseForm.student.trim()) return;
+      const data = { id: editingPraise.value ? editingPraise.value.id : Date.now(), ...praiseForm };
+      if (editingPraise.value) { Object.assign(editingPraise.value, data); }
+      else { praises.value.unshift(data); }
+      showPraiseForm.value = false; editingPraise.value = null; saveData();
+    }
+    function deletePraise(id) { praises.value = praises.value.filter(x => x.id !== id); saveData(); }
+
+    // ====== 离班记录 ======
+    function resetLeaveForm() { leaveForm.date=''; leaveForm.student=''; leaveForm.time=''; leaveForm.toWhere='医务室'; leaveForm.expectedReturn=''; leaveForm.returned=false; leaveForm.note=''; }
+    function openLeaveForm(item) {
+      editingLeave.value = item;
+      if (item) { Object.assign(leaveForm, item); }
+      else { resetLeaveForm(); leaveForm.date = new Date().toISOString().slice(0,10); }
+      showLeaveForm.value = true;
+    }
+    function saveLeave() {
+      if (!leaveForm.student.trim()) return;
+      const data = { id: editingLeave.value ? editingLeave.value.id : Date.now(), ...leaveForm };
+      if (editingLeave.value) { Object.assign(editingLeave.value, data); }
+      else { leaves.value.unshift(data); }
+      showLeaveForm.value = false; editingLeave.value = null; saveData();
+    }
+    function deleteLeave(id) { leaves.value = leaves.value.filter(x => x.id !== id); saveData(); }
+    function markReturned(id) { const l = leaves.value.find(x => x.id === id); if(l) { l.returned = true; saveData(); } }
+
+    // ====== 通知回执 ======
+    function resetNoticeForm() { noticeForm.name=''; noticeForm.date=''; noticeForm.deadline=''; noticeForm.total=0; noticeForm.done=0; noticeForm.missing=''; noticeForm.photos=[]; }
+    function openNoticeForm(item) {
+      editingNotice.value = item;
+      if (item) { Object.assign(noticeForm, { ...item, photos: [...(item.photos||[])] }); }
+      else { resetNoticeForm(); noticeForm.date = new Date().toISOString().slice(0,10); }
+      showNoticeForm.value = true;
+    }
+    function saveNotice() {
+      if (!noticeForm.name.trim()) return;
+      const data = { id: editingNotice.value ? editingNotice.value.id : Date.now(), ...noticeForm };
+      if (editingNotice.value) { Object.assign(editingNotice.value, data); }
+      else { notices.value.unshift(data); }
+      showNoticeForm.value = false; editingNotice.value = null; saveData();
+    }
+    function deleteNotice(id) { notices.value = notices.value.filter(x => x.id !== id); saveData(); }
+
+    // ====== 班规执行 ======
+    function resetRuleForm() { ruleForm.date=''; ruleForm.student=''; ruleForm.type='加分'; ruleForm.score='+1'; ruleForm.reason=''; ruleForm.action=''; ruleForm.photos=[]; }
+    function openRuleForm(item) {
+      editingRule.value = item;
+      if (item) { Object.assign(ruleForm, { ...item, photos: [...(item.photos||[])] }); }
+      else { resetRuleForm(); ruleForm.date = new Date().toISOString().slice(0,10); }
+      showRuleForm.value = true;
+    }
+    function saveRule() {
+      if (!ruleForm.student.trim()) return;
+      const data = { id: editingRule.value ? editingRule.value.id : Date.now(), ...ruleForm };
+      if (editingRule.value) { Object.assign(editingRule.value, data); }
+      else { rules.value.unshift(data); }
+      showRuleForm.value = false; editingRule.value = null; saveData();
+    }
+    function deleteRule(id) { rules.value = rules.value.filter(x => x.id !== id); saveData(); }
+
+    // ====== 集体荣誉 ======
+    function resetHonorForm() { honorForm.date=''; honorForm.name=''; honorForm.level=''; honorForm.students=''; honorForm.photos=[]; honorForm.note=''; }
+    function openHonorForm(item) {
+      editingHonor.value = item;
+      if (item) { Object.assign(honorForm, { ...item, photos: [...(item.photos||[])] }); }
+      else { resetHonorForm(); honorForm.date = new Date().toISOString().slice(0,10); }
+      showHonorForm.value = true;
+    }
+    function saveHonor() {
+      if (!honorForm.name.trim()) return;
+      const data = { id: editingHonor.value ? editingHonor.value.id : Date.now(), ...honorForm };
+      if (editingHonor.value) { Object.assign(editingHonor.value, data); }
+      else { honors.value.unshift(data); }
+      showHonorForm.value = false; editingHonor.value = null; saveData();
+    }
+    function deleteHonor(id) { honors.value = honors.value.filter(x => x.id !== id); saveData(); }
+
+    // ====== 值日排程 ======
+    function resetDutyForm() { dutyForm.week=''; dutyForm.leader=''; dutyForm.members=''; dutyForm.photos=[]; dutyForm.note=''; }
+    function openDutyForm(item) {
+      editingDuty.value = item;
+      if (item) { Object.assign(dutyForm, { ...item, photos: [...(item.photos||[])] }); }
+      else { resetDutyForm(); }
+      showDutyForm.value = true;
+    }
+    function saveDuty() {
+      if (!dutyForm.leader.trim()) return;
+      const data = { id: editingDuty.value ? editingDuty.value.id : Date.now(), ...dutyForm, done: editingDuty.value ? editingDuty.value.done || false : false };
+      if (editingDuty.value) { Object.assign(editingDuty.value, data); }
+      else { duties.value.unshift(data); }
+      showDutyForm.value = false; editingDuty.value = null; saveData();
+    }
+    function deleteDuty(id) { duties.value = duties.value.filter(x => x.id !== id); saveData(); }
+    function markDutyDone(id) { const d = duties.value.find(x => x.id === id); if(d) { d.done = true; saveData(); } }
+
+    // ====== 特别关注 ======
+    function resetWatchForm() { watchForm.student=''; watchForm.reason='成绩下滑'; watchForm.note=''; }
+    function openWatchForm(item) {
+      editingWatch.value = item;
+      if (item) { Object.assign(watchForm, item); }
+      else { resetWatchForm(); }
+      showWatchForm.value = true;
+    }
+    function saveWatch() {
+      if (!watchForm.student.trim()) return;
+      const data = { id: editingWatch.value ? editingWatch.value.id : Date.now(), ...watchForm };
+      if (editingWatch.value) { Object.assign(editingWatch.value, data); }
+      else { watches.value.unshift(data); }
+      showWatchForm.value = false; editingWatch.value = null; saveData();
+    }
+    function deleteWatch(id) { watches.value = watches.value.filter(x => x.id !== id); saveData(); }
+
+    // ====== Tab 切换 ======
+    function switchTab(key) {
+      tab.value = key;
+    }
+
 
     // ====== Safety  ======
     const safetyRecords = ref([]);
@@ -1675,7 +2305,7 @@ createApp({
       document.documentElement.setAttribute('data-theme', savedTheme);
     }
 
-    const APP_VERSION = '20260729.8';
+    const APP_VERSION = '20260729.9';
 
     const updating = ref(false);
     function checkUpdate() {
@@ -1899,6 +2529,15 @@ createApp({
       if (data.safetyRecords) safetyRecords.value = data.safetyRecords;
       if (data.exams) exams.value = data.exams;
       if (data.homework) homework.value = data.homework;
+      if (data.meetings) meetings.value = data.meetings;
+      if (data.violations) violations.value = data.violations;
+      if (data.praises) praises.value = data.praises;
+      if (data.leaves) leaves.value = data.leaves;
+      if (data.notices) notices.value = data.notices;
+      if (data.rules) rules.value = data.rules;
+      if (data.honors) honors.value = data.honors;
+      if (data.duties) duties.value = data.duties;
+      if (data.watches) watches.value = data.watches;
       if (data.teacherInfo) Object.assign(teacherInfo, data.teacherInfo);
       if (data.teacherName) teacherName.value = data.teacherName;
     }
@@ -1940,11 +2579,32 @@ createApp({
       showThemePicker, currentTheme, themeNames, themeList, setTheme,
       // Version
       APP_VERSION, updating, checkUpdate,
+      // Daily Management
+      meetings, showMeetingForm, editingMeeting, meetingForm, openMeetingForm, saveMeeting, deleteMeeting,
+      violations, showVioForm, editingVio, vioForm, openVioForm, saveVio, deleteViolation,
+      praises, showPraiseForm, editingPraise, praiseForm, openPraiseForm, savePraise, deletePraise,
+      leaves, showLeaveForm, editingLeave, leaveForm, openLeaveForm, saveLeave, deleteLeave, markReturned,
+      notices, showNoticeForm, editingNotice, noticeForm, openNoticeForm, saveNotice, deleteNotice,
+      rules, showRuleForm, editingRule, ruleForm, openRuleForm, saveRule, deleteRule,
+      honors, showHonorForm, editingHonor, honorForm, openHonorForm, saveHonor, deleteHonor,
+      duties, showDutyForm, editingDuty, dutyForm, openDutyForm, saveDuty, deleteDuty, markDutyDone,
+      watches, showWatchForm, editingWatch, watchForm, openWatchForm, saveWatch, deleteWatch,
+      showPhotoPreview, previewPhotoUrl, previewPhoto, addPhotos,
+      classSubTab, classSubTabs, teachSubTab, teachSubTabs,
+      dailySubTab, dailySubTabs, studentSubTab, studentSubTabs, studySubTab, studySubTabs,
+      switchTab,
       // Reset
       showResetConfirm, resetConfirmText, resetData, confirmReset,
     };
   }
 }).mount('#app');
 </script>
+    <!-- ===== 底部导航栏 ===== -->
+    <nav class="tab-bar">
+      <div v-for="tb in tabs" :key="tb.key" :class="['tab-item', {active: tab===tb.key}]" @click="switchTab(tb.key)">
+        <span class="tab-icon" v-html="tb.icon"></span>
+        <span class="tab-label">{{ tb.label }}</span>
+      </div>
+    </nav>
 </body>
 </html>
