@@ -518,6 +518,11 @@ textarea.input { resize: vertical; min-height: 60px; }
             <div v-if="m.summary" class="record-body">{{ m.summary }}</div>
             <div v-if="m.absentList" style="font-size:11px;color:var(--warning)">缺勤：{{ m.absentList }}</div>
             <div v-if="m.archived" style="font-size:11px;color:var(--success);margin-top:4px">✅ 已归档</div>
+            <div v-if="m.photos && m.photos.length" class="record-photos">
+              <div v-for="(p, pi) in m.photos" :key="pi" style="display:inline-block">
+                <img :src="p" style="width:60px;height:60px;border-radius:8px;object-fit:cover;margin:2px;cursor:pointer" @click="previewImage(p)">
+              </div>
+            </div>
           </div>
         </div>
 
@@ -548,6 +553,37 @@ textarea.input { resize: vertical; min-height: 60px; }
           </div>
         </div>
 
+        <!-- 班表 -->
+        <div v-show="classDailySub==='schedule'">
+          <div class="page-actions">
+            <span style="font-size:13px; color:var(--text-secondary)">共 {{ scheduleRecords.length }} 条课程</span>
+            <button class="btn-small" @click="showAddSchedule=true">+ 添加</button>
+          </div>
+          <div style="display:flex;gap:4px;margin-bottom:10px;overflow-x:auto">
+            <span v-for="w in [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]" :key="w" 
+              :class="['filter-tab', {active: scheduleWeekFilter===w}]" @click="scheduleWeekFilter=w" 
+              style="padding:4px 10px;font-size:11px;flex-shrink:0">{{ w }}周</span>
+            <span :class="['filter-tab', {active: scheduleWeekFilter===0}]" @click="scheduleWeekFilter=0" style="padding:4px 10px;font-size:11px;flex-shrink:0">全部</span>
+          </div>
+          <div v-if="filteredSchedule.length === 0" class="empty-state">暂无课程安排 📅</div>
+          <div v-for="s in filteredSchedule" :key="s.id" class="class-card">
+            <div class="class-time-block">
+              <div class="class-time-start">第{{ s.period }}节</div>
+              <div style="font-size:10px;color:var(--text-secondary)">周{{ s.weekday }}</div>
+            </div>
+            <div class="class-info">
+              <div style="font-size:14px;font-weight:600">{{ s.name }}</div>
+              <div class="class-detail">{{ s.teacher || '' }}<span v-if="s.location"> · {{ s.location }}</span></div>
+              <div style="font-size:11px;color:var(--text-tertiary)">第{{ s.week }}周</div>
+              <div v-if="s.note" style="font-size:11px;color:var(--text-secondary);margin-top:2px">📌 {{ s.note }}</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+              <span style="cursor:pointer;color:var(--primary);font-size:12px" @click="editSchedule(s)">✏️</span>
+              <span style="cursor:pointer;color:var(--danger);font-size:12px" @click="deleteSchedule(s.id)">删除</span>
+            </div>
+          </div>
+        </div>
+
         <!-- 通知回执单 -->
         <div v-show="classDailySub==='notice'">
           <div class="page-actions">
@@ -570,6 +606,11 @@ textarea.input { resize: vertical; min-height: 60px; }
               <span v-else style="font-size:11px;color:var(--warning)">收集中</span>
             </div>
             <div v-if="n.unreceived" style="font-size:11px;color:var(--danger)">未交：{{ n.unreceived }}</div>
+            <div v-if="n.photos && n.photos.length" class="record-photos">
+              <div v-for="(p, pi) in n.photos" :key="pi" style="display:inline-block">
+                <img :src="p" style="width:60px;height:60px;border-radius:8px;object-fit:cover;margin:2px;cursor:pointer" @click="previewImage(p)">
+              </div>
+            </div>
             <div style="margin-top:8px;display:flex;gap:8px">
               <span style="font-size:11px;color:var(--primary);cursor:pointer" @click="markCollected(n.id)">标记已收齐</span>
               <span style="font-size:11px;color:var(--danger);cursor:pointer" @click="editNotice(n)">✏️</span>
@@ -598,6 +639,11 @@ textarea.input { resize: vertical; min-height: 60px; }
               <span style="cursor:pointer;color:var(--danger);font-size:12px" @click="deleteRule(r.id)">删除</span>
             </div>
             <div v-if="r.action" class="record-body">处理：{{ r.action }}</div>
+            <div v-if="r.photos && r.photos.length" class="record-photos">
+              <div v-for="(p, pi) in r.photos" :key="pi" style="display:inline-block">
+                <img :src="p" style="width:60px;height:60px;border-radius:8px;object-fit:cover;margin:2px;cursor:pointer" @click="previewImage(p)">
+              </div>
+            </div>
           </div>
         </div>
 
@@ -635,6 +681,11 @@ textarea.input { resize: vertical; min-height: 60px; }
             </div>
             <div class="duty-members"><strong>组长：</strong>{{ d.leader }}</div>
             <div class="duty-members"><strong>组员：</strong>{{ d.members }}</div>
+            <div v-if="d.photos && d.photos.length" class="record-photos">
+              <div v-for="(p, pi) in d.photos" :key="pi" style="display:inline-block">
+                <img :src="p" style="width:60px;height:60px;border-radius:8px;object-fit:cover;margin:2px;cursor:pointer" @click="previewImage(p)">
+              </div>
+            </div>
             <div class="duty-footer">
               <span v-if="d.done" style="font-size:11px;color:var(--success)">✅ 已完成</span>
               <span v-else style="font-size:11px;color:var(--warning)">⏳ 待检查</span>
@@ -1233,6 +1284,60 @@ textarea.input { resize: vertical; min-height: 60px; }
       </div>
     </div>
 
+
+    <!-- 班表弹窗 -->
+    <div v-if="showAddSchedule" class="modal-overlay" @click.self="showAddSchedule=false; editingSchedule=null">
+      <div class="modal modal-wide">
+        <div class="modal-header">{{ editingSchedule ? "✏️ 编辑课程" : "📅 添加课程" }}</div>
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>周次 *</label>
+              <select v-model.number="scheduleForm.week" class="input">
+                <option v-for="w in 20" :key="w" :value="w">第{{ w }}周</option>
+              </select>
+            </div>
+            <div class="form-group w-50">
+              <label>星期几 *</label>
+              <select v-model="scheduleForm.weekday" class="input">
+                <option v-for="(d,i) in ['一','二','三','四','五']" :key="i" :value="d">周{{ d }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>节次 *</label>
+              <select v-model.number="scheduleForm.period" class="input">
+                <option v-for="p in 8" :key="p" :value="p">第{{ p }}节</option>
+              </select>
+            </div>
+            <div class="form-group w-50">
+              <label>课程名称 *</label>
+              <input v-model="scheduleForm.name" class="input" placeholder="如：语文、数学">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>任课老师</label>
+              <input v-model="scheduleForm.teacher" class="input" placeholder="如：李老师">
+            </div>
+            <div class="form-group w-50">
+              <label>上课地点</label>
+              <input v-model="scheduleForm.location" class="input" placeholder="如：本班教室">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>备注</label>
+            <input v-model="scheduleForm.note" class="input" placeholder="如：单周语文、双周英语">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showAddSchedule=false; editingSchedule=null">取消</button>
+          <button class="btn-primary" @click="addSchedule">保存</button>
+        </div>
+      </div>
+    </div>
+
     <!-- 主题班会弹窗 -->
     <div v-if="showAddMeeting" class="modal-overlay" @click.self="showAddMeeting=false; editingMeeting=null">
       <div class="modal modal-wide">
@@ -1273,6 +1378,16 @@ textarea.input { resize: vertical; min-height: 60px; }
           <div class="form-group">
             <label>班会内容摘要</label>
             <textarea v-model="meetingForm.summary" class="input" rows="3" placeholder="简要记录班会内容、学生反应等"></textarea>
+          </div>
+          <div class="form-group">
+            <label>📷 照片附件</label>
+            <button class="btn-small" @click="handlePhotoUpload(meetingForm.photos, 9)" style="margin-bottom:6px">+ 添加照片</button>
+            <div v-if="meetingForm.photos && meetingForm.photos.length" class="record-photos">
+              <div v-for="(p, pi) in meetingForm.photos" :key="pi" style="position:relative;display:inline-block">
+                <img :src="p" style="width:64px;height:64px;border-radius:8px;object-fit:cover;margin:2px">
+                <span style="position:absolute;top:-4px;right:-4px;background:var(--danger);color:#fff;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center" @click="removePhoto(meetingForm.photos, pi)">×</span>
+              </div>
+            </div>
           </div>
           <div class="checkbox-row">
             <input v-model="meetingForm.archived" type="checkbox" id="meetArch">
@@ -1369,6 +1484,16 @@ textarea.input { resize: vertical; min-height: 60px; }
               <input v-model="noticeForm.unreceived" class="input" placeholder="用逗号隔开">
             </div>
           </div>
+          <div class="form-group">
+            <label>📷 回执照片</label>
+            <button class="btn-small" @click="handlePhotoUpload(noticeForm.photos, 9)">+ 添加照片</button>
+            <div v-if="noticeForm.photos && noticeForm.photos.length" class="record-photos">
+              <div v-for="(p, pi) in noticeForm.photos" :key="pi" style="position:relative;display:inline-block">
+                <img :src="p" style="width:64px;height:64px;border-radius:8px;object-fit:cover;margin:2px">
+                <span style="position:absolute;top:-4px;right:-4px;background:var(--danger);color:#fff;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center" @click="removePhoto(noticeForm.photos, pi)">×</span>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="modal-footer">
           <button class="btn-cancel" @click="showAddNotice=false; editingNotice=null">取消</button>
@@ -1413,6 +1538,16 @@ textarea.input { resize: vertical; min-height: 60px; }
             <label>处理方式</label>
             <input v-model="ruleForm.action" class="input" placeholder="如：口头警告、擦黑板一周">
           </div>
+          <div class="form-group">
+            <label>📷 佐证照片</label>
+            <button class="btn-small" @click="handlePhotoUpload(ruleForm.photos, 9)">+ 添加照片</button>
+            <div v-if="ruleForm.photos && ruleForm.photos.length" class="record-photos">
+              <div v-for="(p, pi) in ruleForm.photos" :key="pi" style="position:relative;display:inline-block">
+                <img :src="p" style="width:64px;height:64px;border-radius:8px;object-fit:cover;margin:2px">
+                <span style="position:absolute;top:-4px;right:-4px;background:var(--danger);color:#fff;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center" @click="removePhoto(ruleForm.photos, pi)">×</span>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="modal-footer">
           <button class="btn-cancel" @click="showAddRule=false; editingRule=null">取消</button>
@@ -1448,6 +1583,16 @@ textarea.input { resize: vertical; min-height: 60px; }
             <label>参与学生</label>
             <input v-model="honorForm.students" class="input" placeholder="主要参与学生姓名">
           </div>
+          <div class="form-group">
+            <label>📷 荣誉照片</label>
+            <button class="btn-small" @click="handlePhotoUpload(honorForm.photos, 9)">+ 添加照片</button>
+            <div v-if="honorForm.photos && honorForm.photos.length" class="record-photos">
+              <div v-for="(p, pi) in honorForm.photos" :key="pi" style="position:relative;display:inline-block">
+                <img :src="p" style="width:64px;height:64px;border-radius:8px;object-fit:cover;margin:2px">
+                <span style="position:absolute;top:-4px;right:-4px;background:var(--danger);color:#fff;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center" @click="removePhoto(honorForm.photos, pi)">×</span>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="modal-footer">
           <button class="btn-cancel" @click="showAddHonor=false; editingHonor=null">取消</button>
@@ -1478,6 +1623,16 @@ textarea.input { resize: vertical; min-height: 60px; }
           <div class="form-group">
             <label>组员名单 *</label>
             <input v-model="dutyForm.members" class="input" placeholder="用顿号隔开">
+          </div>
+          <div class="form-group">
+            <label>📷 值日照片</label>
+            <button class="btn-small" @click="handlePhotoUpload(dutyForm.photos, 9)">+ 添加照片</button>
+            <div v-if="dutyForm.photos && dutyForm.photos.length" class="record-photos">
+              <div v-for="(p, pi) in dutyForm.photos" :key="pi" style="position:relative;display:inline-block">
+                <img :src="p" style="width:64px;height:64px;border-radius:8px;object-fit:cover;margin:2px">
+                <span style="position:absolute;top:-4px;right:-4px;background:var(--danger);color:#fff;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center" @click="removePhoto(dutyForm.photos, pi)">×</span>
+              </div>
+            </div>
           </div>
         </div>
         <div class="modal-footer">
@@ -1611,6 +1766,14 @@ textarea.input { resize: vertical; min-height: 60px; }
       </div>
     </div>
 
+
+    <!-- 图片预览弹窗 -->
+    <div v-if="showImagePreview" class="modal-overlay" @click.self="showImagePreview=false">
+      <div style="max-width:90vw;max-height:90vh;display:flex;align-items:center;justify-content:center">
+        <img :src="previewImageUrl" style="max-width:90vw;max-height:90vh;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.3)">
+      </div>
+    </div>
+
     <!-- 编辑资料弹窗 -->
     <div v-if="showEditProfile" class="modal-overlay" @click.self="showEditProfile=false">
       <div class="modal modal-wide">
@@ -1721,6 +1884,7 @@ createApp({
     const dailySubs = [
       { key: 'meeting', label: '班会台账', icon: '📋' },
       { key: 'leave', label: '离班记录', icon: '🚶' },
+      { key: 'schedule', label: '班表', icon: '📅' },
       { key: 'notice', label: '通知回执', icon: '📄' },
       { key: 'rule', label: '班规执行', icon: '📏' },
       { key: 'honor', label: '荣誉榜', icon: '🏆' },
@@ -1790,6 +1954,7 @@ createApp({
           dutyRecords: dutyRecords.value,
           warningRecords: warningRecords.value,
           teacherCommRecords: teacherCommRecords.value,
+          scheduleRecords: scheduleRecords.value,
           teacherInfo: teacherInfo,
           teacherName: teacherName.value
         }));
@@ -2203,11 +2368,88 @@ createApp({
       saveData();
     }
 
+
+    // ====== 班表 ======
+    const scheduleRecords = ref([]);
+    const showAddSchedule = ref(false);
+    const editingSchedule = ref(null);
+    const scheduleWeekFilter = ref(1);
+    const scheduleForm = reactive({ week: 1, weekday: '一', period: 1, name: '', teacher: '', location: '', note: '' });
+
+    const filteredSchedule = computed(() => {
+      let list = [...scheduleRecords.value];
+      if (scheduleWeekFilter.value > 0) {
+        list = list.filter(s => s.week === scheduleWeekFilter.value);
+      }
+      return list.sort((a, b) => a.week - b.week || '一二三四五'.indexOf(a.weekday) - '一二三四五'.indexOf(b.weekday) || a.period - b.period);
+    });
+
+    function editSchedule(s) {
+      editingSchedule.value = s;
+      scheduleForm.week = s.week; scheduleForm.weekday = s.weekday; scheduleForm.period = s.period;
+      scheduleForm.name = s.name; scheduleForm.teacher = s.teacher || '';
+      scheduleForm.location = s.location || ''; scheduleForm.note = s.note || '';
+      showAddSchedule.value = true;
+    }
+
+    function addSchedule() {
+      if (!scheduleForm.name.trim()) return;
+      if (editingSchedule.value) {
+        Object.assign(editingSchedule.value, { ...scheduleForm, name: scheduleForm.name.trim() });
+      } else {
+        scheduleRecords.value.push({
+          id: Date.now(),
+          week: scheduleForm.week, weekday: scheduleForm.weekday, period: scheduleForm.period,
+          name: scheduleForm.name.trim(), teacher: scheduleForm.teacher || '',
+          location: scheduleForm.location || '', note: scheduleForm.note || ''
+        });
+      }
+      showAddSchedule.value = false;
+      editingSchedule.value = null;
+      scheduleForm.week = 1; scheduleForm.weekday = '一'; scheduleForm.period = 1; scheduleForm.name = '';
+      scheduleForm.teacher = ''; scheduleForm.location = ''; scheduleForm.note = '';
+      saveData();
+    }
+
+    function deleteSchedule(id) {
+      if (confirm('确定删除？')) {
+        scheduleRecords.value = scheduleRecords.value.filter(s => s.id !== id);
+        saveData();
+      }
+    }
+
+
+    // ====== 通用图片上传 ======
+    function handlePhotoUpload(formField, maxPhotos) {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          if (!formField.value) formField.value = [];
+          formField.value.push(ev.target.result);
+          if (maxPhotos && formField.value.length > maxPhotos) {
+            formField.value = formField.value.slice(-maxPhotos);
+          }
+        };
+        reader.readAsDataURL(file);
+      };
+      input.click();
+    }
+    function removePhoto(formField, index) {
+      if (formField.value) {
+        formField.value.splice(index, 1);
+      }
+    }
+
     // ====== 主题班会台账 ======
     const meetingRecords = ref([]);
     const showAddMeeting = ref(false);
     const editingMeeting = ref(null);
-    const meetingForm = reactive({ date: '', type: '防溺水', topic: '', absent: 0, absentList: '', summary: '', archived: false });
+    const meetingForm = reactive({ date: '', type: '防溺水', topic: '', absent: 0, absentList: '', summary: '', archived: false, photos: [] });
 
     const sortedMeetings = computed(() => {
       return [...meetingRecords.value].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
@@ -2218,6 +2460,7 @@ createApp({
       meetingForm.date = m.date; meetingForm.type = m.type; meetingForm.topic = m.topic;
       meetingForm.absent = m.absent; meetingForm.absentList = m.absentList || '';
       meetingForm.summary = m.summary || ''; meetingForm.archived = m.archived;
+      meetingForm.photos = m.photos ? [...m.photos] : [];
       showAddMeeting.value = true;
     }
 
@@ -2227,19 +2470,21 @@ createApp({
         Object.assign(editingMeeting.value, {
           date: meetingForm.date, type: meetingForm.type, topic: meetingForm.topic.trim(),
           absent: meetingForm.absent || 0, absentList: meetingForm.absentList || '',
-          summary: meetingForm.summary || '', archived: meetingForm.archived
+          summary: meetingForm.summary || '', archived: meetingForm.archived,
+          photos: meetingForm.photos ? [...meetingForm.photos] : []
         });
       } else {
         meetingRecords.value.unshift({
           id: Date.now(),
           date: meetingForm.date, type: meetingForm.type, topic: meetingForm.topic.trim(),
           absent: meetingForm.absent || 0, absentList: meetingForm.absentList || '',
-          summary: meetingForm.summary || '', archived: meetingForm.archived
+          summary: meetingForm.summary || '', archived: meetingForm.archived,
+          photos: meetingForm.photos ? [...meetingForm.photos] : []
         });
       }
       showAddMeeting.value = false;
       editingMeeting.value = null;
-      meetingForm.date = ''; meetingForm.type = '防溺水'; meetingForm.topic = ''; meetingForm.absent = 0; meetingForm.absentList = ''; meetingForm.summary = ''; meetingForm.archived = false;
+      meetingForm.date = ''; meetingForm.type = '防溺水'; meetingForm.topic = ''; meetingForm.absent = 0; meetingForm.absentList = ''; meetingForm.summary = ''; meetingForm.archived = false; meetingForm.photos = [];
       saveData();
     }
 
@@ -2304,7 +2549,7 @@ createApp({
     const noticeRecords = ref([]);
     const showAddNotice = ref(false);
     const editingNotice = ref(null);
-    const noticeForm = reactive({ name: '', date: '', deadline: '', total: 0, received: 0, unreceived: '' });
+    const noticeForm = reactive({ name: '', date: '', deadline: '', total: 0, received: 0, unreceived: '', photos: [] });
 
     const sortedNotices = computed(() => {
       return [...noticeRecords.value].sort((a, b) => b.date.localeCompare(a.date) || a.id - b.id);
@@ -2313,7 +2558,7 @@ createApp({
     function editNotice(n) {
       editingNotice.value = n;
       noticeForm.date = n.date; noticeForm.name = n.name; noticeForm.deadline = n.deadline;
-      noticeForm.total = n.total; noticeForm.received = n.received; noticeForm.unreceived = n.unreceived || '';
+      noticeForm.total = n.total; noticeForm.received = n.received; noticeForm.unreceived = n.unreceived || ''; noticeForm.photos = n.photos ? [...n.photos] : [];
       showAddNotice.value = true;
     }
 
@@ -2323,19 +2568,19 @@ createApp({
         Object.assign(editingNotice.value, {
           name: noticeForm.name.trim(), date: noticeForm.date, deadline: noticeForm.deadline,
           total: noticeForm.total || 0, received: noticeForm.received || 0,
-          unreceived: noticeForm.unreceived || ''
+          unreceived: noticeForm.unreceived || '', photos: noticeForm.photos ? [...noticeForm.photos] : []
         });
       } else {
         noticeRecords.value.unshift({
           id: Date.now(),
           name: noticeForm.name.trim(), date: noticeForm.date, deadline: noticeForm.deadline,
           total: noticeForm.total || 0, received: noticeForm.received || 0,
-          unreceived: noticeForm.unreceived || '', collected: false
+          unreceived: noticeForm.unreceived || '', photos: noticeForm.photos ? [...noticeForm.photos] : [], collected: false, photos: noticeForm.photos ? [...noticeForm.photos] : []
         });
       }
       showAddNotice.value = false;
       editingNotice.value = null;
-      noticeForm.name = ''; noticeForm.date = ''; noticeForm.deadline = ''; noticeForm.total = 0; noticeForm.received = 0; noticeForm.unreceived = '';
+      noticeForm.name = ''; noticeForm.date = ''; noticeForm.deadline = ''; noticeForm.total = 0; noticeForm.received = 0; noticeForm.unreceived = ''; noticeForm.photos = [];
       saveData();
     }
 
@@ -2355,7 +2600,7 @@ createApp({
     const ruleRecords = ref([]);
     const showAddRule = ref(false);
     const editingRule = ref(null);
-    const ruleForm = reactive({ date: '', student: '', type: '加分', score: 1, reason: '', action: '' });
+    const ruleForm = reactive({ date: '', student: '', type: '加分', score: 1, reason: '', action: '', photos: [] });
 
     const sortedRules = computed(() => {
       return [...ruleRecords.value].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
@@ -2364,7 +2609,7 @@ createApp({
     function editRule(r) {
       editingRule.value = r;
       ruleForm.date = r.date; ruleForm.student = r.student; ruleForm.type = r.score >= 0 ? '加分' : '扣分';
-      ruleForm.score = Math.abs(r.score); ruleForm.reason = r.reason; ruleForm.action = r.action || '';
+      ruleForm.score = Math.abs(r.score); ruleForm.reason = r.reason; ruleForm.action = r.action || ''; ruleForm.photos = r.photos ? [...r.photos] : [];
       showAddRule.value = true;
     }
 
@@ -2374,19 +2619,19 @@ createApp({
         Object.assign(editingRule.value, {
           date: ruleForm.date, student: ruleForm.student.trim(),
           type: ruleForm.type, score: ruleForm.type === '加分' ? Math.abs(ruleForm.score) : -Math.abs(ruleForm.score),
-          reason: ruleForm.reason.trim(), action: ruleForm.action || ''
+          reason: ruleForm.reason.trim(), action: ruleForm.action || '', photos: ruleForm.photos ? [...ruleForm.photos] : []
         });
       } else {
         ruleRecords.value.unshift({
           id: Date.now(),
           date: ruleForm.date, student: ruleForm.student.trim(), type: ruleForm.type,
           score: ruleForm.type === '加分' ? Math.abs(ruleForm.score) : -Math.abs(ruleForm.score),
-          reason: ruleForm.reason.trim(), action: ruleForm.action || ''
+          reason: ruleForm.reason.trim(), action: ruleForm.action || '', photos: ruleForm.photos ? [...ruleForm.photos] : []
         });
       }
       showAddRule.value = false;
       editingRule.value = null;
-      ruleForm.date = ''; ruleForm.student = ''; ruleForm.type = '加分'; ruleForm.score = 1; ruleForm.reason = ''; ruleForm.action = '';
+      ruleForm.date = ''; ruleForm.student = ''; ruleForm.type = '加分'; ruleForm.score = 1; ruleForm.reason = ''; ruleForm.action = ''; ruleForm.photos = [];
       saveData();
     }
 
@@ -2401,7 +2646,7 @@ createApp({
     const honorRecords = ref([]);
     const showAddHonor = ref(false);
     const editingHonor = ref(null);
-    const honorForm = reactive({ date: '', name: '', level: '校级', students: '' });
+    const honorForm = reactive({ date: '', name: '', level: '校级', students: '', photos: [] });
 
     const sortedHonors = computed(() => {
       return [...honorRecords.value].sort((a, b) => b.date.localeCompare(a.date) || a.id - b.id);
@@ -2409,7 +2654,7 @@ createApp({
 
     function editHonor(h) {
       editingHonor.value = h;
-      honorForm.date = h.date; honorForm.name = h.name; honorForm.level = h.level; honorForm.students = h.students || '';
+      honorForm.date = h.date; honorForm.name = h.name; honorForm.level = h.level; honorForm.students = h.students || ''; honorForm.photos = h.photos ? [...h.photos] : [];
       showAddHonor.value = true;
     }
 
@@ -2417,17 +2662,17 @@ createApp({
       if (!honorForm.name.trim() || !honorForm.date) return;
       if (editingHonor.value) {
         Object.assign(editingHonor.value, {
-          date: honorForm.date, name: honorForm.name.trim(), level: honorForm.level, students: honorForm.students || ''
+          date: honorForm.date, name: honorForm.name.trim(), level: honorForm.level, students: honorForm.students || '', photos: honorForm.photos ? [...honorForm.photos] : []
         });
       } else {
         honorRecords.value.unshift({
           id: Date.now(),
-          date: honorForm.date, name: honorForm.name.trim(), level: honorForm.level, students: honorForm.students || ''
+          date: honorForm.date, name: honorForm.name.trim(), level: honorForm.level, students: honorForm.students || '', photos: honorForm.photos ? [...honorForm.photos] : []
         });
       }
       showAddHonor.value = false;
       editingHonor.value = null;
-      honorForm.date = ''; honorForm.name = ''; honorForm.level = '校级'; honorForm.students = '';
+      honorForm.date = ''; honorForm.name = ''; honorForm.level = '校级'; honorForm.students = ''; honorForm.photos = [];
       saveData();
     }
 
@@ -2442,7 +2687,7 @@ createApp({
     const dutyRecords = ref([]);
     const showAddDuty = ref(false);
     const editingDuty = ref(null);
-    const dutyForm = reactive({ week: 1, dateRange: '', leader: '', members: '' });
+    const dutyForm = reactive({ week: 1, dateRange: '', leader: '', members: '', photos: [] });
 
     const sortedDuties = computed(() => {
       return [...dutyRecords.value].sort((a, b) => b.week - a.week);
@@ -2450,7 +2695,7 @@ createApp({
 
     function editDuty(d) {
       editingDuty.value = d;
-      dutyForm.week = d.week; dutyForm.dateRange = d.dateRange || ''; dutyForm.leader = d.leader; dutyForm.members = d.members;
+      dutyForm.week = d.week; dutyForm.dateRange = d.dateRange || ''; dutyForm.leader = d.leader; dutyForm.members = d.members; dutyForm.photos = d.photos ? [...d.photos] : [];
       showAddDuty.value = true;
     }
 
@@ -2458,18 +2703,18 @@ createApp({
       if (!dutyForm.leader.trim() || !dutyForm.members.trim() || !dutyForm.week) return;
       if (editingDuty.value) {
         Object.assign(editingDuty.value, {
-          week: dutyForm.week, dateRange: dutyForm.dateRange || '', leader: dutyForm.leader.trim(), members: dutyForm.members.trim()
+          week: dutyForm.week, dateRange: dutyForm.dateRange || '', leader: dutyForm.leader.trim(), members: dutyForm.members.trim(), photos: dutyForm.photos ? [...dutyForm.photos] : []
         });
       } else {
         dutyRecords.value.unshift({
           id: Date.now(),
           week: dutyForm.week, dateRange: dutyForm.dateRange || '', leader: dutyForm.leader.trim(),
-          members: dutyForm.members.trim(), done: false
+          members: dutyForm.members.trim(), done: false, photos: dutyForm.photos ? [...dutyForm.photos] : []
         });
       }
       showAddDuty.value = false;
       editingDuty.value = null;
-      dutyForm.week = 1; dutyForm.dateRange = ''; dutyForm.leader = ''; dutyForm.members = '';
+      dutyForm.week = 1; dutyForm.dateRange = ''; dutyForm.leader = ''; dutyForm.members = ''; dutyForm.photos = [];
       saveData();
     }
 
@@ -2670,6 +2915,9 @@ createApp({
     }
 
     // ====== Profile Actions  ======
+    const showImagePreview = ref(false);
+    const previewImageUrl = ref('');
+    function previewImage(url) { previewImageUrl.value = url; showImagePreview.value = true; }
     const showEditProfile = ref(false);
 
     function exportData() {
@@ -2988,6 +3236,7 @@ createApp({
       if (data.dutyRecords) dutyRecords.value = data.dutyRecords;
       if (data.warningRecords) warningRecords.value = data.warningRecords;
       if (data.teacherCommRecords) teacherCommRecords.value = data.teacherCommRecords;
+      if (data.scheduleRecords) scheduleRecords.value = data.scheduleRecords;
       if (data.teacherInfo) Object.assign(teacherInfo, data.teacherInfo);
       if (data.teacherName) teacherName.value = data.teacherName;
     }
@@ -3033,12 +3282,15 @@ createApp({
       honorRecords, showAddHonor, editingHonor, honorForm, sortedHonors, addHonor, editHonor, deleteHonor,
       // 值日排程
       dutyRecords, showAddDuty, editingDuty, dutyForm, sortedDuties, addDuty, editDuty, markDutyDone, deleteDuty,
+      // 班表
+      scheduleRecords, showAddSchedule, editingSchedule, scheduleForm, scheduleWeekFilter, filteredSchedule, addSchedule, editSchedule, deleteSchedule,
       // 学业预警
       warningRecords, showAddWarning, editingWarning, warningForm, sortedWarnings, addWarning, editWarning, markWarningCommunicated, deleteWarning,
       // 任课老师沟通
       teacherCommRecords, showAddComm, editingComm, commForm, sortedComms, addComm, editComm, markResolved, deleteComm,
       // Profile
       showEditProfile, teacherName, teacherInfo,
+      showImagePreview, previewImageUrl, previewImage, handlePhotoUpload, removePhoto,
       exportData, importData, resetData,
       // Word Import
       showWordImport, wordFile, wordFileName, wordFileSelected, wordImportType,
