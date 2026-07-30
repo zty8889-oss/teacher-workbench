@@ -787,6 +787,11 @@ textarea.input { resize: vertical; min-height: 60px; }
               <div class="warning-detail">{{ w.detail }}</div>
               <div v-if="w.followup" class="warning-detail" style="color:var(--primary)">跟进：{{ w.followup }}</div>
               <div v-if="w.communicated" class="warning-check">✅ 已沟通</div>
+              <div v-if="w.photos && w.photos.length" class="record-photos" style="margin-top:4px">
+                <div v-for="(p, pi) in w.photos" :key="pi" style="display:inline-block">
+                  <img :src="p" style="width:50px;height:50px;border-radius:6px;object-fit:cover;margin:1px;cursor:pointer" @click="previewImage(p)">
+                </div>
+              </div>
             </div>
             <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
               <span v-if="!w.communicated" style="font-size:11px;color:var(--primary);cursor:pointer" @click="markWarningCommunicated(w.id)">标记沟通</span>
@@ -811,6 +816,11 @@ textarea.input { resize: vertical; min-height: 60px; }
             <div class="comm-date">{{ c.date }}</div>
             <div class="comm-content">{{ c.feedback }}</div>
             <div v-if="c.followup" class="comm-followup">👉 跟进：{{ c.followup }}</div>
+            <div v-if="c.photos && c.photos.length" class="record-photos" style="margin:4px 0">
+              <div v-for="(p, pi) in c.photos" :key="pi" style="display:inline-block">
+                <img :src="p" style="width:50px;height:50px;border-radius:6px;object-fit:cover;margin:1px;cursor:pointer" @click="previewImage(p)">
+              </div>
+            </div>
             <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
               <span v-if="c.resolved" class="comm-status">✅ 已解决</span>
               <span v-else style="font-size:11px;color:var(--primary);cursor:pointer" @click="markResolved(c.id)">标记已解决</span>
@@ -1663,6 +1673,16 @@ textarea.input { resize: vertical; min-height: 60px; }
               <input v-model="warningForm.followup" class="input" placeholder="如：安排同桌帮扶">
             </div>
           </div>
+          <div class="form-group">
+            <label>📷 补充照片</label>
+            <button class="btn-small" @click="handlePhotoUpload(warningForm.photos, 9)">+ 添加照片</button>
+            <div v-if="warningForm.photos && warningForm.photos.length" class="record-photos">
+              <div v-for="(p, pi) in warningForm.photos" :key="pi" style="position:relative;display:inline-block">
+                <img :src="p" style="width:64px;height:64px;border-radius:8px;object-fit:cover;margin:2px">
+                <span style="position:absolute;top:-4px;right:-4px;background:var(--danger);color:#fff;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center" @click="removePhoto(warningForm.photos, pi)">×</span>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="modal-footer">
           <button class="btn-cancel" @click="showAddWarning=false; editingWarning=null">取消</button>
@@ -1703,6 +1723,16 @@ textarea.input { resize: vertical; min-height: 60px; }
           <div class="form-group">
             <label>班主任跟进</label>
             <textarea v-model="commForm.followup" class="input" rows="2" placeholder="如：明天班会强调作业态度"></textarea>
+          </div>
+          <div class="form-group">
+            <label>📷 沟通照片</label>
+            <button class="btn-small" @click="handlePhotoUpload(commForm.photos, 9)">+ 添加照片</button>
+            <div v-if="commForm.photos && commForm.photos.length" class="record-photos">
+              <div v-for="(p, pi) in commForm.photos" :key="pi" style="position:relative;display:inline-block">
+                <img :src="p" style="width:64px;height:64px;border-radius:8px;object-fit:cover;margin:2px">
+                <span style="position:absolute;top:-4px;right:-4px;background:var(--danger);color:#fff;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center" @click="removePhoto(commForm.photos, pi)">×</span>
+              </div>
+            </div>
           </div>
         </div>
         <div class="modal-footer">
@@ -2736,7 +2766,7 @@ createApp({
     const warningRecords = ref([]);
     const showAddWarning = ref(false);
     const editingWarning = ref(null);
-    const warningForm = reactive({ student: '', type: '单科下滑', detail: '', date: '', followup: '' });
+    const warningForm = reactive({ student: '', type: '单科下滑', detail: '', date: '', followup: '', photos: [] });
 
     const sortedWarnings = computed(() => {
       return [...warningRecords.value].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
@@ -2745,7 +2775,7 @@ createApp({
     function editWarning(w) {
       editingWarning.value = w;
       warningForm.date = w.date; warningForm.student = w.student; warningForm.type = w.type;
-      warningForm.detail = w.detail; warningForm.followup = w.followup || '';
+      warningForm.detail = w.detail; warningForm.followup = w.followup || ''; warningForm.photos = w.photos ? [...w.photos] : [];
       showAddWarning.value = true;
     }
 
@@ -2754,18 +2784,18 @@ createApp({
       if (editingWarning.value) {
         Object.assign(editingWarning.value, {
           date: warningForm.date, student: warningForm.student.trim(), type: warningForm.type,
-          detail: warningForm.detail.trim(), followup: warningForm.followup || ''
+          detail: warningForm.detail.trim(), followup: warningForm.followup || '', photos: warningForm.photos ? [...warningForm.photos] : []
         });
       } else {
         warningRecords.value.unshift({
           id: Date.now(),
           date: warningForm.date, student: warningForm.student.trim(), type: warningForm.type,
-          detail: warningForm.detail.trim(), followup: warningForm.followup || '', communicated: false
+          detail: warningForm.detail.trim(), followup: warningForm.followup || '', communicated: false, photos: warningForm.photos ? [...warningForm.photos] : []
         });
       }
       showAddWarning.value = false;
       editingWarning.value = null;
-      warningForm.student = ''; warningForm.type = '单科下滑'; warningForm.detail = ''; warningForm.date = ''; warningForm.followup = '';
+      warningForm.student = ''; warningForm.type = '单科下滑'; warningForm.detail = ''; warningForm.date = ''; warningForm.followup = ''; warningForm.photos = [];
       saveData();
     }
 
@@ -2871,7 +2901,7 @@ createApp({
     const teacherCommRecords = ref([]);
     const showAddComm = ref(false);
     const editingComm = ref(null);
-    const commForm = reactive({ date: '', teacher: '', method: '面谈', feedback: '', followup: '' });
+    const commForm = reactive({ date: '', teacher: '', method: '面谈', feedback: '', followup: '', photos: [] });
 
     const sortedComms = computed(() => {
       return [...teacherCommRecords.value].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
@@ -2880,7 +2910,7 @@ createApp({
     function editComm(c) {
       editingComm.value = c;
       commForm.date = c.date; commForm.teacher = c.teacher; commForm.method = c.method;
-      commForm.feedback = c.feedback; commForm.followup = c.followup || '';
+      commForm.feedback = c.feedback; commForm.followup = c.followup || ''; commForm.photos = c.photos ? [...c.photos] : [];
       showAddComm.value = true;
     }
 
@@ -2889,18 +2919,18 @@ createApp({
       if (editingComm.value) {
         Object.assign(editingComm.value, {
           date: commForm.date, teacher: commForm.teacher.trim(), method: commForm.method,
-          feedback: commForm.feedback.trim(), followup: commForm.followup || ''
+          feedback: commForm.feedback.trim(), followup: commForm.followup || '', photos: commForm.photos ? [...commForm.photos] : []
         });
       } else {
         teacherCommRecords.value.unshift({
           id: Date.now(),
           date: commForm.date, teacher: commForm.teacher.trim(), method: commForm.method,
-          feedback: commForm.feedback.trim(), followup: commForm.followup || '', resolved: false
+          feedback: commForm.feedback.trim(), followup: commForm.followup || '', resolved: false, photos: commForm.photos ? [...commForm.photos] : []
         });
       }
       showAddComm.value = false;
       editingComm.value = null;
-      commForm.date = ''; commForm.teacher = ''; commForm.method = '面谈'; commForm.feedback = ''; commForm.followup = '';
+      commForm.date = ''; commForm.teacher = ''; commForm.method = '面谈'; commForm.feedback = ''; commForm.followup = ''; commForm.photos = [];
       saveData();
     }
 
