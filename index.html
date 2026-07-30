@@ -560,6 +560,11 @@ textarea.input { resize: vertical; min-height: 60px; }
             <button class="btn-small" @click="showWordImport=true; wordImportType='schedule'">📥 导入</button>
             <button class="btn-small" @click="showAddSchedule=true">+ 添加</button>
           </div>
+          <!-- 学期起始日 -->
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 12px;background:var(--card);border-radius:12px;box-shadow:var(--shadow)">
+            <span style="font-size:12px;color:var(--text-secondary);white-space:nowrap">📅 学期起始（周一）</span>
+            <input v-model="semesterStart" type="date" class="input" style="padding:6px 10px;font-size:12px;flex:1">
+          </div>
           <!-- 周次选择 -->
           <div style="display:flex;gap:3px;margin-bottom:10px;overflow-x:auto;padding:2px 0">
             <span v-for="w in [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]" :key="w" 
@@ -571,7 +576,10 @@ textarea.input { resize: vertical; min-height: 60px; }
             <!-- 表头 -->
             <div style="display:grid;grid-template-columns:38px repeat(5,1fr);background:var(--primary-gradient);color:#fff;font-size:11px;font-weight:600">
               <div style="padding:8px 4px;text-align:center;border-right:1px solid rgba(255,255,255,0.15)">节</div>
-              <div v-for="d in ['一','二','三','四','五']" :key="d" style="padding:8px 2px;text-align:center;border-right:1px solid rgba(255,255,255,0.15)">周{{ d }}</div>
+              <div v-for="d in ['一','二','三','四','五']" :key="d" style="padding:4px 2px;text-align:center;border-right:1px solid rgba(255,255,255,0.15);line-height:1.3">
+                <div style="font-size:11px">周{{ d }}</div>
+                <div style="font-size:9px;opacity:.7">{{ getDateStr(scheduleWeekFilter, d).slice(5) }}</div>
+              </div>
             </div>
             <!-- 每节课行 -->
             <div v-for="p in 8" :key="p" style="display:grid;grid-template-columns:38px repeat(5,1fr);border-bottom:1px solid var(--border);font-size:12px">
@@ -584,7 +592,7 @@ textarea.input { resize: vertical; min-height: 60px; }
                 <div v-if="getScheduleCell(scheduleWeekFilter, d, p)" style="height:100%">
                   <div style="font-size:11px;font-weight:600;color:var(--primary);line-height:1.2">{{ getScheduleCell(scheduleWeekFilter, d, p).name }}</div>
                   <div style="font-size:9px;color:var(--text-secondary);margin-top:1px">{{ getScheduleCell(scheduleWeekFilter, d, p).teacher || '' }}</div>
-                  <div style="font-size:9px;color:var(--text-tertiary)">{{ getScheduleCell(scheduleWeekFilter, d, p).location || '' }}</div>
+                  <div style="font-size:9px;color:var(--text-tertiary)">{{ getDateStr(scheduleWeekFilter, d) }}</div>
                 </div>
                 <!-- 空课程 -->
                 <div v-else style="height:100%;display:flex;align-items:center;justify-content:center;color:var(--text-tertiary);font-size:18px">+</div>
@@ -1989,6 +1997,7 @@ createApp({
           warningRecords: warningRecords.value,
           teacherCommRecords: teacherCommRecords.value,
           scheduleRecords: scheduleRecords.value,
+          semesterStart: semesterStart.value,
           teacherInfo: teacherInfo,
           teacherName: teacherName.value
         }));
@@ -2408,6 +2417,20 @@ createApp({
     const showAddSchedule = ref(false);
     const editingSchedule = ref(null);
     const scheduleWeekFilter = ref(1);
+    const semesterStart = ref('');
+
+    function getDateStr(week, weekday) {
+      if (!semesterStart.value) return '';
+      const weekdays = ['一','二','三','四','五','六','日'];
+      const dayIdx = weekdays.indexOf(weekday);
+      if (dayIdx < 0) return '';
+      const start = new Date(semesterStart.value);
+      const target = new Date(start);
+      target.setDate(start.getDate() + (week - 1) * 7 + dayIdx);
+      const m = String(target.getMonth() + 1).padStart(2, '0');
+      const d = String(target.getDate()).padStart(2, '0');
+      return m + '/' + d;
+    }
     const scheduleForm = reactive({ week_start: 1, week_end: 20, weekday: '一', period: 1, name: '', teacher: '', location: '', note: '' });
 
     const filteredSchedule = computed(() => {
@@ -3354,6 +3377,7 @@ createApp({
       if (data.warningRecords) warningRecords.value = data.warningRecords;
       if (data.teacherCommRecords) teacherCommRecords.value = data.teacherCommRecords;
       if (data.scheduleRecords) scheduleRecords.value = data.scheduleRecords;
+      if (data.semesterStart) semesterStart.value = data.semesterStart;
       if (data.teacherInfo) Object.assign(teacherInfo, data.teacherInfo);
       if (data.teacherName) teacherName.value = data.teacherName;
     }
@@ -3400,7 +3424,7 @@ createApp({
       // 值日排程
       dutyRecords, showAddDuty, editingDuty, dutyForm, sortedDuties, addDuty, editDuty, markDutyDone, deleteDuty,
       // 班表
-      scheduleRecords, showAddSchedule, editingSchedule, scheduleForm, scheduleWeekFilter, filteredSchedule, addSchedule, editSchedule, deleteSchedule, getScheduleCell, clickScheduleCell,
+      scheduleRecords, showAddSchedule, editingSchedule, scheduleForm, scheduleWeekFilter, filteredSchedule, addSchedule, editSchedule, deleteSchedule, getScheduleCell, clickScheduleCell, semesterStart, getDateStr,
       // 学业预警
       warningRecords, showAddWarning, editingWarning, warningForm, sortedWarnings, addWarning, editWarning, markWarningCommunicated, deleteWarning,
       // 任课老师沟通
