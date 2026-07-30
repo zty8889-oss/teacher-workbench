@@ -273,6 +273,90 @@ textarea.input { resize: vertical; min-height: 60px; }
 .profile-item label { font-size: 14px; color: var(--text); font-weight: 500; }
 .profile-item span { font-size: 14px; color: var(--text-secondary); }
 .profile-about { text-align: center; padding: 20px; color: var(--text-tertiary); font-size: 12px; line-height: 1.8; }
+
+/* ===== Class Management ===== */
+.class-mgmt-tabs { display: flex; gap: 4px; margin-bottom: 14px; background: var(--card); border-radius: 14px; padding: 4px; box-shadow: var(--shadow); }
+.class-mgmt-tab { flex: 1; text-align: center; padding: 10px 4px; border-radius: 12px; font-size: 12px; font-weight: 600; color: var(--text-secondary); cursor: pointer; transition: all .25s; }
+.class-mgmt-tab.active { background: var(--primary-gradient); color: #fff; box-shadow: 0 2px 10px rgba(91,127,255,0.2); }
+.class-mgmt-tab .tab-icon { font-size: 18px; display: block; margin-bottom: 1px; }
+
+.daily-sub-tabs { display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto; padding: 2px 0; -webkit-overflow-scrolling: touch; }
+.daily-sub-tab { padding: 6px 14px; border-radius: 16px; font-size: 12px; font-weight: 500; background: var(--card); color: var(--text-secondary); cursor: pointer; white-space: nowrap; border: 1px solid var(--border); transition: all .25s; flex-shrink: 0; }
+.daily-sub-tab.active { background: var(--primary-gradient); color: #fff; border-color: transparent; box-shadow: 0 2px 8px rgba(91,127,255,0.25); }
+
+.record-card { background: var(--card); border-radius: 14px; padding: 14px 16px; margin-bottom: 8px; box-shadow: var(--shadow); border-left: 3px solid var(--primary); }
+.record-card.praise { border-left-color: var(--success); }
+.record-card.warning { border-left-color: var(--warning); }
+.record-card.danger { border-left-color: var(--danger); }
+.record-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+.record-title { font-size: 14px; font-weight: 600; }
+.record-date { font-size: 11px; color: var(--text-secondary); }
+.record-body { font-size: 13px; color: var(--text-secondary); margin-bottom: 4px; }
+.record-tag { display: inline-block; font-size: 10px; padding: 2px 10px; border-radius: 10px; font-weight: 500; background: #F0F5FF; color: var(--primary); margin-right: 4px; }
+.record-tag.success { background: #F0FFF5; color: var(--success); }
+.record-tag.danger { background: #FFF0F0; color: var(--danger); }
+.record-tag.warning { background: #FFF5E5; color: var(--warning); }
+.record-actions { display: flex; gap: 8px; margin-top: 8px; }
+.record-photo { width: 60px; height: 60px; border-radius: 8px; background: var(--border); display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--text-secondary); cursor: pointer; }
+.record-photos { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+
+.summary-card { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+.summary-item { text-align: center; background: var(--card); border-radius: 12px; padding: 12px 6px; box-shadow: var(--shadow); }
+.summary-num { font-size: 20px; font-weight: 800; color: var(--primary); }
+.summary-label { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+
+.checkbox-row { display: flex; align-items: center; gap: 8px; margin: 10px 0; }
+.checkbox-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary); }
+.checkbox-row label { font-size: 13px; color: var(--text-secondary); cursor: pointer; }
+
+.warning-card { background: var(--card); border-radius: 14px; padding: 14px; margin-bottom: 8px; box-shadow: var(--shadow); border-left: 3px solid var(--warning); display: flex; gap: 12px; align-items: center; }
+.warning-icon { font-size: 24px; }
+.warning-body { flex: 1; }
+.warning-name { font-size: 14px; font-weight: 600; }
+.warning-detail { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+.warning-check { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--success); }
+
+.comm-card { background: var(--card); border-radius: 14px; padding: 14px 16px; margin-bottom: 8px; box-shadow: var(--shadow); }
+.comm-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.comm-teacher { font-size: 14px; font-weight: 600; }
+.comm-method { font-size: 11px; color: var(--primary); background: #F0F5FF; padding: 2px 10px; border-radius: 10px; }
+.comm-date { font-size: 11px; color: var(--text-secondary); }
+.comm-content { font-size: 13px; color: var(--text); margin-bottom: 6px; }
+.comm-followup { font-size: 12px; color: var(--text-secondary); padding: 8px; background: #F8F9FC; border-radius: 8px; margin-top: 4px; }
+.comm-status { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--success); margin-top: 4px; }
+
+.honor-card { background: var(--card); border-radius: 14px; padding: 14px; margin-bottom: 8px; box-shadow: var(--shadow); display: flex; gap: 12px; align-items: center; }
+.honor-emoji { font-size: 32px; }
+.honor-body { flex: 1; }
+.honor-name { font-size: 14px; font-weight: 600; }
+.honor-level { font-size: 11px; padding: 2px 10px; border-radius: 10px; background: #FFEAA7; color: #B7950B; display: inline-block; margin-top: 3px; }
+.honor-level.school { background: #F0F5FF; color: var(--primary); }
+.honor-level.city { background: #FFF0F0; color: var(--danger); }
+
+.duty-card { background: var(--card); border-radius: 14px; padding: 14px 16px; margin-bottom: 8px; box-shadow: var(--shadow); }
+.duty-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.duty-week { font-size: 14px; font-weight: 600; }
+.duty-range { font-size: 11px; color: var(--text-secondary); }
+.duty-members { font-size: 13px; color: var(--text-secondary); padding: 6px 0; }
+.duty-members strong { color: var(--text); }
+.duty-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border); }
+
+.notice-card { background: var(--card); border-radius: 14px; padding: 14px 16px; margin-bottom: 8px; box-shadow: var(--shadow); }
+.notice-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.notice-meta { display: flex; gap: 12px; font-size: 11px; color: var(--text-secondary); margin-bottom: 6px; }
+.notice-progress { display: flex; align-items: center; gap: 10px; margin: 6px 0; }
+.notice-bar { flex: 1; height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; }
+.notice-bar-fill { height: 100%; border-radius: 3px; background: var(--primary-gradient); transition: width .3s; }
+
+.offclass-card { background: var(--card); border-radius: 14px; padding: 14px; margin-bottom: 8px; box-shadow: var(--shadow); border-left: 3px solid var(--warning); display: flex; gap: 10px; align-items: flex-start; }
+.offclass-time { text-align: center; min-width: 50px; }
+.offclass-h { font-size: 16px; font-weight: 700; color: var(--warning); }
+.offclass-label { font-size: 9px; color: var(--text-secondary); }
+.offclass-body { flex: 1; }
+.offclass-name { font-size: 14px; font-weight: 600; }
+.offclass-dest { font-size: 11px; padding: 1px 8px; border-radius: 8px; background: #F0F5FF; color: var(--primary); display: inline-block; margin: 2px 0; }
+.offclass-note { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+.offclass-returned { font-size: 11px; color: var(--success); font-weight: 500; }
 </style>
 </head>
 <body>
@@ -296,17 +380,17 @@ textarea.input { resize: vertical; min-height: 60px; }
       </div>
 
       <div class="stats-grid">
-        <div class="stat-card" @click="tab='classes'; classSubTab='students'">
+        <div class="stat-card" @click="tab='classes'; classMgmtTab='students'">
           <div class="stat-icon">👨‍🎓</div>
           <div class="stat-num">{{ students.length }}</div>
           <div class="stat-label">学生人数</div>
         </div>
-        <div class="stat-card" @click="tab='classes'; classSubTab='homework'">
+        <div class="stat-card" @click="tab='classes'; classMgmtTab='daily'; classDailySub='rule'">
           <div class="stat-icon">📝</div>
           <div class="stat-num">{{ getPendingHomework() }}</div>
           <div class="stat-label">待批作业</div>
         </div>
-        <div class="stat-card" @click="tab='classes'; classSubTab='students'">
+        <div class="stat-card" @click="tab='classes'; classMgmtTab='grades'; classGradeSub='overview'">
           <div class="stat-icon">📊</div>
           <div class="stat-num">{{ exams.length }}</div>
           <div class="stat-label">考试记录</div>
@@ -352,6 +436,290 @@ textarea.input { resize: vertical; min-height: 60px; }
           <h3>📖 教学任务</h3>
         </div>
         <p style="text-align:center; padding:30px; color:var(--text-secondary)">功能开发中，敬请期待...</p>
+      </div>
+    </div>
+
+<!-- ===== 班级管理 ===== -->
+    <div v-show="tab==='classes'">
+      <!-- 二级导航：学生管理 | 日常管理 | 学业关怀 -->
+      <div class="class-mgmt-tabs">
+        <div v-for="mt in mgmtTabs" :key="mt.key" :class="['class-mgmt-tab', {active: classMgmtTab===mt.key}]" @click="classMgmtTab=mt.key; classDailySub='meeting'; classGradeSub='overview'">
+          <span class="tab-icon">{{ mt.icon }}</span>
+          {{ mt.label }}
+        </div>
+      </div>
+
+      <!-- ========== 学生管理 ========== -->
+      <div v-show="classMgmtTab==='students'">
+        <div class="page-actions">
+          <input v-model="studentSearch" class="input" style="flex:1" placeholder="🔍 搜索学生姓名...">
+          <button class="btn-small" @click="showAddStudent=true">+ 添加</button>
+        </div>
+        <div class="student-count" style="margin-bottom:8px">共 {{ filteredStudents.length }} 名学生</div>
+        <div v-if="filteredStudents.length === 0" class="empty-state">暂无学生信息，点击上方添加 🙋</div>
+        <div v-for="s in filteredStudents" :key="s.id" class="student-card" @click="viewStudent(s)">
+          <div class="student-avatar" :style="{background: s.avatarColor || '#4A90D9'}">{{ s.name.charAt(0) }}</div>
+          <div class="student-info">
+            <div class="student-name">{{ s.name }}</div>
+            <div class="student-meta">
+              <span v-if="s.studentId">#{{ s.studentId }}&nbsp;·&nbsp;</span>
+              <span v-if="s.gender">{{ s.gender }}&nbsp;·&nbsp;</span>
+              <span v-if="s.parent">{{ s.parent }}</span>
+              <span v-if="s.phone">&nbsp;{{ s.phone }}</span>
+            </div>
+          </div>
+          <div class="student-arrow">›</div>
+        </div>
+      </div>
+
+      <!-- ========== 日常管理 ========== -->
+      <div v-show="classMgmtTab==='daily'">
+        <div class="daily-sub-tabs">
+          <div v-for="ds in dailySubs" :key="ds.key" :class="['daily-sub-tab', {active: classDailySub===ds.key}]" @click="classDailySub=ds.key">{{ ds.icon }} {{ ds.label }}</div>
+        </div>
+
+        <!-- 主题班会台账 -->
+        <div v-show="classDailySub==='meeting'">
+          <div class="page-actions">
+            <span style="font-size:13px; color:var(--text-secondary)">共 {{ meetingRecords.length }} 次班会</span>
+            <button class="btn-small" @click="showAddMeeting=true">+ 记录</button>
+          </div>
+          <div v-if="meetingRecords.length === 0" class="empty-state">暂未记录主题班会 📋</div>
+          <div v-for="m in sortedMeetings" :key="m.id" class="record-card">
+            <div class="record-header">
+              <div>
+                <div class="record-title">📌 {{ m.topic }}</div>
+                <div style="font-size:11px; color:var(--text-secondary);margin-top:2px">
+                  <span class="record-tag">{{ m.type }}</span>
+                  <span>{{ m.date }}</span>
+                  <span v-if="m.absent"> · 缺勤{{ m.absent }}人</span>
+                </div>
+              </div>
+              <span style="cursor:pointer;color:var(--danger);font-size:12px" @click="deleteMeeting(m.id)">删除</span>
+            </div>
+            <div v-if="m.summary" class="record-body">{{ m.summary }}</div>
+            <div v-if="m.absentList" style="font-size:11px;color:var(--warning)">缺勤：{{ m.absentList }}</div>
+            <div v-if="m.archived" style="font-size:11px;color:var(--success);margin-top:4px">✅ 已归档</div>
+          </div>
+        </div>
+
+        <!-- 临时离班记录 -->
+        <div v-show="classDailySub==='leave'">
+          <div class="page-actions">
+            <span style="font-size:13px; color:var(--text-secondary)">共 {{ leaveRecords.length }} 条记录</span>
+            <button class="btn-small" @click="showAddLeave=true">+ 记录</button>
+          </div>
+          <div v-if="leaveRecords.length === 0" class="empty-state">暂无临时离班记录 🚶</div>
+          <div v-for="r in sortedLeaves" :key="r.id" class="offclass-card">
+            <div class="offclass-time">
+              <div class="offclass-h">{{ r.time }}</div>
+              <div class="offclass-label">离班</div>
+            </div>
+            <div class="offclass-body">
+              <div class="offclass-name">{{ r.student }}</div>
+              <span class="offclass-dest">{{ r.destination }}</span>
+              <div v-if="r.returnTime" class="offclass-note">预计 {{ r.returnTime }} 返回</div>
+              <div style="margin-top:4px">
+                <span v-if="r.returned" class="offclass-returned">✅ 已返回</span>
+                <span v-else class="offclass-note" style="color:var(--warning)">⏳ 未返回</span>
+                <span v-if="!r.returned" style="margin-left:8px;font-size:11px;color:var(--primary);cursor:pointer" @click="markReturned(r.id)">标记返回</span>
+              </div>
+            </div>
+            <span style="cursor:pointer;color:var(--danger);font-size:12px" @click="deleteLeave(r.id)">删除</span>
+          </div>
+        </div>
+
+        <!-- 通知回执单 -->
+        <div v-show="classDailySub==='notice'">
+          <div class="page-actions">
+            <span style="font-size:13px; color:var(--text-secondary)">共 {{ noticeRecords.length }} 条通知</span>
+            <button class="btn-small" @click="showAddNotice=true">+ 通知</button>
+          </div>
+          <div v-if="noticeRecords.length === 0" class="empty-state">暂无通知回执记录 📄</div>
+          <div v-for="n in sortedNotices" :key="n.id" class="notice-card">
+            <div class="notice-title">{{ n.name }}</div>
+            <div class="notice-meta">
+              <span>📅 {{ n.date }}</span>
+              <span>⏰ 截止 {{ n.deadline }}</span>
+            </div>
+            <div class="notice-progress">
+              <span style="font-size:11px;min-width:50px">{{ n.received||0 }}/{{ n.total||0 }}人</span>
+              <div class="notice-bar">
+                <div class="notice-bar-fill" :style="{width: (n.total ? (n.received||0)/n.total*100 : 0) + '%'}"></div>
+              </div>
+              <span v-if="n.collected" style="font-size:11px;color:var(--success)">✅ 已收齐</span>
+              <span v-else style="font-size:11px;color:var(--warning)">收集中</span>
+            </div>
+            <div v-if="n.unreceived" style="font-size:11px;color:var(--danger)">未交：{{ n.unreceived }}</div>
+            <div style="margin-top:8px;display:flex;gap:8px">
+              <span style="font-size:11px;color:var(--primary);cursor:pointer" @click="markCollected(n.id)">标记已收齐</span>
+              <span style="font-size:11px;color:var(--danger);cursor:pointer" @click="deleteNotice(n.id)">删除</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 班规执行记录 -->
+        <div v-show="classDailySub==='rule'">
+          <div class="page-actions">
+            <span style="font-size:13px; color:var(--text-secondary)">共 {{ ruleRecords.length }} 条记录</span>
+            <button class="btn-small" @click="showAddRule=true">+ 记录</button>
+          </div>
+          <div v-if="ruleRecords.length === 0" class="empty-state">暂无班规执行记录 📏</div>
+          <div v-for="r in sortedRules" :key="r.id" class="record-card" :class="{praise: r.type==='加分', danger: r.type==='扣分'}">
+            <div class="record-header">
+              <div>
+                <div class="record-title">
+                  {{ r.student }} 
+                  <span :style="{color: r.type==='加分' ? 'var(--success)' : 'var(--danger)', fontWeight:700}">{{ r.type==='加分' ? '+' : '' }}{{ r.score }}</span>
+                </div>
+                <div style="font-size:11px; color:var(--text-secondary);margin-top:2px">{{ r.date }} · {{ r.reason }}</div>
+              </div>
+              <span style="cursor:pointer;color:var(--danger);font-size:12px" @click="deleteRule(r.id)">删除</span>
+            </div>
+            <div v-if="r.action" class="record-body">处理：{{ r.action }}</div>
+          </div>
+        </div>
+
+        <!-- 集体荣誉榜 -->
+        <div v-show="classDailySub==='honor'">
+          <div class="page-actions">
+            <span style="font-size:13px; color:var(--text-secondary)">共 {{ honorRecords.length }} 项荣誉</span>
+            <button class="btn-small" @click="showAddHonor=true">+ 荣誉</button>
+          </div>
+          <div v-if="honorRecords.length === 0" class="empty-state">暂无集体荣誉记录 🏆</div>
+          <div v-for="h in sortedHonors" :key="h.id" class="honor-card">
+            <div class="honor-emoji">🏆</div>
+            <div class="honor-body">
+              <div class="honor-name">{{ h.name }}</div>
+              <div style="font-size:11px;color:var(--text-secondary);margin:2px 0">{{ h.date }}</div>
+              <span :class="['honor-level', {school: h.level==='校级'||!h.level, city: h.level==='市级以上'}]">{{ h.level || '校级' }}</span>
+              <span v-if="h.students" style="font-size:11px;color:var(--text-secondary);margin-left:6px">参与：{{ h.students }}</span>
+            </div>
+            <span style="cursor:pointer;color:var(--danger);font-size:12px" @click="deleteHonor(h.id)">删除</span>
+          </div>
+        </div>
+
+        <!-- 值日排程 -->
+        <div v-show="classDailySub==='duty'">
+          <div class="page-actions">
+            <span style="font-size:13px; color:var(--text-secondary)">共 {{ dutyRecords.length }} 组</span>
+            <button class="btn-small" @click="showAddDuty=true">+ 排班</button>
+          </div>
+          <div v-if="dutyRecords.length === 0" class="empty-state">暂无值日安排 🧹</div>
+          <div v-for="d in sortedDuties" :key="d.id" class="duty-card">
+            <div class="duty-header">
+              <div class="duty-week">第{{ d.week }}周</div>
+              <div class="duty-range">📅 {{ d.dateRange || '—' }}</div>
+            </div>
+            <div class="duty-members"><strong>组长：</strong>{{ d.leader }}</div>
+            <div class="duty-members"><strong>组员：</strong>{{ d.members }}</div>
+            <div class="duty-footer">
+              <span v-if="d.done" style="font-size:11px;color:var(--success)">✅ 已完成</span>
+              <span v-else style="font-size:11px;color:var(--warning)">⏳ 待检查</span>
+              <span style="display:flex;gap:8px">
+                <span v-if="!d.done" style="font-size:11px;color:var(--primary);cursor:pointer" @click="markDutyDone(d.id)">标记完成</span>
+                <span style="font-size:11px;color:var(--danger);cursor:pointer" @click="deleteDuty(d.id)">删除</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== 学业关怀 ========== -->
+      <div v-show="classMgmtTab==='grades'">
+        <div class="daily-sub-tabs">
+          <div v-for="gs in gradeSubs" :key="gs.key" :class="['daily-sub-tab', {active: classGradeSub===gs.key}]" @click="classGradeSub=gs.key">{{ gs.icon }} {{ gs.label }}</div>
+        </div>
+
+        <!-- 班级成绩总览 -->
+        <div v-show="classGradeSub==='overview'">
+          <div class="page-actions">
+            <span style="font-size:13px; color:var(--text-secondary)">共 {{ exams.length }} 场考试</span>
+            <button class="btn-small" @click="showAddExam=true; editingExam=null; resetExamForm()">+ 考试</button>
+            <button class="btn-small" @click="showWordImport=true; wordImportType='exams'">📥 导入</button>
+          </div>
+          <div v-if="exams.length === 0" class="empty-state">暂无考试记录 📊</div>
+          <div v-for="ex in exams" :key="ex.id" class="exam-card">
+            <div class="exam-header" @click="ex.open=!ex.open">
+              <div class="exam-title">{{ ex.name }}</div>
+              <div class="exam-date">{{ ex.date }}</div>
+              <div class="exam-toggle" :style="{transform: ex.open ? 'rotate(180deg)' : ''}">▼</div>
+            </div>
+            <div v-show="ex.open" class="exam-body">
+              <div class="exam-stats">
+                <div class="exam-stat"><label>均分</label><span>{{ avgScore(ex) }}</span></div>
+                <div class="exam-stat"><label>最高</label><span>{{ maxScore(ex) }}</span></div>
+                <div class="exam-stat"><label>最低</label><span>{{ minScore(ex) }}</span></div>
+                <div class="exam-stat"><label>及格率</label><span>{{ passRate(ex) }}%</span></div>
+              </div>
+              <div v-if="ex.subjects && ex.subjects.length" style="margin-bottom:8px">
+                <div style="font-size:12px;font-weight:600;margin-bottom:6px">📚 科目统计</div>
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;font-size:11px">
+                  <div v-for="sub in ex.subjects" :key="sub" style="background:#F8F9FC;border-radius:8px;padding:6px 4px;text-align:center">
+                    <div style="color:var(--text-secondary)">{{ sub }}</div>
+                    <div style="font-weight:600;color:var(--primary)">{{ avgSubject(ex, sub) }}</div>
+                  </div>
+                </div>
+              </div>
+              <div v-if="ex.scores && ex.scores.length" class="exam-chart">
+                <div v-for="(sc, si) in ex.scores.slice(0, 30)" :key="sc.id" class="chart-bar" :style="{height: (sc.total||0) / ((ex.subjects?.length||1) * (ex.fullScore||100)) * 110 + 'px', background: getScoreColor((sc.total||0) / (ex.subjects?.length||1) / (ex.fullScore||100) * 100)}" :title="sc.name + ' ' + (sc.total||0) + '分'"></div>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:6px">
+                <button class="btn-small" @click="editExam(ex)">✏️ 编辑</button>
+                <button class="btn-small btn-danger" @click="deleteExam(ex.id)">🗑️ 删除</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 学业预警 -->
+        <div v-show="classGradeSub==='warning'">
+          <div class="page-actions">
+            <span style="font-size:13px; color:var(--text-secondary)">共 {{ warningRecords.length }} 条预警</span>
+            <button class="btn-small" @click="showAddWarning=true">+ 预警</button>
+          </div>
+          <div v-if="warningRecords.length === 0" class="empty-state">暂无学业预警 ✅</div>
+          <div v-for="w in sortedWarnings" :key="w.id" class="warning-card">
+            <div class="warning-icon">⚠️</div>
+            <div class="warning-body">
+              <div class="warning-name">{{ w.student }}</div>
+              <div style="font-size:11px">
+                <span class="record-tag warning">{{ w.type }}</span>
+                <span style="color:var(--text-secondary)"> {{ w.date }}</span>
+              </div>
+              <div class="warning-detail">{{ w.detail }}</div>
+              <div v-if="w.followup" class="warning-detail" style="color:var(--primary)">跟进：{{ w.followup }}</div>
+              <div v-if="w.communicated" class="warning-check">✅ 已沟通</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+              <span v-if="!w.communicated" style="font-size:11px;color:var(--primary);cursor:pointer" @click="markWarningCommunicated(w.id)">标记沟通</span>
+              <span style="font-size:11px;color:var(--danger);cursor:pointer" @click="deleteWarning(w.id)">删除</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 任课老师沟通 -->
+        <div v-show="classGradeSub==='communicate'">
+          <div class="page-actions">
+            <span style="font-size:13px; color:var(--text-secondary)">共 {{ teacherCommRecords.length }} 次沟通</span>
+            <button class="btn-small" @click="showAddComm=true">+ 记录</button>
+          </div>
+          <div v-if="teacherCommRecords.length === 0" class="empty-state">暂无沟通记录 💬</div>
+          <div v-for="c in sortedComms" :key="c.id" class="comm-card">
+            <div class="comm-header">
+              <div class="comm-teacher">{{ c.teacher }}</div>
+              <span class="comm-method">{{ c.method || '面谈' }}</span>
+            </div>
+            <div class="comm-date">{{ c.date }}</div>
+            <div class="comm-content">{{ c.feedback }}</div>
+            <div v-if="c.followup" class="comm-followup">👉 跟进：{{ c.followup }}</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+              <span v-if="c.resolved" class="comm-status">✅ 已解决</span>
+              <span v-else style="font-size:11px;color:var(--primary);cursor:pointer" @click="markResolved(c.id)">标记已解决</span>
+              <span style="font-size:11px;color:var(--danger);cursor:pointer" @click="deleteComm(c.id)">删除</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -643,6 +1011,74 @@ textarea.input { resize: vertical; min-height: 60px; }
       </div>
     </div>
 
+    <!-- 学生详情弹窗（基础信息卡+违纪/表扬记录） -->
+    <div v-if="showStudentDetail" class="modal-overlay" @click.self="showStudentDetail=false">
+      <div class="modal modal-wide">
+        <div class="modal-header">
+          <span style="cursor:pointer;font-size:14px;color:var(--primary);margin-right:8px" @click="showStudentDetail=false">‹ 返回</span>
+          学生档案
+        </div>
+        <div class="modal-body">
+          <!-- 基础信息卡 -->
+          <div style="background:#F8F9FC;border-radius:12px;padding:14px;margin-bottom:14px">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+              <div class="student-avatar" :style="{background: selectedStudent.avatarColor || '#4A90D9', width:'50px', height:'50px', fontSize:'22px'}">{{ (selectedStudent.name||'?').charAt(0) }}</div>
+              <div>
+                <div style="font-size:16px;font-weight:700">{{ selectedStudent.name }}</div>
+                <div style="font-size:12px;color:var(--text-secondary)">
+                  <span v-if="selectedStudent.studentId">学号：{{ selectedStudent.studentId }}</span>
+                  <span v-if="selectedStudent.gender"> · {{ selectedStudent.gender }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="detail-grid">
+              <div class="detail-item"><label>家长电话1</label><span>{{ selectedStudent.phone || '—' }}</span></div>
+              <div class="detail-item"><label>家长电话2</label><span>{{ selectedStudent.phone2 || '—' }}</span></div>
+              <div class="detail-item"><label>家庭住址</label><span>{{ selectedStudent.address || '—' }}</span></div>
+              <div class="detail-item"><label>住宿情况</label><span>{{ selectedStudent.accommodation || '—' }}</span></div>
+              <div class="detail-item full"><label>特殊体质/病史</label><span>{{ selectedStudent.healthNote || '无' }}</span></div>
+            </div>
+          </div>
+
+          <!-- 标签：信息/成长记录 -->
+          <div class="filter-tabs" style="margin-bottom:10px">
+            <div v-for="dt in detailTabs" :key="dt.key" :class="['filter-tab', {active: detailTab===dt.key}]" @click="detailTab=dt.key" v-show="dt.key!=='grades' && dt.key!=='info'">{{ dt.label }}</div>
+          </div>
+
+          <!-- 成长记录 -->
+          <div v-show="detailTab==='records'">
+            <div class="page-actions" style="margin-bottom:8px">
+              <span style="font-size:12px;color:var(--text-secondary)">表扬 {{ getRecordStats(selectedStudent).good }} · 违纪 {{ getRecordStats(selectedStudent).bad }}</span>
+              <button class="btn-small" @click="showAddRecord=true">+ 记录</button>
+            </div>
+            <div v-if="!selectedStudent.records || selectedStudent.records.length === 0" style="text-align:center;padding:20px;color:var(--text-secondary)">暂无成长记录</div>
+            <div v-for="r in sortedRecords" :key="r.id" class="record-card" :class="{praise: r.type==='praise', danger: r.type==='criticism'}">
+              <div class="record-header">
+                <div>
+                  <div class="record-title">{{ r.type==='praise' ? '🌟 表扬' : '⚠️ 违纪' }}</div>
+                  <div style="font-size:11px;color:var(--text-secondary);margin-top:2px">{{ r.date }}</div>
+                </div>
+                <span style="cursor:pointer;color:var(--danger);font-size:12px" @click="deleteRecord(selectedStudent, r.id)">删除</span>
+              </div>
+              <div class="record-body">{{ r.text }}</div>
+            </div>
+          </div>
+
+          <!-- 安全记录 -->
+          <div v-show="detailTab==='safety'">
+            <div v-if="safetyRecords.length === 0" style="text-align:center;padding:20px;color:var(--text-secondary)">暂无安全记录</div>
+            <div v-for="sr in safetyRecords" :key="sr.id" class="safety-card">
+              <div class="safety-icon">🛡️</div>
+              <div class="safety-body">
+                <div class="safety-title">{{ sr.title }}</div>
+                <div class="safety-meta">{{ sr.type }} · {{ sr.date }} · {{ sr.students }}人</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 添加/编辑考试弹窗 -->
     <div v-if="showAddExam" class="modal-overlay" @click.self="showAddExam=false">
       <div class="modal modal-wide">
@@ -710,6 +1146,342 @@ textarea.input { resize: vertical; min-height: 60px; }
         <div class="modal-footer">
           <button class="btn-cancel" @click="showAddHomework=false">取消</button>
           <button class="btn-primary" @click="addHomework">布置</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 主题班会弹窗 -->
+    <div v-if="showAddMeeting" class="modal-overlay" @click.self="showAddMeeting=false">
+      <div class="modal modal-wide">
+        <div class="modal-header">📋 记录主题班会</div>
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>日期 *</label>
+              <input v-model="meetingForm.date" type="date" class="input">
+            </div>
+            <div class="form-group w-50">
+              <label>主题类型 *</label>
+              <select v-model="meetingForm.type" class="input">
+                <option value="防溺水">防溺水</option>
+                <option value="防诈骗">防诈骗</option>
+                <option value="防欺凌">防欺凌</option>
+                <option value="消防安全">消防安全</option>
+                <option value="心理健康">心理健康</option>
+                <option value="考前动员">考前动员</option>
+                <option value="其他">其他</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>具体主题 *</label>
+            <input v-model="meetingForm.topic" class="input" placeholder="如：珍爱生命 预防溺水">
+          </div>
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>缺勤人数</label>
+              <input v-model.number="meetingForm.absent" type="number" class="input" min="0">
+            </div>
+            <div class="form-group w-50">
+              <label>缺勤名单</label>
+              <input v-model="meetingForm.absentList" class="input" placeholder="用逗号隔开">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>班会内容摘要</label>
+            <textarea v-model="meetingForm.summary" class="input" rows="3" placeholder="简要记录班会内容、学生反应等"></textarea>
+          </div>
+          <div class="checkbox-row">
+            <input v-model="meetingForm.archived" type="checkbox" id="meetArch">
+            <label for="meetArch">材料已归档</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showAddMeeting=false">取消</button>
+          <button class="btn-primary" @click="addMeeting">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 临时离班弹窗 -->
+    <div v-if="showAddLeave" class="modal-overlay" @click.self="showAddLeave=false">
+      <div class="modal modal-wide">
+        <div class="modal-header">🚶 临时离班登记</div>
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>日期 *</label>
+              <input v-model="leaveForm.date" type="date" class="input">
+            </div>
+            <div class="form-group w-50">
+              <label>学生姓名 *</label>
+              <input v-model="leaveForm.student" class="input" placeholder="姓名">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>离班时间 *</label>
+              <input v-model="leaveForm.time" type="time" class="input">
+            </div>
+            <div class="form-group w-50">
+              <label>去向 *</label>
+              <select v-model="leaveForm.destination" class="input">
+                <option value="医务室">医务室</option>
+                <option value="厕所">厕所</option>
+                <option value="办公室">办公室</option>
+                <option value="其他">其他</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>预计返回时间</label>
+              <input v-model="leaveForm.returnTime" type="time" class="input">
+            </div>
+            <div class="form-group w-50">
+              <label>备注</label>
+              <input v-model="leaveForm.note" class="input" placeholder="其他说明">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showAddLeave=false">取消</button>
+          <button class="btn-primary" @click="addLeave">登记</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 通知回执弹窗 -->
+    <div v-if="showAddNotice" class="modal-overlay" @click.self="showAddNotice=false">
+      <div class="modal modal-wide">
+        <div class="modal-header">📄 通知回执登记</div>
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>通知名称 *</label>
+              <input v-model="noticeForm.name" class="input" placeholder="如：暑期防溺水承诺书">
+            </div>
+            <div class="form-group w-50">
+              <label>下发日期 *</label>
+              <input v-model="noticeForm.date" type="date" class="input">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>回收截止日期 *</label>
+              <input v-model="noticeForm.deadline" type="date" class="input">
+            </div>
+            <div class="form-group w-50">
+              <label>应交人数 *</label>
+              <input v-model.number="noticeForm.total" type="number" class="input" min="0">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>实交人数</label>
+              <input v-model.number="noticeForm.received" type="number" class="input" min="0">
+            </div>
+            <div class="form-group w-50">
+              <label>未交名单</label>
+              <input v-model="noticeForm.unreceived" class="input" placeholder="用逗号隔开">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showAddNotice=false">取消</button>
+          <button class="btn-primary" @click="addNotice">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 班规执行弹窗 -->
+    <div v-if="showAddRule" class="modal-overlay" @click.self="showAddRule=false">
+      <div class="modal modal-wide">
+        <div class="modal-header">📏 班规执行记录</div>
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>日期 *</label>
+              <input v-model="ruleForm.date" type="date" class="input">
+            </div>
+            <div class="form-group w-50">
+              <label>学生姓名 *</label>
+              <input v-model="ruleForm.student" class="input" placeholder="姓名">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>类别 *</label>
+              <select v-model="ruleForm.type" class="input">
+                <option value="加分">加分 🟢</option>
+                <option value="扣分">扣分 🔴</option>
+              </select>
+            </div>
+            <div class="form-group w-50">
+              <label>分值 *</label>
+              <input v-model.number="ruleForm.score" type="number" class="input" placeholder="如：1、-2">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>事由 *</label>
+            <input v-model="ruleForm.reason" class="input" placeholder="如：自习课说话、主动打扫卫生">
+          </div>
+          <div class="form-group">
+            <label>处理方式</label>
+            <input v-model="ruleForm.action" class="input" placeholder="如：口头警告、擦黑板一周">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showAddRule=false">取消</button>
+          <button class="btn-primary" @click="addRule">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 集体荣誉弹窗 -->
+    <div v-if="showAddHonor" class="modal-overlay" @click.self="showAddHonor=false">
+      <div class="modal modal-wide">
+        <div class="modal-header">🏆 集体荣誉登记</div>
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>获奖日期 *</label>
+              <input v-model="honorForm.date" type="date" class="input">
+            </div>
+            <div class="form-group w-50">
+              <label>级别</label>
+              <select v-model="honorForm.level" class="input">
+                <option value="校级">校级</option>
+                <option value="年级">年级</option>
+                <option value="市级以上">市级以上</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>荣誉名称 *</label>
+            <input v-model="honorForm.name" class="input" placeholder="如：流动红旗、运动会团体第二名">
+          </div>
+          <div class="form-group">
+            <label>参与学生</label>
+            <input v-model="honorForm.students" class="input" placeholder="主要参与学生姓名">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showAddHonor=false">取消</button>
+          <button class="btn-primary" @click="addHonor">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 值日排程弹窗 -->
+    <div v-if="showAddDuty" class="modal-overlay" @click.self="showAddDuty=false">
+      <div class="modal modal-wide">
+        <div class="modal-header">🧹 值日排程</div>
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>周次 *</label>
+              <input v-model.number="dutyForm.week" type="number" class="input" placeholder="如：1">
+            </div>
+            <div class="form-group w-50">
+              <label>日期范围</label>
+              <input v-model="dutyForm.dateRange" class="input" placeholder="示例：7.30-8.3">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>值日组长 *</label>
+            <input v-model="dutyForm.leader" class="input" placeholder="组长姓名">
+          </div>
+          <div class="form-group">
+            <label>组员名单 *</label>
+            <input v-model="dutyForm.members" class="input" placeholder="用顿号隔开">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showAddDuty=false">取消</button>
+          <button class="btn-primary" @click="addDuty">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 学业预警弹窗 -->
+    <div v-if="showAddWarning" class="modal-overlay" @click.self="showAddWarning=false">
+      <div class="modal modal-wide">
+        <div class="modal-header">⚠️ 学业预警登记</div>
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>学生姓名 *</label>
+              <input v-model="warningForm.student" class="input" placeholder="姓名">
+            </div>
+            <div class="form-group w-50">
+              <label>预警类型 *</label>
+              <select v-model="warningForm.type" class="input">
+                <option value="单科下滑">单科下滑</option>
+                <option value="多科下滑">多科下滑</option>
+                <option value="排名危险边缘">排名危险边缘</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>具体表现 *</label>
+            <textarea v-model="warningForm.detail" class="input" rows="3" placeholder="如：数学连续两次退步超15分"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>预警日期 *</label>
+              <input v-model="warningForm.date" type="date" class="input">
+            </div>
+            <div class="form-group">
+              <label>跟进措施</label>
+              <input v-model="warningForm.followup" class="input" placeholder="如：安排同桌帮扶">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showAddWarning=false">取消</button>
+          <button class="btn-primary" @click="addWarning">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 任课老师沟通弹窗 -->
+    <div v-if="showAddComm" class="modal-overlay" @click.self="showAddComm=false">
+      <div class="modal modal-wide">
+        <div class="modal-header">💬 任课老师沟通记录</div>
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>沟通日期 *</label>
+              <input v-model="commForm.date" type="date" class="input">
+            </div>
+            <div class="form-group w-50">
+              <label>任课老师 *</label>
+              <input v-model="commForm.teacher" class="input" placeholder="如：数学-李老师">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>沟通方式</label>
+              <select v-model="commForm.method" class="input">
+                <option value="面谈">面谈</option>
+                <option value="微信">微信</option>
+                <option value="电话">电话</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>反馈内容 *</label>
+            <textarea v-model="commForm.feedback" class="input" rows="3" placeholder="如：反映近期作业质量整体下降"></textarea>
+          </div>
+          <div class="form-group">
+            <label>班主任跟进</label>
+            <textarea v-model="commForm.followup" class="input" rows="2" placeholder="如：明天班会强调作业态度"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showAddComm=false">取消</button>
+          <button class="btn-primary" @click="addComm">保存</button>
         </div>
       </div>
     </div>
@@ -814,12 +1586,30 @@ createApp({
       { key: 'profile', label: '设置', icon: '⚙️' },
     ];
 
-    const classSubTabs = [
-      { key: 'students', label: '👨‍🎓 学生' },
-      { key: 'grades', label: '📊 成绩' },
-      { key: 'homework', label: '📝 作业' },
+    const mgmtTabs = [
+      { key: 'students', label: '学生管理', icon: '👨🎓' },
+      { key: 'daily', label: '日常管理', icon: '📋' },
+      { key: 'grades', label: '学业关怀', icon: '📊' },
     ];
-    const classSubTab = ref('students');
+    const classMgmtTab = ref('students');
+
+    const dailySubs = [
+      { key: 'meeting', label: '班会台账', icon: '📋' },
+      { key: 'leave', label: '离班记录', icon: '🚶' },
+      { key: 'notice', label: '通知回执', icon: '📄' },
+      { key: 'rule', label: '班规执行', icon: '📏' },
+      { key: 'honor', label: '荣誉榜', icon: '🏆' },
+      { key: 'duty', label: '值日排程', icon: '🧹' },
+    ];
+    const classDailySub = ref('meeting');
+
+    const gradeSubs = [
+      { key: 'overview', label: '成绩总览', icon: '📊' },
+      { key: 'warning', label: '学业预警', icon: '⚠️' },
+      { key: 'communicate', label: '老师沟通', icon: '💬' },
+    ];
+    const classGradeSub = ref('overview');
+
 
     const detailTabs = [
       { key: 'info', label: '信息' },
@@ -868,6 +1658,14 @@ createApp({
           safetyRecords: safetyRecords.value,
           exams: exams.value,
           homework: homework.value,
+          meetingRecords: meetingRecords.value,
+          leaveRecords: leaveRecords.value,
+          noticeRecords: noticeRecords.value,
+          ruleRecords: ruleRecords.value,
+          honorRecords: honorRecords.value,
+          dutyRecords: dutyRecords.value,
+          warningRecords: warningRecords.value,
+          teacherCommRecords: teacherCommRecords.value,
           teacherInfo: teacherInfo,
           teacherName: teacherName.value
         }));
@@ -1251,6 +2049,287 @@ createApp({
       saveData();
     }
 
+    // ====== 主题班会台账 ======
+    const meetingRecords = ref([]);
+    const showAddMeeting = ref(false);
+    const meetingForm = reactive({ date: '', type: '防溺水', topic: '', absent: 0, absentList: '', summary: '', archived: false });
+
+    const sortedMeetings = computed(() => {
+      return [...meetingRecords.value].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+    });
+
+    function addMeeting() {
+      if (!meetingForm.topic.trim() || !meetingForm.date) return;
+      meetingRecords.value.unshift({
+        id: Date.now(),
+        date: meetingForm.date,
+        type: meetingForm.type,
+        topic: meetingForm.topic.trim(),
+        absent: meetingForm.absent || 0,
+        absentList: meetingForm.absentList || '',
+        summary: meetingForm.summary || '',
+        archived: meetingForm.archived
+      });
+      showAddMeeting.value = false;
+      meetingForm.date = ''; meetingForm.type = '防溺水'; meetingForm.topic = ''; meetingForm.absent = 0; meetingForm.absentList = ''; meetingForm.summary = ''; meetingForm.archived = false;
+      saveData();
+    }
+
+    function deleteMeeting(id) {
+      if (confirm('确定删除该班会记录？')) {
+        meetingRecords.value = meetingRecords.value.filter(m => m.id !== id);
+        saveData();
+      }
+    }
+
+    // ====== 临时离班记录 ======
+    const leaveRecords = ref([]);
+    const showAddLeave = ref(false);
+    const leaveForm = reactive({ date: '', student: '', time: '', destination: '医务室', returnTime: '', note: '' });
+
+    const sortedLeaves = computed(() => {
+      return [...leaveRecords.value].sort((a, b) => b.date.localeCompare(a.date) || b.time.localeCompare(a.time));
+    });
+
+    function addLeave() {
+      if (!leaveForm.student.trim() || !leaveForm.date || !leaveForm.time) return;
+      leaveRecords.value.unshift({
+        id: Date.now(),
+        date: leaveForm.date,
+        student: leaveForm.student.trim(),
+        time: leaveForm.time,
+        destination: leaveForm.destination,
+        returnTime: leaveForm.returnTime || '',
+        note: leaveForm.note || '',
+        returned: false
+      });
+      showAddLeave.value = false;
+      leaveForm.date = ''; leaveForm.student = ''; leaveForm.time = ''; leaveForm.destination = '医务室'; leaveForm.returnTime = ''; leaveForm.note = '';
+      saveData();
+    }
+
+    function markReturned(id) {
+      const r = leaveRecords.value.find(x => x.id === id);
+      if (r) { r.returned = true; saveData(); }
+    }
+
+    function deleteLeave(id) {
+      if (confirm('确定删除？')) {
+        leaveRecords.value = leaveRecords.value.filter(r => r.id !== id);
+        saveData();
+      }
+    }
+
+    // ====== 通知回执单 ======
+    const noticeRecords = ref([]);
+    const showAddNotice = ref(false);
+    const noticeForm = reactive({ name: '', date: '', deadline: '', total: 0, received: 0, unreceived: '' });
+
+    const sortedNotices = computed(() => {
+      return [...noticeRecords.value].sort((a, b) => b.date.localeCompare(a.date) || a.id - b.id);
+    });
+
+    function addNotice() {
+      if (!noticeForm.name.trim() || !noticeForm.date || !noticeForm.deadline) return;
+      noticeRecords.value.unshift({
+        id: Date.now(),
+        name: noticeForm.name.trim(),
+        date: noticeForm.date,
+        deadline: noticeForm.deadline,
+        total: noticeForm.total || 0,
+        received: noticeForm.received || 0,
+        unreceived: noticeForm.unreceived || '',
+        collected: false
+      });
+      showAddNotice.value = false;
+      noticeForm.name = ''; noticeForm.date = ''; noticeForm.deadline = ''; noticeForm.total = 0; noticeForm.received = 0; noticeForm.unreceived = '';
+      saveData();
+    }
+
+    function markCollected(id) {
+      const n = noticeRecords.value.find(x => x.id === id);
+      if (n) { n.collected = true; n.received = n.total; saveData(); }
+    }
+
+    function deleteNotice(id) {
+      if (confirm('确定删除？')) {
+        noticeRecords.value = noticeRecords.value.filter(n => n.id !== id);
+        saveData();
+      }
+    }
+
+    // ====== 班规执行记录 ======
+    const ruleRecords = ref([]);
+    const showAddRule = ref(false);
+    const ruleForm = reactive({ date: '', student: '', type: '加分', score: 1, reason: '', action: '' });
+
+    const sortedRules = computed(() => {
+      return [...ruleRecords.value].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+    });
+
+    function addRule() {
+      if (!ruleForm.student.trim() || !ruleForm.date || !ruleForm.reason.trim()) return;
+      ruleRecords.value.unshift({
+        id: Date.now(),
+        date: ruleForm.date,
+        student: ruleForm.student.trim(),
+        type: ruleForm.type,
+        score: ruleForm.type === '加分' ? Math.abs(ruleForm.score) : -Math.abs(ruleForm.score),
+        reason: ruleForm.reason.trim(),
+        action: ruleForm.action || ''
+      });
+      showAddRule.value = false;
+      ruleForm.date = ''; ruleForm.student = ''; ruleForm.type = '加分'; ruleForm.score = 1; ruleForm.reason = ''; ruleForm.action = '';
+      saveData();
+    }
+
+    function deleteRule(id) {
+      if (confirm('确定删除？')) {
+        ruleRecords.value = ruleRecords.value.filter(r => r.id !== id);
+        saveData();
+      }
+    }
+
+    // ====== 集体荣誉榜 ======
+    const honorRecords = ref([]);
+    const showAddHonor = ref(false);
+    const honorForm = reactive({ date: '', name: '', level: '校级', students: '' });
+
+    const sortedHonors = computed(() => {
+      return [...honorRecords.value].sort((a, b) => b.date.localeCompare(a.date) || a.id - b.id);
+    });
+
+    function addHonor() {
+      if (!honorForm.name.trim() || !honorForm.date) return;
+      honorRecords.value.unshift({
+        id: Date.now(),
+        date: honorForm.date,
+        name: honorForm.name.trim(),
+        level: honorForm.level,
+        students: honorForm.students || ''
+      });
+      showAddHonor.value = false;
+      honorForm.date = ''; honorForm.name = ''; honorForm.level = '校级'; honorForm.students = '';
+      saveData();
+    }
+
+    function deleteHonor(id) {
+      if (confirm('确定删除？')) {
+        honorRecords.value = honorRecords.value.filter(h => h.id !== id);
+        saveData();
+      }
+    }
+
+    // ====== 值日排程 ======
+    const dutyRecords = ref([]);
+    const showAddDuty = ref(false);
+    const dutyForm = reactive({ week: 1, dateRange: '', leader: '', members: '' });
+
+    const sortedDuties = computed(() => {
+      return [...dutyRecords.value].sort((a, b) => b.week - a.week);
+    });
+
+    function addDuty() {
+      if (!dutyForm.leader.trim() || !dutyForm.members.trim() || !dutyForm.week) return;
+      dutyRecords.value.unshift({
+        id: Date.now(),
+        week: dutyForm.week,
+        dateRange: dutyForm.dateRange || '',
+        leader: dutyForm.leader.trim(),
+        members: dutyForm.members.trim(),
+        done: false
+      });
+      showAddDuty.value = false;
+      dutyForm.week = 1; dutyForm.dateRange = ''; dutyForm.leader = ''; dutyForm.members = '';
+      saveData();
+    }
+
+    function markDutyDone(id) {
+      const d = dutyRecords.value.find(x => x.id === id);
+      if (d) { d.done = true; saveData(); }
+    }
+
+    function deleteDuty(id) {
+      if (confirm('确定删除？')) {
+        dutyRecords.value = dutyRecords.value.filter(d => d.id !== id);
+        saveData();
+      }
+    }
+
+    // ====== 学业预警 ======
+    const warningRecords = ref([]);
+    const showAddWarning = ref(false);
+    const warningForm = reactive({ student: '', type: '单科下滑', detail: '', date: '', followup: '' });
+
+    const sortedWarnings = computed(() => {
+      return [...warningRecords.value].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+    });
+
+    function addWarning() {
+      if (!warningForm.student.trim() || !warningForm.detail.trim() || !warningForm.date) return;
+      warningRecords.value.unshift({
+        id: Date.now(),
+        student: warningForm.student.trim(),
+        type: warningForm.type,
+        detail: warningForm.detail.trim(),
+        date: warningForm.date,
+        followup: warningForm.followup || '',
+        communicated: false
+      });
+      showAddWarning.value = false;
+      warningForm.student = ''; warningForm.type = '单科下滑'; warningForm.detail = ''; warningForm.date = ''; warningForm.followup = '';
+      saveData();
+    }
+
+    function markWarningCommunicated(id) {
+      const w = warningRecords.value.find(x => x.id === id);
+      if (w) { w.communicated = true; saveData(); }
+    }
+
+    function deleteWarning(id) {
+      if (confirm('确定删除？')) {
+        warningRecords.value = warningRecords.value.filter(w => w.id !== id);
+        saveData();
+      }
+    }
+
+    // ====== 任课老师沟通 ======
+    const teacherCommRecords = ref([]);
+    const showAddComm = ref(false);
+    const commForm = reactive({ date: '', teacher: '', method: '面谈', feedback: '', followup: '' });
+
+    const sortedComms = computed(() => {
+      return [...teacherCommRecords.value].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+    });
+
+    function addComm() {
+      if (!commForm.teacher.trim() || !commForm.feedback.trim() || !commForm.date) return;
+      teacherCommRecords.value.unshift({
+        id: Date.now(),
+        date: commForm.date,
+        teacher: commForm.teacher.trim(),
+        method: commForm.method,
+        feedback: commForm.feedback.trim(),
+        followup: commForm.followup || '',
+        resolved: false
+      });
+      showAddComm.value = false;
+      commForm.date = ''; commForm.teacher = ''; commForm.method = '面谈'; commForm.feedback = ''; commForm.followup = '';
+      saveData();
+    }
+
+    function markResolved(id) {
+      const c = teacherCommRecords.value.find(x => x.id === id);
+      if (c) { c.resolved = true; saveData(); }
+    }
+
+    function deleteComm(id) {
+      if (confirm('确定删除？')) {
+        teacherCommRecords.value = teacherCommRecords.value.filter(c => c.id !== id);
+        saveData();
+      }
+    }
+
     // ====== Profile Actions  ======
     const showEditProfile = ref(false);
 
@@ -1562,6 +2641,14 @@ createApp({
       if (data.safetyRecords) safetyRecords.value = data.safetyRecords;
       if (data.exams) exams.value = data.exams;
       if (data.homework) homework.value = data.homework;
+      if (data.meetingRecords) meetingRecords.value = data.meetingRecords;
+      if (data.leaveRecords) leaveRecords.value = data.leaveRecords;
+      if (data.noticeRecords) noticeRecords.value = data.noticeRecords;
+      if (data.ruleRecords) ruleRecords.value = data.ruleRecords;
+      if (data.honorRecords) honorRecords.value = data.honorRecords;
+      if (data.dutyRecords) dutyRecords.value = data.dutyRecords;
+      if (data.warningRecords) warningRecords.value = data.warningRecords;
+      if (data.teacherCommRecords) teacherCommRecords.value = data.teacherCommRecords;
       if (data.teacherInfo) Object.assign(teacherInfo, data.teacherInfo);
       if (data.teacherName) teacherName.value = data.teacherName;
     }
@@ -1573,7 +2660,9 @@ createApp({
 
     return {
       tab, hasNotch, welcomeSub, tabs, currentDate, timeGreeting,
-      classSubTabs, classSubTab, detailTabs,
+      // 班级管理导航
+      mgmtTabs, classMgmtTab, dailySubs, classDailySub, gradeSubs, classGradeSub,
+      detailTabs,
       // Todos
       todos, todoFilter, showAddTodo, newTodo, todoFilters, filteredTodos, toggleTodo, addTodo,
       // Schedule
@@ -1592,6 +2681,22 @@ createApp({
       saveExam, editExam, deleteExam, deleteScore,
       // Homework
       homework, showAddHomework, hwForm, hwFilter, hwFilters, filteredHomework, getPendingHomework, addHomework, markHomeworkDone, deleteHomework,
+      // 主题班会
+      meetingRecords, showAddMeeting, meetingForm, sortedMeetings, addMeeting, deleteMeeting,
+      // 离班记录
+      leaveRecords, showAddLeave, leaveForm, sortedLeaves, addLeave, markReturned, deleteLeave,
+      // 通知回执
+      noticeRecords, showAddNotice, noticeForm, sortedNotices, addNotice, markCollected, deleteNotice,
+      // 班规执行
+      ruleRecords, showAddRule, ruleForm, sortedRules, addRule, deleteRule,
+      // 荣誉榜
+      honorRecords, showAddHonor, honorForm, sortedHonors, addHonor, deleteHonor,
+      // 值日排程
+      dutyRecords, showAddDuty, dutyForm, sortedDuties, addDuty, markDutyDone, deleteDuty,
+      // 学业预警
+      warningRecords, showAddWarning, warningForm, sortedWarnings, addWarning, markWarningCommunicated, deleteWarning,
+      // 任课老师沟通
+      teacherCommRecords, showAddComm, commForm, sortedComms, addComm, markResolved, deleteComm,
       // Profile
       showEditProfile, teacherName, teacherInfo,
       exportData, importData, resetData,
