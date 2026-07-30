@@ -1320,7 +1320,21 @@ textarea.input { resize: vertical; min-height: 60px; }
         <div class="modal-header">{{ editingSchedule ? "✏️ 编辑课程" : "📅 添加课程" }}</div>
         <div class="modal-body">
           <div style="background:#f8f9fc;border-radius:10px;padding:10px;margin-bottom:12px;text-align:center;font-size:13px">
-            第{{ scheduleForm.week }}周 · 周{{ scheduleForm.weekday }} · 第{{ scheduleForm.period }}节
+            <div style="display:flex;gap:10px;justify-content:center;align-items:center">
+              <span>周{{ scheduleForm.weekday }} · 第{{ scheduleForm.period }}节</span>
+            </div>
+            <div style="display:flex;gap:6px;justify-content:center;align-items:center;margin-top:6px">
+              <span>第</span>
+              <select v-model.number="scheduleForm.week_start" class="input" style="width:60px;padding:4px 6px;font-size:12px;display:inline-block">
+                <option v-for="w in 20" :key="w" :value="w">{{ w }}</option>
+              </select>
+              <span>周 至 第</span>
+              <select v-model.number="scheduleForm.week_end" class="input" style="width:60px;padding:4px 6px;font-size:12px;display:inline-block">
+                <option v-for="w in 20" :key="w" :value="w">{{ w }}</option>
+              </select>
+              <span>周</span>
+            </div>
+            <div style="font-size:11px;color:var(--text-secondary);margin-top:4px">共 {{ scheduleForm.week_end - scheduleForm.week_start + 1 }} 周</div>
           </div>
           <div class="form-group">
             <label>课程名称 *</label>
@@ -2394,18 +2408,18 @@ createApp({
     const showAddSchedule = ref(false);
     const editingSchedule = ref(null);
     const scheduleWeekFilter = ref(1);
-    const scheduleForm = reactive({ week: 1, weekday: '一', period: 1, name: '', teacher: '', location: '', note: '' });
+    const scheduleForm = reactive({ week_start: 1, week_end: 20, weekday: '一', period: 1, name: '', teacher: '', location: '', note: '' });
 
     const filteredSchedule = computed(() => {
       let list = [...scheduleRecords.value];
       if (scheduleWeekFilter.value > 0) {
-        list = list.filter(s => s.week === scheduleWeekFilter.value);
+        list = list.filter(s => s.week_start <= scheduleWeekFilter.value && s.week_end >= scheduleWeekFilter.value);
       }
-      return list.sort((a, b) => a.week - b.week || '一二三四五'.indexOf(a.weekday) - '一二三四五'.indexOf(b.weekday) || a.period - b.period);
+      return list.sort((a, b) => a.week_start - b.week_start || '一二三四五'.indexOf(a.weekday) - '一二三四五'.indexOf(b.weekday) || a.period - b.period);
     });
 
     function getScheduleCell(week, weekday, period) {
-      return scheduleRecords.value.find(s => s.week === week && s.weekday === weekday && s.period === period) || null;
+      return scheduleRecords.value.find(s => s.week_start <= week && s.week_end >= week && s.weekday === weekday && s.period === period) || null;
     }
 
     function clickScheduleCell(week, weekday, period) {
@@ -2413,7 +2427,8 @@ createApp({
       if (existing) {
         editSchedule(existing);
       } else {
-        scheduleForm.week = week; scheduleForm.weekday = weekday; scheduleForm.period = period;
+        scheduleForm.week_start = week; scheduleForm.week_end = week;
+        scheduleForm.weekday = weekday; scheduleForm.period = period;
         editingSchedule.value = null;
         scheduleForm.name = ''; scheduleForm.teacher = ''; scheduleForm.location = ''; scheduleForm.note = '';
         showAddSchedule.value = true;
@@ -2422,7 +2437,8 @@ createApp({
 
     function editSchedule(s) {
       editingSchedule.value = s;
-      scheduleForm.week = s.week; scheduleForm.weekday = s.weekday; scheduleForm.period = s.period;
+      scheduleForm.week_start = s.week_start; scheduleForm.week_end = s.week_end;
+      scheduleForm.weekday = s.weekday; scheduleForm.period = s.period;
       scheduleForm.name = s.name; scheduleForm.teacher = s.teacher || '';
       scheduleForm.location = s.location || ''; scheduleForm.note = s.note || '';
       showAddSchedule.value = true;
@@ -2431,18 +2447,23 @@ createApp({
     function addSchedule() {
       if (!scheduleForm.name.trim()) return;
       if (editingSchedule.value) {
-        Object.assign(editingSchedule.value, { ...scheduleForm, name: scheduleForm.name.trim() });
+        Object.assign(editingSchedule.value, {
+          week_start: scheduleForm.week_start, week_end: scheduleForm.week_end,
+          weekday: scheduleForm.weekday, period: scheduleForm.period, name: scheduleForm.name.trim(),
+          teacher: scheduleForm.teacher || '', location: scheduleForm.location || '', note: scheduleForm.note || ''
+        });
       } else {
         scheduleRecords.value.push({
           id: Date.now(),
-          week: scheduleForm.week, weekday: scheduleForm.weekday, period: scheduleForm.period,
+          week_start: scheduleForm.week_start, week_end: scheduleForm.week_end,
+          weekday: scheduleForm.weekday, period: scheduleForm.period,
           name: scheduleForm.name.trim(), teacher: scheduleForm.teacher || '',
           location: scheduleForm.location || '', note: scheduleForm.note || ''
         });
       }
       showAddSchedule.value = false;
       editingSchedule.value = null;
-      scheduleForm.week = 1; scheduleForm.weekday = '一'; scheduleForm.period = 1; scheduleForm.name = '';
+      scheduleForm.week_start = 1; scheduleForm.week_end = 20; scheduleForm.weekday = '一'; scheduleForm.period = 1; scheduleForm.name = '';
       scheduleForm.teacher = ''; scheduleForm.location = ''; scheduleForm.note = '';
       saveData();
     }
