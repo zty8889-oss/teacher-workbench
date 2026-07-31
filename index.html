@@ -109,6 +109,26 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFa
 /* ===== Welcome Card ===== */
 .welcome-card { background: var(--primary-gradient); border-radius: 20px; padding: 22px; color: #fff; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; box-shadow: var(--shadow-lg); position: relative; overflow: hidden; }
 .welcome-card::after { content: ''; position: absolute; top: -50%; right: -30%; width: 200px; height: 200px; background: rgba(255,255,255,0.08); border-radius: 50%; }
+/* 首页顶部信息条 */
+.home-info-bar { display: flex; align-items: center; gap: 10px; background: var(--card); border-radius: 12px; padding: 8px 12px; margin-bottom: 10px; box-shadow: var(--shadow); font-size: 12px; cursor: pointer; overflow-x: auto; white-space: nowrap; }
+.home-info-item { color: var(--text-secondary); }
+.home-info-item:first-child { color: var(--primary); font-weight: 600; }
+.home-info-gear { margin-left: auto; font-size: 13px; color: var(--text-tertiary); flex-shrink: 0; }
+/* 悬浮窗 */
+.fab-wrap { position: fixed; right: 16px; bottom: 76px; z-index: 999; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+.fab-btn { width: 52px; height: 52px; border-radius: 50%; background: var(--primary-gradient); color: #fff; font-size: 22px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(74,144,217,.4); cursor: pointer; transition: transform .15s; }
+.fab-btn:active { transform: scale(.92); }
+.fab-menu { display: flex; flex-direction: column; gap: 8px; }
+.fab-item { background: var(--card); border-radius: 20px; padding: 8px 16px; font-size: 13px; font-weight: 600; color: var(--text); box-shadow: var(--shadow); cursor: pointer; }
+.fab-item:active { background: var(--bg); }
+/* 一键通讯录 */
+.contact-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+.contact-item:last-child { border-bottom: none; }
+.contact-info { display: flex; flex-direction: column; min-width: 0; }
+.contact-name { font-size: 14px; font-weight: 600; }
+.contact-parent { font-size: 11px; color: var(--text-secondary); }
+.contact-call { font-size: 13px; color: var(--success); font-weight: 700; text-decoration: none; white-space: nowrap; }
+.contact-nophone { font-size: 11px; color: var(--text-tertiary); white-space: nowrap; }
 .welcome-text h2 { font-size: 18px; margin-bottom: 4px; position: relative; z-index: 1; }
 .welcome-text p { font-size: 13px; opacity: .85; position: relative; z-index: 1; }
 .welcome-avatar { width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,.2); display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; position: relative; z-index: 1; border: 2px solid rgba(255,255,255,0.3); }
@@ -453,6 +473,13 @@ textarea.input { resize: vertical; min-height: 60px; }
   <main class="app-main">
     <!-- 首页 -->
     <div v-show="tab==='home'">
+      <!-- 顶部信息条：日期/星期/第几周/期末倒计时 -->
+      <div class="home-info-bar" @click="showSemesterSet=true">
+        <span class="home-info-item">📅 {{ homeDateText }}</span>
+        <span class="home-info-item">🗓 第 {{ weekOfSemester }} 周</span>
+        <span v-if="examEndDate" class="home-info-item">{{ examCountdownText }}</span>
+        <span class="home-info-gear">⚙️</span>
+      </div>
       <div class="welcome-card">
         <div class="welcome-text">
           <h2>{{ teacherName || '教师' }}，{{ timeGreeting }}</h2>
@@ -1883,6 +1910,29 @@ textarea.input { resize: vertical; min-height: 60px; }
       </div>
     </div>
 
+    <!-- 开学/考试设置弹窗 -->
+    <div v-if="showSemesterSet" class="modal-overlay" @click.self="showSemesterSet=false">
+      <div class="modal">
+        <div class="modal-header">🗓 开学 / 考试设置</div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>学期起始日期（周一）*</label>
+            <input v-model="semesterStart" type="date" class="input">
+            <div style="font-size:11px;color:var(--text-secondary);margin-top:4px">用于自动计算当前是第几周</div>
+          </div>
+          <div class="form-group">
+            <label>期末考试日期</label>
+            <input v-model="examEndDate" type="date" class="input">
+            <div style="font-size:11px;color:var(--text-secondary);margin-top:4px">用于首页自动倒计时，留空则不显示</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showSemesterSet=false">取消</button>
+          <button class="btn-primary" @click="showSemesterSet=false; saveData()">保存</button>
+        </div>
+      </div>
+    </div>
+
     <!-- 主题班会弹窗 -->
     <div v-if="showAddMeeting" class="modal-overlay" @click.self="showAddMeeting=false; editingMeeting=null">
       <div class="modal modal-wide">
@@ -2391,6 +2441,73 @@ textarea.input { resize: vertical; min-height: 60px; }
     </div>
   </main>
 
+    <!-- 悬浮窗：快速记录 / 一键通讯录 -->
+    <div class="fab-wrap">
+      <div v-if="fabOpen" class="fab-menu">
+        <div class="fab-item" @click="openQuickRecord">📝 快速记录</div>
+        <div class="fab-item" @click="openContacts">📞 一键通讯录</div>
+      </div>
+      <div class="fab-btn" @click="fabOpen=!fabOpen">{{ fabOpen ? '✕' : '➕' }}</div>
+    </div>
+
+    <!-- 快速记录弹窗 -->
+    <div v-if="showQuickRecord" class="modal-overlay" @click.self="showQuickRecord=false">
+      <div class="modal">
+        <div class="modal-header">📝 快速记录</div>
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>类型 *</label>
+              <select v-model="quickForm.type" class="input">
+                <option value="班会">班会 📋</option>
+                <option value="违纪">违纪 ⚠️</option>
+                <option value="表扬">表扬 🌟</option>
+                <option value="待办">待办 ✅</option>
+              </select>
+            </div>
+            <div v-if="quickForm.type==='违纪' || quickForm.type==='表扬'" class="form-group w-50">
+              <label>学生 *</label>
+              <div class="picker-wrap">
+                <input v-model="quickForm.student" class="input" placeholder="搜索或选择学生" @focus="quickPickerOpen=true" @input="quickPickerOpen=true" @blur="closeQuickPicker()">
+                <div v-if="quickPickerOpen" class="picker-list">
+                  <div v-for="s in filteredQuickStudents" :key="s.id" class="picker-item" @mousedown.prevent="pickQuickStudent(s)">{{ s.name }}<span v-if="s.studentId" style="font-size:11px;color:var(--text-secondary)">（{{ s.studentId }}）</span></div>
+                  <div v-if="filteredQuickStudents.length === 0" class="picker-empty">无匹配学生</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>内容 *</label>
+            <input v-model="quickForm.content" class="input" placeholder="如：班会主题 / 违纪行为 / 表扬事迹 / 待办事项">
+          </div>
+          <div style="font-size:11px;color:var(--text-secondary)">班会记入班会台账，违纪/表扬记入学生成长记录，待办记入待办清单。</div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showQuickRecord=false">取消</button>
+          <button class="btn-primary" @click="saveQuickRecord">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 一键通讯录弹窗 -->
+    <div v-if="showContacts" class="modal-overlay" @click.self="showContacts=false">
+      <div class="modal modal-wide">
+        <div class="modal-header">📞 一键通讯录 <span style="font-size:11px;font-weight:400;color:var(--text-secondary)">点击号码直接拨号</span></div>
+        <div class="modal-body">
+          <input v-model="contactSearch" class="input" placeholder="🔍 搜索学生姓名" style="margin-bottom:8px">
+          <div v-if="filteredContacts.length === 0" class="empty-state">暂无学生或电话号码 📭</div>
+          <div v-for="s in filteredContacts" :key="s.id" class="contact-item">
+            <div class="contact-info">
+              <span class="contact-name">{{ s.name }}</span>
+              <span class="contact-parent">{{ s.parent ? ('家长：' + s.parent) : '未填家长' }}</span>
+            </div>
+            <a v-if="s.phone" :href="'tel:' + s.phone" class="contact-call">📞 {{ s.phone }}</a>
+            <span v-else class="contact-nophone">无电话</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
   <!-- 底部导航栏 -->
   <nav class="tab-bar">
     <div v-for="tb in tabs" :key="tb.key" :class="['tab-item', {active: tab===tb.key}]" @click="tab=tb.key">
@@ -2524,6 +2641,7 @@ createApp({
           teacherCommRecords: teacherCommRecords.value,
           scheduleRecords: scheduleRecords.value,
           semesterStart: semesterStart.value,
+          examEndDate: examEndDate.value,
           scoreLines: { benke: scoreBenke.value, tekong: scoreTekong.value },
           teachPlan: teachPlan.value,
           planProgress: planProgress.value,
@@ -3420,6 +3538,80 @@ createApp({
     const editingSchedule = ref(null);
     const scheduleWeekFilter = ref(1);
     const semesterStart = ref('');
+
+    // ====== 首页信息条（日期/星期/第几周/期末倒计时） ======
+    const examEndDate = ref('');
+    const showSemesterSet = ref(false);
+    const WEEK_CN = ['日', '一', '二', '三', '四', '五', '六'];
+    const homeDateText = computed(() => {
+      const d = new Date();
+      return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 星期${WEEK_CN[d.getDay()]}`;
+    });
+    const weekOfSemester = computed(() => {
+      if (!semesterStart.value) return 1;
+      const start = new Date(semesterStart.value + 'T00:00:00');
+      const today = new Date();
+      const diff = Math.floor((today - start) / 86400000);
+      return Math.max(1, Math.floor(diff / 7) + 1);
+    });
+    const examCountdownText = computed(() => {
+      if (!examEndDate.value) return '';
+      const end = new Date(examEndDate.value + 'T00:00:00');
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const diff = Math.ceil((end - today) / 86400000);
+      if (diff > 0) return `⏳ 距期末考试还有 ${diff} 天`;
+      if (diff === 0) return '📝 今天是期末考试';
+      return '✅ 期末考试已结束';
+    });
+
+    // ====== 悬浮窗：快速记录 / 一键通讯录 ======
+    const fabOpen = ref(false);
+    const showQuickRecord = ref(false);
+    const quickForm = reactive({ type: '班会', student: '', content: '' });
+    const quickPickerOpen = ref(false);
+    const filteredQuickStudents = computed(() => {
+      const q = quickForm.student.trim().toLowerCase();
+      if (!q) return students.value;
+      return students.value.filter(s => s.name.toLowerCase().includes(q) || (s.studentId || '').toLowerCase().includes(q));
+    });
+    function pickQuickStudent(s) { quickForm.student = s.name; quickPickerOpen.value = false; }
+    function closeQuickPicker() { setTimeout(() => { quickPickerOpen.value = false; }, 150); }
+    function openQuickRecord() {
+      fabOpen.value = false;
+      quickForm.type = '班会'; quickForm.student = ''; quickForm.content = '';
+      showQuickRecord.value = true;
+    }
+    function saveQuickRecord() {
+      if (!quickForm.content.trim()) { alert('请填写内容'); return; }
+      if ((quickForm.type === '违纪' || quickForm.type === '表扬') && !quickForm.student.trim()) { alert('请选择学生'); return; }
+      const today = new Date().toISOString().slice(0, 10);
+      if (quickForm.type === '班会') {
+        meetingRecords.value.unshift({ id: Date.now(), date: today, type: '其他', topic: quickForm.content.trim(), summary: '', archived: false, photos: [] });
+      } else if (quickForm.type === '待办') {
+        todos.value.unshift({ id: Date.now(), text: quickForm.content.trim(), priority: 'medium', date: today, done: false });
+      } else {
+        const stu = students.value.find(s => s.name === quickForm.student.trim());
+        if (!stu) { alert('未找到该学生'); return; }
+        if (!stu.records) stu.records = [];
+        stu.records.push({ id: 'r' + Date.now(), date: today, type: quickForm.type === '违纪' ? 'criticism' : 'praise', subType: '快速记录', text: quickForm.content.trim(), action: '' });
+      }
+      showQuickRecord.value = false;
+      quickForm.type = '班会'; quickForm.student = ''; quickForm.content = '';
+      saveData();
+    }
+    const showContacts = ref(false);
+    const contactSearch = ref('');
+    const filteredContacts = computed(() => {
+      const q = contactSearch.value.trim().toLowerCase();
+      if (!q) return students.value;
+      return students.value.filter(s => s.name.toLowerCase().includes(q) || (s.phone || '').includes(q) || (s.studentId || '').toLowerCase().includes(q));
+    });
+    function openContacts() {
+      fabOpen.value = false;
+      contactSearch.value = '';
+      showContacts.value = true;
+    }
 
     function getDateStr(week, weekday) {
       if (!semesterStart.value) return '';
@@ -4512,6 +4704,7 @@ createApp({
       if (data.warningRecords) warningRecords.value = data.warningRecords;
       if (data.teacherCommRecords) teacherCommRecords.value = data.teacherCommRecords;
       if (data.scheduleRecords) scheduleRecords.value = data.scheduleRecords;
+      if (data.examEndDate) examEndDate.value = data.examEndDate;
       // 教学任务数据
       if (data.teachPlan) teachPlan.value = data.teachPlan;
       if (data.planProgress != null) planProgress.value = data.planProgress;
@@ -4601,6 +4794,10 @@ createApp({
       dutyRecords, showAddDuty, editingDuty, dutyForm, sortedDuties, addDuty, editDuty, markDutyDone, deleteDuty,
       // 班表
       scheduleRecords, showAddSchedule, editingSchedule, scheduleForm, scheduleWeekFilter, filteredSchedule, addSchedule, editSchedule, deleteSchedule, getScheduleCell, clickScheduleCell, semesterStart, getDateStr,
+      // 首页信息条 + 悬浮窗
+      homeDateText, weekOfSemester, examEndDate, examCountdownText, showSemesterSet,
+      fabOpen, showQuickRecord, quickForm, quickPickerOpen, filteredQuickStudents, pickQuickStudent, closeQuickPicker,
+      openQuickRecord, saveQuickRecord, showContacts, contactSearch, filteredContacts, openContacts,
       // 学业分析
       gradeExamId, scoreBenke, scoreTekong, deviationView, selectedExam, overviewGroups,
       deviationStudents, deviationSubjects, progressData, showExamMgmt,
@@ -4611,7 +4808,7 @@ createApp({
       // Profile
       showEditProfile, teacherName, teacherInfo,
       showImagePreview, previewImageUrl, previewImage, handlePhotoUpload, removePhoto,
-      exportData, importData, resetData,
+      exportData, importData, resetData, saveData,
       // Word Import
       showWordImport, wordFile, wordFileName, wordFileSelected, wordImportType,
       wordImporting, wordPreview, wordImportResult, wordExamName, wordExamFullScore,
