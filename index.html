@@ -4508,11 +4508,11 @@ createApp({
         }
         if (week < 1 || week > 20 || !['一','二','三','四','五'].includes(day) || period < 1 || period > 8) continue;
         // Check duplicate
-        const exists = scheduleRecords.value.some(s => s.week === week && s.weekday === day && s.period === period);
+        const exists = scheduleRecords.value.some(s => s.week_start === week && s.weekday === day && s.period === period);
         if (exists) continue;
         newSchedule.push({
           id: Date.now() + r + Math.random(),
-          week: week,
+          week_start: week, week_end: week,
           weekday: day,
           period: period,
           name: name,
