@@ -155,6 +155,25 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFa
 /* 进退步 */
 .progress-ranks { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 4px; font-size: 13px; font-weight: 600; color: var(--text-secondary); }
 .btn-small.active { background: var(--primary); color: #fff; }
+/* 教学计划 */
+.plan-current { background: var(--primary-gradient); color: #fff; border-radius: 14px; padding: 14px; margin-bottom: 10px; box-shadow: var(--shadow); }
+.plan-current-label { font-size: 11px; opacity: .85; margin-bottom: 4px; }
+.plan-current-content { font-size: 16px; font-weight: 700; }
+.plan-current-prev { font-size: 11px; opacity: .8; margin-top: 6px; }
+.plan-remind { display: flex; align-items: center; gap: 8px; background: #FFF7E6; border: 1px solid #FFD591; border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; font-size: 13px; color: #AD6800; }
+.plan-item { display: flex; align-items: center; gap: 10px; background: var(--card); border-radius: 12px; padding: 10px 12px; margin-bottom: 6px; box-shadow: var(--shadow); font-size: 13px; }
+.plan-item.current { border: 1.5px solid var(--primary); background: #F0F5FF; }
+.plan-item.done { opacity: .55; }
+.plan-order { width: 22px; height: 22px; line-height: 22px; text-align: center; border-radius: 50%; background: var(--bg); color: var(--text-secondary); font-size: 11px; font-weight: 700; flex-shrink: 0; }
+.plan-item.current .plan-order { background: var(--primary); color: #fff; }
+.plan-content { flex: 1; }
+.plan-done { font-size: 12px; }
+/* 分数段 */
+.band-row { display: flex; align-items: center; gap: 8px; margin: 3px 0; }
+.band-label { width: 56px; font-size: 11px; color: var(--text-secondary); text-align: right; flex-shrink: 0; }
+.band-bar-bg { flex: 1; height: 10px; background: var(--bg); border-radius: 5px; overflow: hidden; }
+.band-bar { height: 100%; background: var(--primary-gradient); border-radius: 5px; min-width: 2px; }
+.band-count { width: 34px; font-size: 11px; color: var(--text-secondary); flex-shrink: 0; }
 
 /* ===== Section Cards ===== */
 .section-card { background: var(--card); border-radius: var(--card-radius); padding: 18px; margin-bottom: 12px; box-shadow: var(--shadow); }
@@ -471,16 +490,152 @@ textarea.input { resize: vertical; min-height: 60px; }
           <span class="todo-text">{{ t.text }}</span>
           <span class="todo-date">{{ t.date }}</span>
         </div>
+        <!-- 待批改作业 -->
+        <div v-if="pendingHomeworks.length" style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+            <span style="font-size:12px;font-weight:600">📝 待批改作业（{{ pendingHomeworks.length }}）</span>
+            <span style="font-size:11px;color:var(--primary);cursor:pointer" @click="tab='teaching'; teachSub='hwpool'">去批改 ›</span>
+          </div>
+          <div v-for="h in pendingHomeworks.slice(0,3)" :key="h.id" class="todo-item" style="cursor:pointer" @click="tab='teaching'; teachSub='hwpool'">
+            <span class="todo-priority p-high">批</span>
+            <span class="todo-text">{{ h.subject }}·{{ h.className || '未填班级' }} {{ h.content }}</span>
+            <span class="todo-date">{{ h.deadline ? h.deadline + '前' : '' }}</span>
+          </div>
+        </div>
       </div>
     </div>
 
         <!-- 教学任务 -->
     <div v-show="tab==='teaching'">
-      <div class="section-card">
-        <div class="section-header">
-          <h3>📖 教学任务</h3>
+      <div class="left-sidebar-layout">
+        <div class="left-sidebar">
+          <div v-for="ts in teachSubs" :key="ts.key" :class="['left-sidebar-item', {active: teachSub===ts.key}]" @click="teachSub=ts.key">
+            <span class="sidebar-icon">{{ ts.icon }}</span>
+            {{ ts.label }}
+          </div>
         </div>
-        <p style="text-align:center; padding:30px; color:var(--text-secondary)">功能开发中，敬请期待...</p>
+        <div class="left-sidebar-content">
+
+        <!-- 教学计划 -->
+        <div v-show="teachSub==='plan'">
+          <div class="page-actions">
+            <span style="font-size:13px; color:var(--text-secondary)">共 {{ teachPlan.length }} 课时</span>
+            <button class="btn-small" @click="showPlanImport=true">📥 导入计划</button>
+            <button class="btn-small" @click="showAddPlan=true">+ 添加</button>
+          </div>
+          <!-- 当前应授内容 -->
+          <div v-if="teachPlan.length" class="plan-current">
+            <div class="plan-current-label">📖 本节课应授（第 {{ planProgress + 1 }} 课时）</div>
+            <div class="plan-current-content">{{ currentPlanItem.content }}</div>
+            <div v-if="planProgress > 0" class="plan-current-prev">上节已授：{{ teachPlan[planProgress - 1].content }}</div>
+          </div>
+          <!-- 讲完提醒布置作业 -->
+          <div v-if="hwRemind" class="plan-remind">
+            <span>💡 本节课已上完，要布置作业吗？</span>
+            <button class="btn-small" @click="openHwFromPlan()">📝 去布置</button>
+            <span style="font-size:11px;color:var(--text-secondary);cursor:pointer" @click="hwRemind=false">稍后</span>
+          </div>
+          <div v-if="teachPlan.length === 0" class="empty-state">暂无教学计划，点击「导入计划」📥</div>
+          <div v-for="(p, i) in teachPlan" :key="p.id" :class="['plan-item', {current: i === planProgress, done: p.done, future: i > planProgress}]">
+            <span class="plan-order">{{ i + 1 }}</span>
+            <span class="plan-content">{{ p.content }}</span>
+            <span v-if="i < planProgress" class="plan-done">✅</span>
+            <span v-else-if="i === planProgress" style="font-size:11px;color:var(--primary);cursor:pointer;white-space:nowrap" @click="finishPlanItem()">完成本节 ▶</span>
+            <span v-else style="font-size:11px;color:var(--text-tertiary)">待授</span>
+            <span style="cursor:pointer;color:var(--danger);font-size:12px" @click="deletePlanItem(p.id)">✕</span>
+          </div>
+        </div>
+
+        <!-- 作业待办池 -->
+        <div v-show="teachSub==='hwpool'">
+          <div class="page-actions">
+            <span style="font-size:13px; color:var(--text-secondary)">待批改 {{ pendingHomeworks.length }} · 已批 {{ doneHomeworks.length }}</span>
+            <button class="btn-small" @click="showAddHomework=true">+ 布置作业</button>
+          </div>
+          <div v-if="homework.length === 0" class="empty-state">暂无作业，讲完课后记得布置哦 📝</div>
+          <div v-for="h in sortedHomeworks" :key="h.id" :class="['record-card', {danger: h.status !== 'done'}]">
+            <div class="record-header">
+              <div>
+                <div class="record-title">📝 {{ h.content }}</div>
+                <div style="font-size:11px;color:var(--text-secondary);margin-top:2px">{{ h.subject }} · {{ h.className || '未填班级' }} · 布置 {{ h.assignDate }}<span v-if="h.deadline"> · {{ h.deadline }} 前批改</span></div>
+              </div>
+              <span v-if="h.status !== 'done'" style="font-size:11px;color:var(--warning);cursor:pointer" @click="markHomeworkDone(h.id)">✅ 批改完成</span>
+              <span v-else style="font-size:11px;color:var(--success)">已批改</span>
+            </div>
+            <div style="margin-top:6px;display:flex;gap:10px">
+              <span style="font-size:11px;color:var(--primary);cursor:pointer" @click="editHomeworkItem(h)">✏️ 编辑</span>
+              <span style="font-size:11px;color:var(--danger);cursor:pointer" @click="deleteHomework(h.id)">删除</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 任教班级成绩 -->
+        <div v-show="teachSub==='scores'">
+          <div class="page-actions">
+            <span style="font-size:13px; color:var(--text-secondary)">共 {{ teachRecords.length }} 次成绩</span>
+            <button class="btn-small" @click="showTeachScore=true">+ 录入成绩</button>
+          </div>
+          <!-- 任教设置 -->
+          <div style="margin-bottom:10px;padding:8px 12px;background:var(--card);border-radius:12px;box-shadow:var(--shadow)">
+            <div style="display:flex;align-items:center;gap:6px;font-size:12px">
+              <span style="color:var(--text-secondary);white-space:nowrap">📚 任教科目</span>
+              <input v-model="teachSubject" class="input" style="width:80px;padding:4px 6px;font-size:12px">
+              <span style="color:var(--text-secondary);white-space:nowrap">任教班级</span>
+              <input v-model="teachClassesText" class="input" style="flex:1;padding:4px 6px;font-size:12px" placeholder="用逗号分隔，如：高一1班,高一2班">
+            </div>
+          </div>
+          <!-- 考试选择 -->
+          <div v-if="teachRecords.length" class="page-actions" style="margin-top:0">
+            <select v-model="teachScoreExamId" class="input" style="flex:1;min-width:0">
+              <option v-for="(en, i) in teachExamNames" :key="i" :value="en">{{ en }}</option>
+            </select>
+          </div>
+          <div v-if="teachRecords.length === 0" class="empty-state">暂无任教成绩，点击「录入成绩」🏆</div>
+          <div v-for="cls in teachClassList" :key="cls" class="line-card" style="border-left-color:var(--primary)">
+            <div class="line-header">🏫 {{ cls }} <span class="line-count">{{ classScoreCount(cls) }} 人</span></div>
+            <div class="exam-stats" style="margin-bottom:6px">
+              <div class="exam-stat"><label>平均分</label><span>{{ classAvgScore(cls) }}</span></div>
+              <div class="exam-stat"><label>最高分</label><span>{{ classMaxScore(cls) }}</span></div>
+              <div class="exam-stat"><label>最低分</label><span>{{ classMinScore(cls) }}</span></div>
+            </div>
+            <!-- 分数段 -->
+            <div v-if="classBands(cls).length" style="font-size:11px">
+              <div style="color:var(--text-secondary);margin-bottom:3px">分数段（{{ classFullScore(cls) }}分制 · {{ bandStep(cls) }}分一段）</div>
+              <div v-for="b in classBands(cls)" :key="b.label" class="band-row">
+                <span class="band-label">{{ b.label }}</span>
+                <div class="band-bar-bg"><div class="band-bar" :style="{width: (b.count / classScoreCount(cls) * 100) + '%'}"></div></div>
+                <span class="band-count">{{ b.count }}人</span>
+              </div>
+            </div>
+          </div>
+          <!-- 成绩变化表 -->
+          <div v-if="teachRecords.length" class="line-card" style="border-left-color:var(--success)">
+            <div class="line-header">📈 各班平均分变化</div>
+            <div style="font-size:11px;overflow-x:auto">
+              <table style="width:100%;border-collapse:collapse;min-width:420px">
+                <tr style="color:var(--text-secondary)"><td style="padding:4px 6px">班级</td><td v-for="(en, i) in teachExamNames" :key="i" style="padding:4px 6px;text-align:center">{{ en }}</td></tr>
+                <tr v-for="cls in teachClassList" :key="cls" style="border-top:1px solid var(--border)">
+                  <td style="padding:4px 6px;font-weight:600">{{ cls }}</td>
+                  <td v-for="(en, i) in teachExamNames" :key="i" style="padding:4px 6px;text-align:center">{{ classAvgFor(cls, en) }}</td>
+                </tr>
+              </table>
+            </div>
+          </div>
+          <!-- 成绩记录管理 -->
+          <div class="line-card" style="border-left-color:var(--text-tertiary);cursor:pointer" @click="showTeachMgmt=!showTeachMgmt">
+            <div class="line-header">🗂 成绩记录（{{ teachRecords.length }} 条）<span style="margin-left:auto;font-size:11px;color:var(--text-secondary)">{{ showTeachMgmt ? '收起 ▲' : '展开 ▼' }}</span></div>
+          </div>
+          <div v-if="showTeachMgmt" class="line-card" style="border-left-color:var(--text-tertiary)">
+            <div v-for="r in sortedTeachRecords" :key="r.id" class="line-row">
+              <span class="line-name">{{ r.examName }} · {{ r.className }}</span>
+              <span style="font-size:11px;color:var(--text-secondary)">{{ r.date }} · {{ r.fullScore }}分制 · {{ (r.scores||[]).length }}人</span>
+              <span style="font-size:11px;color:var(--primary);cursor:pointer" @click="editTeachRecord(r)">✏️</span>
+              <span style="font-size:11px;color:var(--danger);cursor:pointer" @click="deleteTeachRecord(r.id)">删除</span>
+            </div>
+          </div>
+        </div>
+
+        </div>
       </div>
     </div>
 
@@ -1420,13 +1575,13 @@ textarea.input { resize: vertical; min-height: 60px; }
     </div>
 
     <!-- 布置作业弹窗 -->
-    <div v-if="showAddHomework" class="modal-overlay" @click.self="showAddHomework=false">
+    <div v-if="showAddHomework" class="modal-overlay" @click.self="showAddHomework=false; editingHw=null">
       <div class="modal">
-        <div class="modal-header">布置作业</div>
+        <div class="modal-header">{{ editingHw ? "✏️ 编辑作业" : "📝 布置作业" }}</div>
         <div class="modal-body">
           <div class="form-group">
-            <label>作业标题</label>
-            <input v-model="hwForm.title" class="input" placeholder="如：第一单元练习题">
+            <label>作业内容 *</label>
+            <input v-model="hwForm.content" class="input" placeholder="如：第一单元练习题、背诵《沁园春·长沙》">
           </div>
           <div class="form-row">
             <div class="form-group w-50">
@@ -1435,19 +1590,111 @@ textarea.input { resize: vertical; min-height: 60px; }
                 <option value="语文">语文</option>
                 <option value="数学">数学</option>
                 <option value="英语">英语</option>
-                <option value="科学">科学</option>
+                <option value="物理">物理</option>
+                <option value="化学">化学</option>
                 <option value="其他">其他</option>
               </select>
             </div>
             <div class="form-group w-50">
-              <label>日期</label>
-              <input v-model="hwForm.date" type="date" class="input">
+              <label>班级</label>
+              <input v-model="hwForm.className" class="input" placeholder="如：高一1班">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>布置日期</label>
+              <input v-model="hwForm.assignDate" type="date" class="input">
+            </div>
+            <div class="form-group w-50">
+              <label>批改截止（下次上课前）</label>
+              <input v-model="hwForm.deadline" type="date" class="input">
             </div>
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn-cancel" @click="showAddHomework=false">取消</button>
-          <button class="btn-primary" @click="addHomework">布置</button>
+          <button class="btn-cancel" @click="showAddHomework=false; editingHw=null">取消</button>
+          <button class="btn-primary" @click="addHomework">{{ editingHw ? '保存修改' : '布置' }}</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 教学计划导入弹窗 -->
+    <div v-if="showPlanImport" class="modal-overlay" @click.self="showPlanImport=false">
+      <div class="modal modal-wide">
+        <div class="modal-header">📥 导入学期教学计划</div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>① 粘贴计划（每行一个课时内容）</label>
+            <textarea v-model="planImportText" class="input" rows="8" placeholder="第1课 沁园春·长沙&#10;第2课 再别康桥&#10;第3课 大堰河——我的保姆&#10;..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>② 或导入 Excel（第一列为内容，按课时顺序）</label>
+            <button class="btn-small" @click="importPlanFile()">📄 选择 Excel 文件</button>
+            <span v-if="planFileName" style="font-size:11px;color:var(--success);margin-left:6px">✅ {{ planFileName }}</span>
+          </div>
+          <div style="font-size:11px;color:var(--text-secondary)">导入将追加到现有计划末尾，如需重新开始请先清空计划。</div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showPlanImport=false; planImportText=''">取消</button>
+          <button class="btn-primary" @click="doImportPlan">导入</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 教学计划添加弹窗 -->
+    <div v-if="showAddPlan" class="modal-overlay" @click.self="showAddPlan=false">
+      <div class="modal">
+        <div class="modal-header">➕ 添加课时</div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>课时内容 *</label>
+            <input v-model="planAddContent" class="input" placeholder="如：第1课 沁园春·长沙">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showAddPlan=false; planAddContent=''">取消</button>
+          <button class="btn-primary" @click="addPlanItem">添加</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 任教成绩录入弹窗 -->
+    <div v-if="showTeachScore" class="modal-overlay" @click.self="showTeachScore=false; editingTeachRecord=null">
+      <div class="modal modal-wide">
+        <div class="modal-header">{{ editingTeachRecord ? "✏️ 编辑成绩" : "🏆 录入任教成绩" }}</div>
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>考试名称 *</label>
+              <input v-model="teachScoreForm.examName" class="input" placeholder="如：第一次月考">
+            </div>
+            <div class="form-group w-50">
+              <label>日期 *</label>
+              <input v-model="teachScoreForm.date" type="date" class="input">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>班级 *</label>
+              <input v-model="teachScoreForm.className" class="input" placeholder="如：高一1班">
+            </div>
+            <div class="form-group w-50">
+              <label>满分（决定分段）*</label>
+              <select v-model.number="teachScoreForm.fullScore" class="input">
+                <option :value="150">150 分（15分一段）</option>
+                <option :value="100">100 分（10分一段）</option>
+                <option :value="120">120 分（15分一段）</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>学生分数（每行一个，或空格/逗号分隔）*</label>
+            <textarea v-model="teachScoreForm.scoresText" class="input" rows="6" placeholder="85&#10;92&#10;76&#10;88 90 71..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showTeachScore=false; editingTeachRecord=null">取消</button>
+          <button class="btn-primary" @click="addTeachRecord">保存</button>
         </div>
       </div>
     </div>
@@ -2143,6 +2390,11 @@ createApp({
           scheduleRecords: scheduleRecords.value,
           semesterStart: semesterStart.value,
           scoreLines: { benke: scoreBenke.value, tekong: scoreTekong.value },
+          teachPlan: teachPlan.value,
+          planProgress: planProgress.value,
+          teachSubject: teachSubject.value,
+          teachClassesText: teachClassesText.value,
+          teachRecords: teachRecords.value,
           teacherInfo: teacherInfo,
           teacherName: teacherName.value
         }));
@@ -2628,49 +2880,247 @@ createApp({
       return { examNames: last3.map(e => e.name), list };
     });
 
-    // ====== Homework  ======
+    // ====== 教学任务 ======
+    const teachSubs = [
+      { key: 'plan', label: '教学计划', icon: '📅' },
+      { key: 'hwpool', label: '作业待办池', icon: '📝' },
+      { key: 'scores', label: '任教成绩', icon: '🏆' },
+    ];
+    const teachSub = ref('plan');
+
+    // ----- 教学计划 -----
+    const teachPlan = ref([]);
+    const planProgress = ref(0);
+    const hwRemind = ref(false);
+    const currentPlanItem = computed(() => teachPlan.value[planProgress.value] || null);
+    const showPlanImport = ref(false);
+    const planImportText = ref('');
+    const planFileName = ref('');
+    const showAddPlan = ref(false);
+    const planAddContent = ref('');
+
+    function finishPlanItem() {
+      const item = teachPlan.value[planProgress.value];
+      if (!item) return;
+      item.done = true;
+      planProgress.value = Math.min(planProgress.value + 1, teachPlan.value.length);
+      hwRemind.value = true;
+      saveData();
+    }
+    function openHwFromPlan() {
+      hwRemind.value = false;
+      editingHw.value = null;
+      hwForm.subject = teachSubject.value || '语文';
+      hwForm.assignDate = new Date().toISOString().slice(0, 10);
+      showAddHomework.value = true;
+    }
+    function deletePlanItem(id) {
+      if (!confirm('删除该课时？')) return;
+      const idx = teachPlan.value.findIndex(p => p.id === id);
+      teachPlan.value = teachPlan.value.filter(p => p.id !== id);
+      if (idx >= 0 && idx < planProgress.value) planProgress.value = Math.max(0, planProgress.value - 1);
+      if (idx === planProgress.value) planProgress.value = Math.min(planProgress.value, teachPlan.value.length);
+      saveData();
+    }
+    function addPlanItem() {
+      if (!planAddContent.value.trim()) return;
+      teachPlan.value.push({ id: Date.now(), content: planAddContent.value.trim(), done: false });
+      planAddContent.value = '';
+      showAddPlan.value = false;
+      saveData();
+    }
+    function importPlanFile() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.xlsx,.xls';
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        planFileName.value = file.name;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          try {
+            const data = new Uint8Array(ev.target.result);
+            const wb = XLSX.read(data, { type: 'array' });
+            const ws = wb.Sheets[wb.SheetNames[0]];
+            const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+            planImportText.value = rows.map(r => String(r[0] || '').trim()).filter(Boolean).join('\n');
+          } catch(err) { alert('Excel 解析失败：' + err.message); }
+        };
+        reader.readAsArrayBuffer(file);
+      };
+      input.click();
+    }
+    function doImportPlan() {
+      const items = planImportText.value.split('\n').map(l => l.trim()).filter(Boolean);
+      if (!items.length) { alert('请粘贴计划内容或选择 Excel 文件'); return; }
+      items.forEach(c => teachPlan.value.push({ id: Date.now(), content: c, done: false }));
+      planImportText.value = ''; planFileName.value = '';
+      showPlanImport.value = false;
+      saveData();
+    }
+
+    // ----- 作业待办池 -----
     const homework = ref([]);
     const showAddHomework = ref(false);
-    const hwForm = reactive({ title: '', subject: '语文', date: '' });
-    const hwFilter = ref('all');
-    const hwFilters = [
-      { key: 'all', label: '全部' },
-      { key: 'pending', label: '待批改' },
-      { key: 'done', label: '已批改' },
-    ];
+    const editingHw = ref(null);
+    const hwForm = reactive({ subject: '语文', className: '', content: '', assignDate: '', deadline: '' });
 
-    const filteredHomework = computed(() => {
-      if (hwFilter.value === 'all') return homework.value;
-      return homework.value.filter(h => h.status === hwFilter.value);
+    const sortedHomeworks = computed(() => {
+      return [...homework.value].sort((a, b) => (a.status === 'done') - (b.status === 'done') || b.id - a.id);
     });
-
+    const pendingHomeworks = computed(() => homework.value.filter(h => h.status !== 'done'));
+    const doneHomeworks = computed(() => homework.value.filter(h => h.status === 'done'));
     function getPendingHomework() {
-      return homework.value.filter(h => h.status === 'pending').length;
+      return pendingHomeworks.value.length;
+    }
+
+    function editHomeworkItem(h) {
+      editingHw.value = h;
+      hwForm.content = h.content || h.title || '';
+      hwForm.subject = h.subject || '语文';
+      hwForm.className = h.className || '';
+      hwForm.assignDate = h.assignDate || h.date || new Date().toISOString().slice(0, 10);
+      hwForm.deadline = h.deadline || '';
+      showAddHomework.value = true;
     }
 
     function addHomework() {
-      if (!hwForm.title.trim()) return;
-      homework.value.unshift({
-        id: Date.now(),
-        title: hwForm.title.trim(),
-        subject: hwForm.subject,
-        date: hwForm.date || new Date().toISOString().slice(0, 10),
-        submitted: 0,
+      if (!hwForm.content.trim()) { alert('请填写作业内容'); return; }
+      const payload = {
+        subject: hwForm.subject, className: hwForm.className.trim(),
+        content: hwForm.content.trim(),
+        assignDate: hwForm.assignDate || new Date().toISOString().slice(0, 10),
+        deadline: hwForm.deadline || '',
         status: 'pending'
-      });
+      };
+      if (editingHw.value) {
+        Object.assign(editingHw.value, payload);
+      } else {
+        homework.value.unshift({ id: Date.now(), ...payload });
+      }
       showAddHomework.value = false;
-      hwForm.title = ''; hwForm.subject = '语文'; hwForm.date = '';
+      editingHw.value = null;
+      hwForm.subject = '语文'; hwForm.className = ''; hwForm.content = ''; hwForm.assignDate = ''; hwForm.deadline = '';
       saveData();
     }
 
     function markHomeworkDone(id) {
-      const hw = homework.value.find(h => h.id === id);
-      if (hw) { hw.status = 'done'; saveData(); }
+      const h = homework.value.find(x => x.id === id);
+      if (h) { h.status = 'done'; saveData(); }
     }
 
     function deleteHomework(id) {
-      homework.value = homework.value.filter(h => h.id !== id);
+      if (confirm('确定删除该作业？')) {
+        homework.value = homework.value.filter(h => h.id !== id);
+        saveData();
+      }
+    }
+
+    // ----- 任教班级学科成绩 -----
+    const teachSubject = ref('语文');
+    const teachClassesText = ref('高一1班,高一2班,高一3班');
+    const teachRecords = ref([]);
+    const showTeachScore = ref(false);
+    const editingTeachRecord = ref(null);
+    const showTeachMgmt = ref(false);
+    const teachScoreForm = reactive({ examName: '', date: '', className: '', fullScore: 150, scoresText: '' });
+    const teachScoreExamId = ref('');
+
+    const teachClassList = computed(() => teachClassesText.value.split(/[,，、\s]+/).map(s => s.trim()).filter(Boolean));
+    const teachExamNames = computed(() => {
+      const names = [];
+      teachRecords.value.forEach(r => { if (!names.includes(r.examName)) names.push(r.examName); });
+      return names;
+    });
+    const sortedTeachRecords = computed(() => [...teachRecords.value].sort((a, b) => a.date.localeCompare(b.date)));
+
+    function parseScoreList(text) {
+      return String(text || '').split(/[\s,，、;；]+/).map(v => parseFloat(v)).filter(v => !isNaN(v));
+    }
+    function teachRecordFor(cls, examName) {
+      return teachRecords.value.find(r => r.className === cls && r.examName === examName);
+    }
+    function classScores(cls) {
+      const r = teachRecordFor(cls, teachScoreExamId.value);
+      return r ? (r.scores || []) : [];
+    }
+    function classFullScore(cls) {
+      const r = teachRecordFor(cls, teachScoreExamId.value);
+      return r ? (r.fullScore || 100) : 100;
+    }
+    function classScoreCount(cls) { return classScores(cls).length; }
+    function classAvgScore(cls) {
+      const s = classScores(cls);
+      return s.length ? (s.reduce((a, b) => a + b, 0) / s.length).toFixed(1) : '-';
+    }
+    function classMaxScore(cls) {
+      const s = classScores(cls);
+      return s.length ? Math.max(...s) : '-';
+    }
+    function classMinScore(cls) {
+      const s = classScores(cls);
+      return s.length ? Math.min(...s) : '-';
+    }
+    function bandStep(cls) {
+      const fs = classFullScore(cls);
+      return fs >= 120 ? 15 : 10;
+    }
+    function classBands(cls) {
+      const s = classScores(cls);
+      const fs = classFullScore(cls);
+      const step = bandStep(cls);
+      const bands = [];
+      for (let lo = 0; lo <= fs; lo += step) {
+        const hi = Math.min(lo + step - 1, fs);
+        bands.push({ label: `${lo}-${hi}`, count: 0 });
+      }
+      s.forEach(v => {
+        const idx = Math.min(Math.floor(v / step), bands.length - 1);
+        if (bands[idx]) bands[idx].count++;
+      });
+      return bands;
+    }
+    function classAvgFor(cls, examName) {
+      const r = teachRecordFor(cls, examName);
+      if (!r || !r.scores || !r.scores.length) return '-';
+      return (r.scores.reduce((a, b) => a + b, 0) / r.scores.length).toFixed(1);
+    }
+    function addTeachRecord() {
+      if (!teachScoreForm.examName.trim() || !teachScoreForm.date || !teachScoreForm.className.trim()) { alert('请填写考试名称、日期和班级'); return; }
+      const scores = parseScoreList(teachScoreForm.scoresText);
+      if (!scores.length) { alert('请填写至少一个分数'); return; }
+      const payload = {
+        examName: teachScoreForm.examName.trim(), date: teachScoreForm.date,
+        className: teachScoreForm.className.trim(), fullScore: teachScoreForm.fullScore,
+        scores
+      };
+      if (editingTeachRecord.value) {
+        Object.assign(editingTeachRecord.value, payload);
+      } else {
+        teachRecords.value.push({ id: Date.now(), ...payload });
+      }
+      const cl = payload.className;
+      if (!teachClassList.value.includes(cl)) {
+        teachClassesText.value = teachClassesText.value ? teachClassesText.value + ',' + cl : cl;
+      }
+      if (!teachScoreExamId.value) teachScoreExamId.value = payload.examName;
+      showTeachScore.value = false;
+      editingTeachRecord.value = null;
+      teachScoreForm.examName = ''; teachScoreForm.date = ''; teachScoreForm.className = ''; teachScoreForm.fullScore = 150; teachScoreForm.scoresText = '';
       saveData();
+    }
+    function editTeachRecord(r) {
+      editingTeachRecord.value = r;
+      teachScoreForm.examName = r.examName; teachScoreForm.date = r.date; teachScoreForm.className = r.className;
+      teachScoreForm.fullScore = r.fullScore || 150; teachScoreForm.scoresText = r.scores.join('\n');
+      showTeachScore.value = true;
+    }
+    function deleteTeachRecord(id) {
+      if (confirm('确定删除该成绩记录？')) {
+        teachRecords.value = teachRecords.value.filter(r => r.id !== id);
+        saveData();
+      }
     }
 
 
@@ -3772,6 +4222,22 @@ createApp({
       if (data.warningRecords) warningRecords.value = data.warningRecords;
       if (data.teacherCommRecords) teacherCommRecords.value = data.teacherCommRecords;
       if (data.scheduleRecords) scheduleRecords.value = data.scheduleRecords;
+      // 教学任务数据
+      if (data.teachPlan) teachPlan.value = data.teachPlan;
+      if (data.planProgress != null) planProgress.value = data.planProgress;
+      if (data.teachSubject) teachSubject.value = data.teachSubject;
+      if (data.teachClassesText) teachClassesText.value = data.teachClassesText;
+      if (data.teachRecords) teachRecords.value = data.teachRecords;
+      if (data.teachRecords && data.teachRecords.length && !teachScoreExamId.value) teachScoreExamId.value = data.teachRecords[0].examName;
+      // 旧版作业（title/date）→ 作业待办池（content/assignDate）迁移
+      if (data.homework) {
+        homework.value = data.homework.map(h => ({
+          ...h,
+          content: h.content || h.title || '',
+          assignDate: h.assignDate || h.date || '',
+          className: h.className || ''
+        }));
+      }
       // 默认选中最新考试（exams[0] 为最新）
       if (exams.value.length) gradeExamId.value = exams.value[0].id;
       if (data.scoreLines) {
@@ -3810,8 +4276,16 @@ createApp({
       exams, showAddExam, editingExam, examForm, allSubjects, avgScore, maxScore, minScore, passRate, getScoreColor,
       avgSubject, maxSubject, minSubject, passSubject, toggleSubject,
       saveExam, editExam, deleteExam, deleteScore,
-      // Homework
-      homework, showAddHomework, hwForm, hwFilter, hwFilters, filteredHomework, getPendingHomework, addHomework, markHomeworkDone, deleteHomework,
+      // Homework / 作业待办池
+      homework, showAddHomework, editingHw, hwForm, sortedHomeworks, pendingHomeworks, doneHomeworks, getPendingHomework, addHomework, editHomeworkItem, markHomeworkDone, deleteHomework,
+      // 教学任务
+      teachSubs, teachSub, teachPlan, planProgress, currentPlanItem, finishPlanItem, deletePlanItem,
+      showPlanImport, planImportText, planFileName, importPlanFile, doImportPlan,
+      showAddPlan, planAddContent, addPlanItem, hwRemind, openHwFromPlan,
+      // 任教成绩
+      teachSubject, teachClassesText, teachRecords, showTeachScore, editingTeachRecord, showTeachMgmt, teachScoreForm, teachScoreExamId,
+      teachClassList, teachExamNames, sortedTeachRecords, classScoreCount, classAvgScore, classMaxScore, classMinScore,
+      classFullScore, classBands, bandStep, classAvgFor, addTeachRecord, editTeachRecord, deleteTeachRecord,
       // 主题班会
       meetingRecords, showAddMeeting, editingMeeting, meetingForm, sortedMeetings, addMeeting, editMeeting, deleteMeeting,
       // 学生请假
