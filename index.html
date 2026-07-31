@@ -542,6 +542,7 @@ textarea.input { resize: vertical; min-height: 60px; }
         <div v-show="teachSub==='timetable'">
           <div class="page-actions">
             <span style="font-size:13px; color:var(--text-secondary)">周课表 · 点击格子设置</span>
+            <button class="btn-small" @click="showSlotImport=true">📥 导入课表</button>
             <button class="btn-small" @click="openAddSlot()">+ 设置课程</button>
           </div>
           <!-- 今日课程（联动教学计划） -->
@@ -1724,6 +1725,29 @@ textarea.input { resize: vertical; min-height: 60px; }
         <div class="modal-footer">
           <button class="btn-cancel" @click="showAddPlan=false; planAddContent=''">取消</button>
           <button class="btn-primary" @click="addPlanItem">添加</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 教师课表导入弹窗 -->
+    <div v-if="showSlotImport" class="modal-overlay" @click.self="showSlotImport=false">
+      <div class="modal modal-wide">
+        <div class="modal-header">📥 一键导入教师课表</div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>① 粘贴课表（每行：星期 节次 班级 [科目]，空格或逗号分隔）</label>
+            <textarea v-model="slotImportText" class="input" rows="7" placeholder="周一 1 高一1班 语文&#10;周一 2 高一2班 语文&#10;周二 3 高一3班&#10;5 2 高一1班 语文&#10;..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>② 或导入 Excel（列：星期 / 节次 / 班级 / 科目，星期填 1-5 或 周一~周五）</label>
+            <button class="btn-small" @click="importSlotFile()">📄 选择 Excel 文件</button>
+            <span v-if="slotFileName" style="font-size:11px;color:var(--success);margin-left:6px">✅ {{ slotFileName }}</span>
+          </div>
+          <div style="font-size:11px;color:var(--text-secondary)">重复时段将覆盖原课程；科目留空默认「{{ teachSubject }}」；无效行自动跳过。</div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showSlotImport=false; slotImportText=''">取消</button>
+          <button class="btn-primary" @click="doImportSlots">导入</button>
         </div>
       </div>
     </div>
@@ -3008,6 +3032,71 @@ createApp({
     const showAddSlot = ref(false);
     const editingSlot = ref(null);
     const slotForm = reactive({ weekday: 1, period: 1, className: '', subject: '' });
+    const showSlotImport = ref(false);
+    const slotImportText = ref('');
+    const slotFileName = ref('');
+
+    // 导入：解析星期（1-5 或 周一~周五）
+    function parseWeekday(str) {
+      const s = String(str || '').trim();
+      if (/^[1-5]$/.test(s)) return parseInt(s);
+      const map = { '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '1': 1, '2': 2, '3': 3, '4': 4, '5': 5 };
+      const m = s.match(/[一二三四五1-5]/);
+      return m ? map[m[0]] : 0;
+    }
+    function parseSlotText(text) {
+      const lines = String(text || '').split('\n').map(l => l.trim()).filter(Boolean);
+      const slots = [];
+      const errs = [];
+      lines.forEach((line, i) => {
+        const parts = line.split(/[\s,，、;；]+/).filter(Boolean);
+        if (parts.length < 3) { errs.push(`第${i+1}行格式不对`); return; }
+        const weekday = parseWeekday(parts[0]);
+        const period = parseInt(parts[1]);
+        if (!weekday || !period || period < 1 || period > 8) { errs.push(`第${i+1}行星期/节次无效`); return; }
+        slots.push({ weekday, period, className: parts[2], subject: parts[3] || teachSubject.value || '语文' });
+      });
+      return { slots, errs };
+    }
+    function importSlotFile() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.xlsx,.xls';
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        slotFileName.value = file.name;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          try {
+            const data = new Uint8Array(ev.target.result);
+            const wb = XLSX.read(data, { type: 'array' });
+            const ws = wb.Sheets[wb.SheetNames[0]];
+            const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+            slotImportText.value = rows
+              .filter(r => r && String(r[0] || '').trim())
+              .map(r => [r[0], r[1], r[2], r[3]].filter(v => v !== undefined && v !== null).join(' '))
+              .join('\n');
+          } catch(err) { alert('Excel 解析失败：' + err.message); }
+        };
+        reader.readAsArrayBuffer(file);
+      };
+      input.click();
+    }
+    function doImportSlots() {
+      const { slots, errs } = parseSlotText(slotImportText.value);
+      if (!slots.length) { alert(errs.length ? ('导入失败：' + errs[0]) : '请粘贴课表或选择 Excel 文件'); return; }
+      slots.forEach(s => {
+        const exist = teachSlots.value.find(x => x.weekday === s.weekday && x.period === s.period);
+        if (exist) Object.assign(exist, s);
+        else teachSlots.value.push({ id: Date.now(), ...s });
+      });
+      const msg = `成功导入 ${slots.length} 节课 🗓` + (errs.length ? `（${errs.length} 行无效已跳过）` : '');
+      slotImportText.value = ''; slotFileName.value = '';
+      showSlotImport.value = false;
+      saveData();
+      alert(msg);
+    }
 
     const todayWeekday = computed(() => { const d = new Date().getDay(); return d === 0 ? 7 : d; });
     const todayDateStr = computed(() => {
@@ -4489,6 +4578,7 @@ createApp({
       teachSlots, teachSlotLogs, showAddSlot, editingSlot, slotForm,
       todayWeekday, todayDateStr, todayTeachSlots, slotAt, slotStatusToday, slotContentText,
       markSlotDone, markSlotMissed, missedRemindText, openAddSlot, saveSlot, deleteSlot,
+      showSlotImport, slotImportText, slotFileName, importSlotFile, doImportSlots,
       // 任教成绩
       teachSubject, teachClassesText, teachRecords, showTeachScore, editingTeachRecord, showTeachMgmt, teachScoreForm, teachScoreExamId,
       teachClassList, teachExamNames, sortedTeachRecords, classScoreCount, classAvgScore, classMaxScore, classMinScore,
