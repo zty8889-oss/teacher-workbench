@@ -194,6 +194,18 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFa
 .band-bar-bg { flex: 1; height: 10px; background: var(--bg); border-radius: 5px; overflow: hidden; }
 .band-bar { height: 100%; background: var(--primary-gradient); border-radius: 5px; min-width: 2px; }
 .band-count { width: 34px; font-size: 11px; color: var(--text-secondary); flex-shrink: 0; }
+/* 各科成绩表 */
+.score-table-wrap { overflow-x: auto; margin-top: 4px; }
+.score-table { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 420px; }
+.score-table th { background: var(--bg); color: var(--text-secondary); padding: 5px 4px; text-align: center; font-weight: 600; white-space: nowrap; }
+.score-table td { padding: 5px 4px; text-align: center; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.score-table .st-name { font-weight: 600; text-align: left; }
+.score-table .st-total { font-weight: 700; color: var(--primary); }
+/* 平均分标签 */
+.avg-bar { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; margin-bottom: 8px; font-size: 11px; }
+.avg-tag { background: #F0F5FF; color: var(--primary); border-radius: 8px; padding: 2px 7px; }
+.avg-tag b { font-weight: 700; }
+.avg-inline { font-size: 11px; background: #F0F5FF; color: var(--primary); border-radius: 8px; padding: 1px 7px; }
 /* 教师课表 */
 .teach-grid { display: grid; grid-template-columns: 30px repeat(5, 1fr); gap: 3px; background: var(--card); border-radius: 14px; padding: 8px; box-shadow: var(--shadow); }
 .teach-grid-head { text-align: center; font-size: 11px; font-weight: 700; color: var(--text-secondary); padding: 4px 0; }
@@ -1057,30 +1069,68 @@ textarea.input { resize: vertical; min-height: 60px; }
           <div v-if="!selectedExam" class="empty-state">暂无考试记录 📊</div>
           <template v-else>
             <div class="line-card" style="border-left-color:var(--danger)">
-              <div class="line-header">🔴 特控线以上（≥{{ scoreTekong }}分）<span class="line-count">{{ overviewGroups.up.length }} 人</span></div>
+              <div class="line-header" style="cursor:pointer" @click="toggleGroup('up')">🔴 特控线以上（≥{{ scoreTekong }}分）<span class="line-count">{{ overviewGroups.up.length }} 人</span><span style="margin-left:auto;font-size:11px;color:var(--text-secondary)">{{ expandedGroup==='up' ? '收起 ▲' : '各科成绩 ▼' }}</span></div>
               <div v-if="!overviewGroups.up.length" class="line-empty">暂无</div>
-              <div v-for="s in overviewGroups.up" :key="s.name" class="line-row">
-                <span class="line-rank">{{ s.rank }}</span>
-                <span class="line-name">{{ s.name }}</span>
-                <span class="line-score">{{ s.total }} 分</span>
+              <!-- 展开：各科成绩表（按总分降序） -->
+              <div v-if="expandedGroup==='up' && overviewGroups.up.length" class="score-table-wrap">
+                <table class="score-table">
+                  <tr><th>名</th><th>姓名</th><th v-for="sub in selectedExam.subjects" :key="sub">{{ sub }}</th><th>总分</th></tr>
+                  <tr v-for="s in overviewGroups.up" :key="s.name">
+                    <td>{{ s.rank }}</td><td class="st-name">{{ s.name }}</td>
+                    <td v-for="sub in selectedExam.subjects" :key="sub">{{ scoreOf(s.name, sub) }}</td>
+                    <td class="st-total">{{ s.total }}</td>
+                  </tr>
+                </table>
+              </div>
+              <!-- 收起：精简名单 -->
+              <div v-else>
+                <div v-for="s in overviewGroups.up" :key="s.name" class="line-row">
+                  <span class="line-rank">{{ s.rank }}</span>
+                  <span class="line-name">{{ s.name }}</span>
+                  <span class="line-score">{{ s.total }} 分</span>
+                </div>
               </div>
             </div>
             <div class="line-card" style="border-left-color:var(--warning)">
-              <div class="line-header">🟡 本科线上（{{ scoreBenke }}~{{ scoreTekong }}分）<span class="line-count">{{ overviewGroups.mid.length }} 人</span></div>
+              <div class="line-header" style="cursor:pointer" @click="toggleGroup('mid')">🟡 本科线上（{{ scoreBenke }}~{{ scoreTekong }}分）<span class="line-count">{{ overviewGroups.mid.length }} 人</span><span style="margin-left:auto;font-size:11px;color:var(--text-secondary)">{{ expandedGroup==='mid' ? '收起 ▲' : '各科成绩 ▼' }}</span></div>
               <div v-if="!overviewGroups.mid.length" class="line-empty">暂无</div>
-              <div v-for="s in overviewGroups.mid" :key="s.name" class="line-row">
-                <span class="line-rank">{{ s.rank }}</span>
-                <span class="line-name">{{ s.name }}</span>
-                <span class="line-score">{{ s.total }} 分</span>
+              <div v-if="expandedGroup==='mid' && overviewGroups.mid.length" class="score-table-wrap">
+                <table class="score-table">
+                  <tr><th>名</th><th>姓名</th><th v-for="sub in selectedExam.subjects" :key="sub">{{ sub }}</th><th>总分</th></tr>
+                  <tr v-for="s in overviewGroups.mid" :key="s.name">
+                    <td>{{ s.rank }}</td><td class="st-name">{{ s.name }}</td>
+                    <td v-for="sub in selectedExam.subjects" :key="sub">{{ scoreOf(s.name, sub) }}</td>
+                    <td class="st-total">{{ s.total }}</td>
+                  </tr>
+                </table>
+              </div>
+              <div v-else>
+                <div v-for="s in overviewGroups.mid" :key="s.name" class="line-row">
+                  <span class="line-rank">{{ s.rank }}</span>
+                  <span class="line-name">{{ s.name }}</span>
+                  <span class="line-score">{{ s.total }} 分</span>
+                </div>
               </div>
             </div>
             <div class="line-card" style="border-left-color:var(--text-tertiary)">
-              <div class="line-header">⚪ 本科线下（&lt;{{ scoreBenke }}分）<span class="line-count">{{ overviewGroups.down.length }} 人</span></div>
+              <div class="line-header" style="cursor:pointer" @click="toggleGroup('down')">⚪ 本科线下（&lt;{{ scoreBenke }}分）<span class="line-count">{{ overviewGroups.down.length }} 人</span><span style="margin-left:auto;font-size:11px;color:var(--text-secondary)">{{ expandedGroup==='down' ? '收起 ▲' : '各科成绩 ▼' }}</span></div>
               <div v-if="!overviewGroups.down.length" class="line-empty">暂无</div>
-              <div v-for="s in overviewGroups.down" :key="s.name" class="line-row">
-                <span class="line-rank">{{ s.rank }}</span>
-                <span class="line-name">{{ s.name }}</span>
-                <span class="line-score">{{ s.total }} 分</span>
+              <div v-if="expandedGroup==='down' && overviewGroups.down.length" class="score-table-wrap">
+                <table class="score-table">
+                  <tr><th>名</th><th>姓名</th><th v-for="sub in selectedExam.subjects" :key="sub">{{ sub }}</th><th>总分</th></tr>
+                  <tr v-for="s in overviewGroups.down" :key="s.name">
+                    <td>{{ s.rank }}</td><td class="st-name">{{ s.name }}</td>
+                    <td v-for="sub in selectedExam.subjects" :key="sub">{{ scoreOf(s.name, sub) }}</td>
+                    <td class="st-total">{{ s.total }}</td>
+                  </tr>
+                </table>
+              </div>
+              <div v-else>
+                <div v-for="s in overviewGroups.down" :key="s.name" class="line-row">
+                  <span class="line-rank">{{ s.rank }}</span>
+                  <span class="line-name">{{ s.name }}</span>
+                  <span class="line-score">{{ s.total }} 分</span>
+                </div>
               </div>
             </div>
             <!-- 考试管理（折叠） -->
@@ -1098,19 +1148,35 @@ textarea.input { resize: vertical; min-height: 60px; }
           </template>
         </div>
 
-        <!-- 偏科分析（单科排名 vs 总分排名） -->
+        <!-- 偏科分析（与平均分对比） -->
         <div v-show="classGradeSub==='deviation'">
           <div class="page-actions">
-            <select v-model="gradeExamId" class="input" style="flex:1;min-width:0">
-              <option v-for="ex in exams" :key="ex.id" :value="ex.id">{{ ex.name }}（{{ ex.date }}）</option>
-            </select>
+            <button v-for="(ex, i) in recentExams" :key="ex.id" class="btn-small" :class="{active: selectedDeviationExam && selectedDeviationExam.id === ex.id}" @click="deviationExamIndex=i">{{ ex.name }}</button>
             <button class="btn-small" :class="{active: deviationView==='student'}" @click="deviationView='student'">👦 按学生</button>
             <button class="btn-small" :class="{active: deviationView==='subject'}" @click="deviationView='subject'">📚 按学科</button>
           </div>
-          <div style="font-size:11px;color:var(--text-secondary);padding:0 2px 8px">偏科程度 = 单科排名 − 总分排名（{{ '⬇' }}绿色为优势科目，{{ '⬆' }}红色为薄弱科目）</div>
-          <div v-if="!selectedExam" class="empty-state">暂无考试记录 📊</div>
+          <div style="font-size:11px;color:var(--text-secondary);padding:0 2px 6px">偏科程度 = 单科成绩 − 该科平均分（{{ '⬆' }}绿色=超均分优势科目，{{ '⬇' }}红色=低于平均薄弱科目）</div>
+          <div v-if="!recentExams.length" class="empty-state">暂无考试记录 📊</div>
           <template v-else>
-            <!-- 按学生：每个学生各科差距，按最大偏科程度排序 -->
+            <!-- 当前考试各科平均分 -->
+            <div v-if="selectedDeviationExam" class="avg-bar">
+              <span style="color:var(--text-secondary);white-space:nowrap">📊 {{ selectedDeviationExam.name }} 平均分</span>
+              <span v-for="sub in selectedDeviationExam.subjects" :key="sub" class="avg-tag">{{ sub }} <b>{{ subjectAvgTextOf(selectedDeviationExam, sub) }}</b></span>
+            </div>
+            <!-- 三次考试平均分对比 -->
+            <div v-if="recentExams.length > 1" class="line-card" style="border-left-color:var(--success);margin-bottom:10px">
+              <div class="line-header">📈 三次考试各科平均分对比</div>
+              <div style="font-size:11px;overflow-x:auto">
+                <table style="width:100%;border-collapse:collapse;min-width:420px">
+                  <tr style="color:var(--text-secondary)"><td style="padding:4px 6px">科目</td><td v-for="ex in recentExams" :key="ex.id" style="padding:4px 6px;text-align:center">{{ ex.name }}</td></tr>
+                  <tr v-for="sub in allAvgSubjects" :key="sub" style="border-top:1px solid var(--border)">
+                    <td style="padding:4px 6px;font-weight:600">{{ sub }}</td>
+                    <td v-for="ex in recentExams" :key="ex.id" style="padding:4px 6px;text-align:center">{{ subjectAvgTextOf(ex, sub) }}</td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+            <!-- 按学生：每个学生各科与平均分差距，按最大偏科排序 -->
             <div v-if="deviationView==='student'">
               <div v-if="!deviationStudents.length" class="empty-state">该场考试暂无成绩数据</div>
               <div v-for="d in deviationStudents" :key="d.name" class="record-card">
@@ -1120,19 +1186,19 @@ textarea.input { resize: vertical; min-height: 60px; }
                   </div>
                 </div>
                 <div class="dev-gaps">
-                  <span v-for="(g, sub) in d.gaps" :key="sub" :class="['dev-gap', g < 0 ? 'good' : (g > 0 ? 'bad' : '')]">{{ sub }} {{ g > 0 ? '⬇' : (g < 0 ? '⬆' : '＝') }}{{ Math.abs(g) }}</span>
+                  <span v-for="(g, sub) in d.gaps" :key="sub" :class="['dev-gap', g > 0 ? 'good' : (g < 0 ? 'bad' : '')]">{{ sub }} {{ g > 0 ? '⬆+' : (g < 0 ? '⬇' : '＝') }}{{ Math.abs(g) }}</span>
                 </div>
               </div>
             </div>
-            <!-- 按学科：每科学生按偏科程度排序 -->
+            <!-- 按学科：每科学生按与平均分差距排序 -->
             <div v-else>
               <div v-if="!deviationSubjects.length" class="empty-state">该场考试暂无科目数据</div>
               <div v-for="ds in deviationSubjects" :key="ds.subject" class="record-card">
-                <div class="record-title" style="margin-bottom:6px">📚 {{ ds.subject }} <span style="font-size:11px;color:var(--text-secondary)">按偏科程度排序</span></div>
+                <div class="record-title" style="margin-bottom:6px">📚 {{ ds.subject }} <span class="avg-inline">平均 {{ ds.avgText }}</span> <span style="font-size:11px;color:var(--text-secondary)">按偏科程度排序</span></div>
                 <div v-for="r in ds.rows" :key="r.name" class="dev-row">
                   <span class="dev-row-name">{{ r.name }}</span>
-                  <span class="dev-row-rank">{{ r.score }} 分 · 单科第{{ r.subjectRank }} / 总分第{{ r.totalRank }}</span>
-                  <span :class="['dev-gap', r.gap < 0 ? 'good' : (r.gap > 0 ? 'bad' : '')]">{{ r.gap > 0 ? '⬇' : (r.gap < 0 ? '⬆' : '＝') }}{{ Math.abs(r.gap) }}</span>
+                  <span class="dev-row-rank">{{ r.score }} 分 · 总分第{{ r.totalRank }}</span>
+                  <span :class="['dev-gap', r.gap > 0 ? 'good' : (r.gap < 0 ? 'bad' : '')]">{{ r.gap > 0 ? '⬆+' : (r.gap < 0 ? '⬇' : '＝') }}{{ Math.abs(r.gap) }}</span>
                 </div>
               </div>
             </div>
@@ -3045,20 +3111,16 @@ createApp({
       });
       return map;
     }
-    // 单科排名表
-    function getSubjectRankMap(ex, sub) {
-      const vals = (ex.scores || []).map(s => ({ name: s.name, v: s.subjects?.[sub] })).filter(x => x.v !== undefined);
-      vals.sort((a, b) => b.v - a.v);
-      const map = {};
-      let prev = null, prevRank = 0;
-      vals.forEach((x, i) => {
-        if (x.v !== prev) { prev = x.v; prevRank = i + 1; }
-        map[x.name] = prevRank;
-      });
-      return map;
-    }
 
-    // 1) 总体成绩预览：三线分组
+    // 1) 总体成绩预览：三线分组（可展开看各科成绩）
+    const expandedGroup = ref(null);
+    function toggleGroup(g) { expandedGroup.value = expandedGroup.value === g ? null : g; }
+    function scoreOf(name, sub) {
+      const ex = selectedExam.value;
+      if (!ex) return '-';
+      const s = (ex.scores || []).find(x => x.name === name);
+      return s && s.subjects?.[sub] !== undefined ? s.subjects[sub] : '-';
+    }
     const overviewGroups = computed(() => {
       const ex = selectedExam.value;
       if (!ex || !ex.scores || !ex.scores.length) return { up: [], mid: [], down: [] };
@@ -3071,9 +3133,34 @@ createApp({
       };
     });
 
-    // 2) 偏科分析：按学生（各科差距，按最大偏科排序）
+    // 2) 偏科分析：基于最近三次考试 + 各科平均分
+    const recentExams = computed(() => {
+      const sorted = [...exams.value].sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id);
+      return sorted.slice(-3);
+    });
+    const deviationExamIndex = ref(999); // 默认最新一场
+    const selectedDeviationExam = computed(() => {
+      const list = recentExams.value;
+      if (!list.length) return null;
+      return list[Math.min(deviationExamIndex.value, list.length - 1)] || list[list.length - 1];
+    });
+    function subjectAvgOf(ex, sub) {
+      const vals = (ex.scores || []).map(s => s.subjects?.[sub]).filter(v => v !== undefined);
+      return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+    }
+    function subjectAvgTextOf(ex, sub) {
+      const v = subjectAvgOf(ex, sub);
+      return v == null ? '-' : v.toFixed(1);
+    }
+    const allAvgSubjects = computed(() => {
+      const subs = [];
+      recentExams.value.forEach(ex => (ex.subjects || []).forEach(s => { if (!subs.includes(s)) subs.push(s); }));
+      return subs;
+    });
+
+    // 按学生：各科与平均分差，按最大偏科排序
     const deviationStudents = computed(() => {
-      const ex = selectedExam.value;
+      const ex = selectedDeviationExam.value;
       if (!ex || !ex.scores || !ex.scores.length) return [];
       const totalRank = getTotalRankMap(ex);
       return (ex.scores || []).map(s => {
@@ -3081,9 +3168,9 @@ createApp({
         let maxGap = 0;
         (ex.subjects || []).forEach(sub => {
           if (s.subjects?.[sub] === undefined) return;
-          const sr = getSubjectRankMap(ex, sub)[s.name] || 0;
-          const tr = totalRank[s.name] || 0;
-          const gap = sr - tr;
+          const avg = subjectAvgOf(ex, sub);
+          if (avg == null) return;
+          const gap = Math.round((s.subjects[sub] - avg) * 10) / 10;
           gaps[sub] = gap;
           if (Math.abs(gap) > Math.abs(maxGap)) maxGap = gap;
         });
@@ -3091,24 +3178,23 @@ createApp({
       }).sort((a, b) => Math.abs(b.maxGap) - Math.abs(a.maxGap));
     });
 
-    // 2b) 偏科分析：按学科（每科学生按偏科程度排序）
+    // 按学科：每科显示平均分，学生按与平均分差距排序
     const deviationSubjects = computed(() => {
-      const ex = selectedExam.value;
+      const ex = selectedDeviationExam.value;
       if (!ex || !ex.scores || !ex.scores.length) return [];
       const totalRank = getTotalRankMap(ex);
       return (ex.subjects || []).map(sub => {
-        const sr = getSubjectRankMap(ex, sub);
+        const avg = subjectAvgOf(ex, sub);
         const rows = (ex.scores || [])
           .filter(s => s.subjects?.[sub] !== undefined)
           .map(s => ({
             name: s.name,
             score: s.subjects[sub],
-            subjectRank: sr[s.name] || 0,
             totalRank: totalRank[s.name] || 0,
-            gap: (sr[s.name] || 0) - (totalRank[s.name] || 0)
+            gap: Math.round((s.subjects[sub] - (avg || 0)) * 10) / 10
           }))
           .sort((a, b) => Math.abs(b.gap) - Math.abs(a.gap));
-        return { subject: sub, rows };
+        return { subject: sub, avgText: avg == null ? '-' : avg.toFixed(1), rows };
       });
     });
 
@@ -4805,6 +4891,8 @@ createApp({
       openQuickRecord, saveQuickRecord, showContacts, contactSearch, filteredContacts, openContacts,
       // 学业分析
       gradeExamId, scoreBenke, scoreTekong, deviationView, selectedExam, overviewGroups,
+      expandedGroup, toggleGroup, scoreOf,
+      recentExams, deviationExamIndex, selectedDeviationExam, subjectAvgTextOf, allAvgSubjects,
       deviationStudents, deviationSubjects, progressData, showExamMgmt,
       // 学业预警
       warningRecords, showAddWarning, editingWarning, warningForm, sortedWarnings, addWarning, editWarning, markWarningCommunicated, deleteWarning,
