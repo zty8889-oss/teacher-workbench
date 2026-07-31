@@ -3352,7 +3352,12 @@ createApp({
             const wb = XLSX.read(data, { type: 'array' });
             const ws = wb.Sheets[wb.SheetNames[0]];
             const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
-            planImportText.value = rows.map(r => String(r[0] || '').trim()).filter(Boolean).join('\n');
+            let items = rows.map(r => String(r[0] || '').trim()).filter(Boolean);
+            // 智能跳过表头（含表头特征词且不是课时内容）
+            if (items.length > 1 && /内容|课时|教学计划|计划|课程|课文|周次/.test(items[0]) && !/第\s*\d+/.test(items[0])) {
+              items = items.slice(1);
+            }
+            planImportText.value = items.join('\n');
           } catch(err) { alert('Excel 解析失败：' + err.message); }
         };
         reader.readAsArrayBuffer(file);
