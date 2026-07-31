@@ -133,6 +133,28 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFa
 .picked-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .picked-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; background: #F0F5FF; color: var(--primary); border-radius: 8px; padding: 3px 8px; }
 .picked-tag-x { cursor: pointer; font-weight: 700; color: var(--danger); padding: 0 2px; }
+/* 三线分组预览 */
+.line-card { background: var(--card); border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; box-shadow: var(--shadow); border-left: 3px solid var(--primary); }
+.line-header { font-size: 13px; font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+.line-count { font-size: 11px; font-weight: 500; background: var(--bg); color: var(--text-secondary); border-radius: 8px; padding: 1px 8px; }
+.line-empty { font-size: 12px; color: var(--text-tertiary); padding: 4px 0; }
+.line-row { display: flex; align-items: center; gap: 8px; padding: 5px 2px; border-bottom: 1px solid var(--border); font-size: 13px; }
+.line-row:last-child { border-bottom: none; }
+.line-rank { width: 26px; height: 22px; line-height: 22px; text-align: center; border-radius: 6px; background: var(--bg); color: var(--text-secondary); font-size: 11px; font-weight: 600; flex-shrink: 0; }
+.line-name { flex: 1; font-weight: 600; }
+.line-score { color: var(--primary); font-weight: 700; }
+/* 偏科分析 */
+.dev-gaps { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.dev-gap { font-size: 11px; padding: 2px 7px; border-radius: 8px; background: var(--bg); color: var(--text-secondary); }
+.dev-gap.good { background: #E8F8EF; color: #1E9E58; font-weight: 600; }
+.dev-gap.bad { background: #FDECEC; color: #E04A4A; font-weight: 600; }
+.dev-row { display: flex; align-items: center; gap: 8px; padding: 5px 2px; border-bottom: 1px solid var(--border); font-size: 12px; }
+.dev-row:last-child { border-bottom: none; }
+.dev-row-name { flex: 1; font-weight: 600; }
+.dev-row-rank { color: var(--text-secondary); font-size: 11px; }
+/* 进退步 */
+.progress-ranks { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 4px; font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+.btn-small.active { background: var(--primary); color: #fff; }
 
 /* ===== Section Cards ===== */
 .section-card { background: var(--card); border-radius: var(--card-radius); padding: 18px; margin-bottom: 12px; box-shadow: var(--shadow); }
@@ -760,45 +782,131 @@ textarea.input { resize: vertical; min-height: 60px; }
             </div>
           </div>
           <div class="left-sidebar-content">
-        <!-- 班级成绩总览 -->
+        <!-- 班级成绩总览（本科线/特控线分组） -->
         <div v-show="classGradeSub==='overview'">
           <div class="page-actions">
-            <span style="font-size:13px; color:var(--text-secondary)">共 {{ exams.length }} 场考试</span>
+            <select v-model="gradeExamId" class="input" style="flex:1;min-width:0">
+              <option v-for="ex in exams" :key="ex.id" :value="ex.id">{{ ex.name }}（{{ ex.date }}）</option>
+            </select>
             <button class="btn-small" @click="showAddExam=true; editingExam=null; resetExamForm()">+ 考试</button>
             <button class="btn-small" @click="showWordImport=true; wordImportType='exams'">📥 导入</button>
           </div>
-          <div v-if="exams.length === 0" class="empty-state">暂无考试记录 📊</div>
-          <div v-for="ex in exams" :key="ex.id" class="exam-card">
-            <div class="exam-header" @click="ex.open=!ex.open">
-              <div class="exam-title">{{ ex.name }}</div>
-              <div class="exam-date">{{ ex.date }}</div>
-              <div class="exam-toggle" :style="{transform: ex.open ? 'rotate(180deg)' : ''}">▼</div>
-            </div>
-            <div v-show="ex.open" class="exam-body">
-              <div class="exam-stats">
-                <div class="exam-stat"><label>均分</label><span>{{ avgScore(ex) }}</span></div>
-                <div class="exam-stat"><label>最高</label><span>{{ maxScore(ex) }}</span></div>
-                <div class="exam-stat"><label>最低</label><span>{{ minScore(ex) }}</span></div>
-                <div class="exam-stat"><label>及格率</label><span>{{ passRate(ex) }}%</span></div>
-              </div>
-              <div v-if="ex.subjects && ex.subjects.length" style="margin-bottom:8px">
-                <div style="font-size:12px;font-weight:600;margin-bottom:6px">📚 科目统计</div>
-                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;font-size:11px">
-                  <div v-for="sub in ex.subjects" :key="sub" style="background:#F8F9FC;border-radius:8px;padding:6px 4px;text-align:center">
-                    <div style="color:var(--text-secondary)">{{ sub }}</div>
-                    <div style="font-weight:600;color:var(--primary)">{{ avgSubject(ex, sub) }}</div>
-                  </div>
-                </div>
-              </div>
-              <div v-if="ex.scores && ex.scores.length" class="exam-chart">
-                <div v-for="(sc, si) in ex.scores.slice(0, 30)" :key="sc.id" class="chart-bar" :style="{height: (sc.total||0) / ((ex.subjects?.length||1) * (ex.fullScore||100)) * 110 + 'px', background: getScoreColor((sc.total||0) / (ex.subjects?.length||1) / (ex.fullScore||100) * 100)}" :title="sc.name + ' ' + (sc.total||0) + '分'"></div>
-              </div>
-              <div style="display:flex;gap:8px;margin-top:6px">
-                <button class="btn-small" @click="editExam(ex)">✏️ 编辑</button>
-                <button class="btn-small btn-danger" @click="deleteExam(ex.id)">🗑️ 删除</button>
-              </div>
+          <!-- 分数线设置 -->
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 12px;background:var(--card);border-radius:12px;box-shadow:var(--shadow)">
+            <span style="font-size:12px;color:var(--text-secondary);white-space:nowrap">📏 分数线</span>
+            <div style="flex:1;display:flex;align-items:center;gap:4px">
+              <span style="font-size:11px;color:var(--warning);white-space:nowrap">本科线</span>
+              <input v-model.number="scoreBenke" type="number" class="input" style="padding:4px 6px;font-size:12px;width:70px">
+              <span style="font-size:11px;color:var(--danger);white-space:nowrap;margin-left:6px">特控线</span>
+              <input v-model.number="scoreTekong" type="number" class="input" style="padding:4px 6px;font-size:12px;width:70px">
             </div>
           </div>
+          <div v-if="!selectedExam" class="empty-state">暂无考试记录 📊</div>
+          <template v-else>
+            <div class="line-card" style="border-left-color:var(--danger)">
+              <div class="line-header">🔴 特控线以上（≥{{ scoreTekong }}分）<span class="line-count">{{ overviewGroups.up.length }} 人</span></div>
+              <div v-if="!overviewGroups.up.length" class="line-empty">暂无</div>
+              <div v-for="s in overviewGroups.up" :key="s.name" class="line-row">
+                <span class="line-rank">{{ s.rank }}</span>
+                <span class="line-name">{{ s.name }}</span>
+                <span class="line-score">{{ s.total }} 分</span>
+              </div>
+            </div>
+            <div class="line-card" style="border-left-color:var(--warning)">
+              <div class="line-header">🟡 本科线上（{{ scoreBenke }}~{{ scoreTekong }}分）<span class="line-count">{{ overviewGroups.mid.length }} 人</span></div>
+              <div v-if="!overviewGroups.mid.length" class="line-empty">暂无</div>
+              <div v-for="s in overviewGroups.mid" :key="s.name" class="line-row">
+                <span class="line-rank">{{ s.rank }}</span>
+                <span class="line-name">{{ s.name }}</span>
+                <span class="line-score">{{ s.total }} 分</span>
+              </div>
+            </div>
+            <div class="line-card" style="border-left-color:var(--text-tertiary)">
+              <div class="line-header">⚪ 本科线下（&lt;{{ scoreBenke }}分）<span class="line-count">{{ overviewGroups.down.length }} 人</span></div>
+              <div v-if="!overviewGroups.down.length" class="line-empty">暂无</div>
+              <div v-for="s in overviewGroups.down" :key="s.name" class="line-row">
+                <span class="line-rank">{{ s.rank }}</span>
+                <span class="line-name">{{ s.name }}</span>
+                <span class="line-score">{{ s.total }} 分</span>
+              </div>
+            </div>
+            <!-- 考试管理（折叠） -->
+            <div class="line-card" style="border-left-color:var(--primary);cursor:pointer" @click="showExamMgmt=!showExamMgmt">
+              <div class="line-header">🗂 考试管理（{{ exams.length }} 场）<span style="margin-left:auto;font-size:11px;color:var(--text-secondary)">{{ showExamMgmt ? '收起 ▲' : '展开 ▼' }}</span></div>
+            </div>
+            <div v-if="showExamMgmt" class="line-card" style="border-left-color:var(--primary)">
+              <div v-for="ex in exams" :key="ex.id" class="line-row">
+                <span class="line-name">{{ ex.name }}</span>
+                <span style="font-size:11px;color:var(--text-secondary)">{{ ex.date }} · {{ (ex.scores||[]).length }}人</span>
+                <span style="font-size:11px;color:var(--primary);cursor:pointer" @click="editExam(ex)">✏️</span>
+                <span style="font-size:11px;color:var(--danger);cursor:pointer" @click="deleteExam(ex.id)">删除</span>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <!-- 偏科分析（单科排名 vs 总分排名） -->
+        <div v-show="classGradeSub==='deviation'">
+          <div class="page-actions">
+            <select v-model="gradeExamId" class="input" style="flex:1;min-width:0">
+              <option v-for="ex in exams" :key="ex.id" :value="ex.id">{{ ex.name }}（{{ ex.date }}）</option>
+            </select>
+            <button class="btn-small" :class="{active: deviationView==='student'}" @click="deviationView='student'">👦 按学生</button>
+            <button class="btn-small" :class="{active: deviationView==='subject'}" @click="deviationView='subject'">📚 按学科</button>
+          </div>
+          <div style="font-size:11px;color:var(--text-secondary);padding:0 2px 8px">偏科程度 = 单科排名 − 总分排名（{{ '⬇' }}绿色为优势科目，{{ '⬆' }}红色为薄弱科目）</div>
+          <div v-if="!selectedExam" class="empty-state">暂无考试记录 📊</div>
+          <template v-else>
+            <!-- 按学生：每个学生各科差距，按最大偏科程度排序 -->
+            <div v-if="deviationView==='student'">
+              <div v-if="!deviationStudents.length" class="empty-state">该场考试暂无成绩数据</div>
+              <div v-for="d in deviationStudents" :key="d.name" class="record-card">
+                <div class="record-header">
+                  <div>
+                    <div class="record-title">{{ d.name }} <span class="record-tag">总分第 {{ d.totalRank }} 名 · {{ d.total }} 分</span></div>
+                  </div>
+                </div>
+                <div class="dev-gaps">
+                  <span v-for="(g, sub) in d.gaps" :key="sub" :class="['dev-gap', g < 0 ? 'good' : (g > 0 ? 'bad' : '')]">{{ sub }} {{ g > 0 ? '⬇' : (g < 0 ? '⬆' : '＝') }}{{ Math.abs(g) }}</span>
+                </div>
+              </div>
+            </div>
+            <!-- 按学科：每科学生按偏科程度排序 -->
+            <div v-else>
+              <div v-if="!deviationSubjects.length" class="empty-state">该场考试暂无科目数据</div>
+              <div v-for="ds in deviationSubjects" :key="ds.subject" class="record-card">
+                <div class="record-title" style="margin-bottom:6px">📚 {{ ds.subject }} <span style="font-size:11px;color:var(--text-secondary)">按偏科程度排序</span></div>
+                <div v-for="r in ds.rows" :key="r.name" class="dev-row">
+                  <span class="dev-row-name">{{ r.name }}</span>
+                  <span class="dev-row-rank">{{ r.score }} 分 · 单科第{{ r.subjectRank }} / 总分第{{ r.totalRank }}</span>
+                  <span :class="['dev-gap', r.gap < 0 ? 'good' : (r.gap > 0 ? 'bad' : '')]">{{ r.gap > 0 ? '⬇' : (r.gap < 0 ? '⬆' : '＝') }}{{ Math.abs(r.gap) }}</span>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <!-- 进退步名次（最近三次，连续两次退步） -->
+        <div v-show="classGradeSub==='progress'">
+          <div class="page-actions">
+            <span style="font-size:13px; color:var(--text-secondary)">以最近三次考试排名为准</span>
+          </div>
+          <div v-if="exams.length < 3" class="empty-state">至少需要 3 场考试才能分析进退步 📈</div>
+          <template v-else>
+            <div style="font-size:11px;color:var(--text-secondary);padding:0 2px 8px">三次排名中连续两次退步的学生名单（{{ progressData.examNames.join(' → ') }}）</div>
+            <div v-if="!progressData.list.length" class="empty-state">本次暂无连续两次退步的学生 🎉</div>
+            <div v-for="p in progressData.list" :key="p.name" class="record-card" style="border-left:3px solid var(--danger)">
+              <div class="record-header">
+                <div>
+                  <div class="record-title">{{ p.name }} <span class="record-tag" style="color:var(--danger)">累计退步 {{ p.totalBack }} 名</span></div>
+                </div>
+              </div>
+              <div class="progress-ranks">
+                <span>第 {{ p.r1 }} 名 → 第 {{ p.r2 }} 名 → 第 {{ p.r3 }} 名</span>
+                <span style="color:var(--danger);font-size:11px">▲{{ p.back1 }} ▲{{ p.back2 }}</span>
+              </div>
+            </div>
+          </template>
         </div>
 
         <!-- 学业预警 -->
@@ -1911,7 +2019,7 @@ textarea.input { resize: vertical; min-height: 60px; }
 </div>
 
 <script>
-const { createApp, ref, reactive, computed, nextTick } = Vue;
+const { createApp, ref, reactive, computed, nextTick, watch } = Vue;
 
 // ====== 底部 Tab 样式（动态注入） ======
 const tabStyle = document.createElement('style');
@@ -1970,6 +2078,8 @@ createApp({
 
     const gradeSubs = [
       { key: 'overview', label: '成绩总览', icon: '📊' },
+      { key: 'deviation', label: '偏科分析', icon: '🎯' },
+      { key: 'progress', label: '进退步', icon: '📈' },
       { key: 'warning', label: '学业预警', icon: '⚠️' },
       { key: 'communicate', label: '老师沟通', icon: '💬' },
     ];
@@ -2032,6 +2142,7 @@ createApp({
           teacherCommRecords: teacherCommRecords.value,
           scheduleRecords: scheduleRecords.value,
           semesterStart: semesterStart.value,
+          scoreLines: { benke: scoreBenke.value, tekong: scoreTekong.value },
           teacherInfo: teacherInfo,
           teacherName: teacherName.value
         }));
@@ -2388,6 +2499,7 @@ createApp({
     function deleteExam(id) {
       if (confirm('确定要删除这场考试吗？')) {
         exams.value = exams.value.filter(e => e.id !== id);
+        if (gradeExamId.value === id) gradeExamId.value = exams.value[0]?.id || 0;
         saveData();
       }
     }
@@ -2399,6 +2511,122 @@ createApp({
         saveData();
       }
     }
+
+    // ====== 学业分析（总体预览 / 偏科分析 / 进退步） ======
+    const gradeExamId = ref(0);
+    const scoreBenke = ref(450);
+    const scoreTekong = ref(520);
+    const deviationView = ref('student');
+    const showExamMgmt = ref(false);
+
+    // 分数线修改后自动保存
+    watch([scoreBenke, scoreTekong], () => { try { saveData(); } catch (e) {} });
+
+    const selectedExam = computed(() => {
+      if (!exams.value.length) return null;
+      return exams.value.find(e => e.id === gradeExamId.value) || exams.value[0];
+    });
+
+    // 总分排名表（同分同名次）
+    function getTotalRankMap(ex) {
+      const sorted = [...(ex.scores || [])].sort((a, b) => (b.total || 0) - (a.total || 0));
+      const map = {};
+      let prev = null, prevRank = 0;
+      sorted.forEach((s, i) => {
+        if (s.total !== prev) { prev = s.total; prevRank = i + 1; }
+        map[s.name] = prevRank;
+      });
+      return map;
+    }
+    // 单科排名表
+    function getSubjectRankMap(ex, sub) {
+      const vals = (ex.scores || []).map(s => ({ name: s.name, v: s.subjects?.[sub] })).filter(x => x.v !== undefined);
+      vals.sort((a, b) => b.v - a.v);
+      const map = {};
+      let prev = null, prevRank = 0;
+      vals.forEach((x, i) => {
+        if (x.v !== prev) { prev = x.v; prevRank = i + 1; }
+        map[x.name] = prevRank;
+      });
+      return map;
+    }
+
+    // 1) 总体成绩预览：三线分组
+    const overviewGroups = computed(() => {
+      const ex = selectedExam.value;
+      if (!ex || !ex.scores || !ex.scores.length) return { up: [], mid: [], down: [] };
+      const totalRank = getTotalRankMap(ex);
+      const rows = (ex.scores || []).map(s => ({ name: s.name, total: s.total || 0, rank: totalRank[s.name] }));
+      return {
+        up: rows.filter(s => s.total >= scoreTekong.value),
+        mid: rows.filter(s => s.total >= scoreBenke.value && s.total < scoreTekong.value),
+        down: rows.filter(s => s.total < scoreBenke.value)
+      };
+    });
+
+    // 2) 偏科分析：按学生（各科差距，按最大偏科排序）
+    const deviationStudents = computed(() => {
+      const ex = selectedExam.value;
+      if (!ex || !ex.scores || !ex.scores.length) return [];
+      const totalRank = getTotalRankMap(ex);
+      return (ex.scores || []).map(s => {
+        const gaps = {};
+        let maxGap = 0;
+        (ex.subjects || []).forEach(sub => {
+          if (s.subjects?.[sub] === undefined) return;
+          const sr = getSubjectRankMap(ex, sub)[s.name] || 0;
+          const tr = totalRank[s.name] || 0;
+          const gap = sr - tr;
+          gaps[sub] = gap;
+          if (Math.abs(gap) > Math.abs(maxGap)) maxGap = gap;
+        });
+        return { name: s.name, total: s.total || 0, totalRank: totalRank[s.name] || 0, gaps, maxGap };
+      }).sort((a, b) => Math.abs(b.maxGap) - Math.abs(a.maxGap));
+    });
+
+    // 2b) 偏科分析：按学科（每科学生按偏科程度排序）
+    const deviationSubjects = computed(() => {
+      const ex = selectedExam.value;
+      if (!ex || !ex.scores || !ex.scores.length) return [];
+      const totalRank = getTotalRankMap(ex);
+      return (ex.subjects || []).map(sub => {
+        const sr = getSubjectRankMap(ex, sub);
+        const rows = (ex.scores || [])
+          .filter(s => s.subjects?.[sub] !== undefined)
+          .map(s => ({
+            name: s.name,
+            score: s.subjects[sub],
+            subjectRank: sr[s.name] || 0,
+            totalRank: totalRank[s.name] || 0,
+            gap: (sr[s.name] || 0) - (totalRank[s.name] || 0)
+          }))
+          .sort((a, b) => Math.abs(b.gap) - Math.abs(a.gap));
+        return { subject: sub, rows };
+      });
+    });
+
+    // 3) 进退步：最近三次考试，连续两次退步的名单
+    const progressData = computed(() => {
+      const sorted = [...exams.value].sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id);
+      if (sorted.length < 3) return { examNames: [], list: [] };
+      const last3 = sorted.slice(-3);
+      const rankMaps = last3.map(ex => getTotalRankMap(ex));
+      const studentSet = new Set();
+      last3.forEach(ex => (ex.scores || []).forEach(s => studentSet.add(s.name)));
+      const list = [];
+      studentSet.forEach(name => {
+        const ranks = rankMaps.map(m => m[name]);
+        if (ranks.some(r => r === undefined)) return;
+        const [r1, r2, r3] = ranks;
+        const back1 = r2 - r1;
+        const back2 = r3 - r2;
+        if (back1 > 0 && back2 > 0) {
+          list.push({ name, r1, r2, r3, back1, back2, totalBack: r3 - r1 });
+        }
+      });
+      list.sort((a, b) => b.totalBack - a.totalBack);
+      return { examNames: last3.map(e => e.name), list };
+    });
 
     // ====== Homework  ======
     const homework = ref([]);
@@ -3544,6 +3772,12 @@ createApp({
       if (data.warningRecords) warningRecords.value = data.warningRecords;
       if (data.teacherCommRecords) teacherCommRecords.value = data.teacherCommRecords;
       if (data.scheduleRecords) scheduleRecords.value = data.scheduleRecords;
+      // 默认选中最新考试（exams[0] 为最新）
+      if (exams.value.length) gradeExamId.value = exams.value[0].id;
+      if (data.scoreLines) {
+        if (data.scoreLines.benke) scoreBenke.value = data.scoreLines.benke;
+        if (data.scoreLines.tekong) scoreTekong.value = data.scoreLines.tekong;
+      }
       if (data.semesterStart) semesterStart.value = data.semesterStart;
       if (data.teacherInfo) Object.assign(teacherInfo, data.teacherInfo);
       if (data.teacherName) teacherName.value = data.teacherName;
@@ -3596,6 +3830,9 @@ createApp({
       dutyRecords, showAddDuty, editingDuty, dutyForm, sortedDuties, addDuty, editDuty, markDutyDone, deleteDuty,
       // 班表
       scheduleRecords, showAddSchedule, editingSchedule, scheduleForm, scheduleWeekFilter, filteredSchedule, addSchedule, editSchedule, deleteSchedule, getScheduleCell, clickScheduleCell, semesterStart, getDateStr,
+      // 学业分析
+      gradeExamId, scoreBenke, scoreTekong, deviationView, selectedExam, overviewGroups,
+      deviationStudents, deviationSubjects, progressData, showExamMgmt,
       // 学业预警
       warningRecords, showAddWarning, editingWarning, warningForm, sortedWarnings, addWarning, editWarning, markWarningCommunicated, deleteWarning,
       // 任课老师沟通
