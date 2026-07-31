@@ -526,26 +526,27 @@ textarea.input { resize: vertical; min-height: 60px; }
           </div>
         </div>
 
-        <!-- 临时离班记录 -->
+        <!-- 学生请假记录 -->
         <div v-show="classDailySub==='leave'">
           <div class="page-actions">
             <span style="font-size:13px; color:var(--text-secondary)">共 {{ leaveRecords.length }} 条记录</span>
             <button class="btn-small" @click="showAddLeave=true">+ 记录</button>
           </div>
-          <div v-if="leaveRecords.length === 0" class="empty-state">暂无临时离班记录 🚶</div>
+          <div v-if="leaveRecords.length === 0" class="empty-state">暂无请假记录 📝</div>
           <div v-for="r in sortedLeaves" :key="r.id" class="offclass-card">
             <div class="offclass-time">
-              <div class="offclass-h">{{ r.time }}</div>
-              <div class="offclass-label">离班</div>
+              <div class="offclass-h">{{ r.type==='病假' ? '🤒' : '📋' }}</div>
+              <div class="offclass-label">{{ r.type }}</div>
             </div>
             <div class="offclass-body">
-              <div class="offclass-name">{{ r.student }}</div>
-              <span class="offclass-dest">{{ r.destination }}</span>
-              <div v-if="r.returnTime" class="offclass-note">预计 {{ r.returnTime }} 返回</div>
-              <div style="margin-top:4px">
-                <span v-if="r.returned" class="offclass-returned">✅ 已返回</span>
-                <span v-else class="offclass-note" style="color:var(--warning)">⏳ 未返回</span>
-                <span v-if="!r.returned" style="margin-left:8px;font-size:11px;color:var(--primary);cursor:pointer" @click="markReturned(r.id)">标记返回</span>
+              <div class="offclass-name">{{ r.student }}<span v-if="r.studentId" style="font-size:10px;color:var(--text-tertiary);margin-left:4px">{{ r.studentId }}</span></div>
+              <span class="offclass-dest">{{ r.startDate }} ~ {{ r.endDate }}</span>
+              <div class="offclass-note">家长知晓：{{ r.parentKnown==='是' ? '✅ 已告知' : '❌ 未知晓' }}</div>
+              <div v-if="r.reason" class="offclass-note">事由：{{ r.reason }}</div>
+              <div v-if="r.parentScreenshot && r.parentScreenshot.length" class="record-photos">
+                <div v-for="(p, pi) in r.parentScreenshot" :key="pi" style="display:inline-block">
+                  <img :src="p" style="width:60px;height:60px;border-radius:8px;object-fit:cover;margin:2px;cursor:pointer" @click="previewImage(p)">
+                </div>
               </div>
             </div>
             <span style="cursor:pointer;color:var(--primary);font-size:12px;margin-right:8px" @click="editLeave(r)">✏️</span>
@@ -636,26 +637,40 @@ textarea.input { resize: vertical; min-height: 60px; }
           </div>
         </div>
 
-        <!-- 班规执行记录 -->
+        <!-- 班费收支记录 -->
         <div v-show="classDailySub==='rule'">
           <div class="page-actions">
             <span style="font-size:13px; color:var(--text-secondary)">共 {{ ruleRecords.length }} 条记录</span>
             <button class="btn-small" @click="showAddRule=true">+ 记录</button>
           </div>
-          <div v-if="ruleRecords.length === 0" class="empty-state">暂无班规执行记录 📏</div>
-          <div v-for="r in sortedRules" :key="r.id" class="record-card" :class="{praise: r.type==='加分', danger: r.type==='扣分'}">
+          <!-- 收支统计 -->
+          <div v-if="ruleRecords.length" style="display:flex;gap:8px;margin-bottom:10px">
+            <div style="flex:1;background:var(--card);border-radius:12px;padding:10px 12px;box-shadow:var(--shadow);text-align:center">
+              <div style="font-size:10px;color:var(--text-secondary)">总收入</div>
+              <div style="font-size:16px;font-weight:700;color:var(--success)">¥{{ totalIncome.toFixed(2) }}</div>
+            </div>
+            <div style="flex:1;background:var(--card);border-radius:12px;padding:10px 12px;box-shadow:var(--shadow);text-align:center">
+              <div style="font-size:10px;color:var(--text-secondary)">总支出</div>
+              <div style="font-size:16px;font-weight:700;color:var(--danger)">¥{{ totalExpense.toFixed(2) }}</div>
+            </div>
+            <div style="flex:1;background:var(--card);border-radius:12px;padding:10px 12px;box-shadow:var(--shadow);text-align:center">
+              <div style="font-size:10px;color:var(--text-secondary)">结余</div>
+              <div style="font-size:16px;font-weight:700;color:var(--primary)">¥{{ balance.toFixed(2) }}</div>
+            </div>
+          </div>
+          <div v-if="ruleRecords.length === 0" class="empty-state">暂无班费收支记录 💰</div>
+          <div v-for="r in sortedRules" :key="r.id" class="record-card" :class="{praise: r.type==='收入', danger: r.type==='支出'}">
             <div class="record-header">
               <div>
                 <div class="record-title">
-                  {{ r.student }} 
-                  <span :style="{color: r.type==='加分' ? 'var(--success)' : 'var(--danger)', fontWeight:700}">{{ r.type==='加分' ? '+' : '' }}{{ r.score }}</span>
+                  {{ r.detail }}
+                  <span :style="{color: r.type==='收入' ? 'var(--success)' : 'var(--danger)', fontWeight:700}">{{ r.type==='收入' ? '+' : '-' }}¥{{ Number(r.amount||0).toFixed(2) }}</span>
                 </div>
-                <div style="font-size:11px; color:var(--text-secondary);margin-top:2px">{{ r.date }} · {{ r.reason }}</div>
+                <div style="font-size:11px; color:var(--text-secondary);margin-top:2px">{{ r.date }} · {{ r.type }}<span v-if="r.type==='支出'" style="margin-left:4px">🧾 已上传凭证</span></div>
               </div>
               <span style="cursor:pointer;color:var(--danger);font-size:12px" @click="editRule(r)">✏️</span>
               <span style="cursor:pointer;color:var(--danger);font-size:12px" @click="deleteRule(r.id)">删除</span>
             </div>
-            <div v-if="r.action" class="record-body">处理：{{ r.action }}</div>
             <div v-if="r.photos && r.photos.length" class="record-photos">
               <div v-for="(p, pi) in r.photos" :key="pi" style="display:inline-block">
                 <img :src="p" style="width:60px;height:60px;border-radius:8px;object-fit:cover;margin:2px;cursor:pointer" @click="previewImage(p)">
@@ -1423,50 +1438,65 @@ textarea.input { resize: vertical; min-height: 60px; }
       </div>
     </div>
 
-    <!-- 临时离班弹窗 -->
+    <!-- 学生请假弹窗 -->
     <div v-if="showAddLeave" class="modal-overlay" @click.self="showAddLeave=false; editingLeave=null">
       <div class="modal modal-wide">
-        <div class="modal-header">{{ editingLeave ? "✏️ 编辑离班记录" : "🚶 临时离班登记" }}</div>
+        <div class="modal-header">{{ editingLeave ? "✏️ 编辑请假记录" : "📝 学生请假登记" }}</div>
         <div class="modal-body">
           <div class="form-row">
             <div class="form-group w-50">
-              <label>日期 *</label>
-              <input v-model="leaveForm.date" type="date" class="input">
-            </div>
-            <div class="form-group w-50">
               <label>学生姓名 *</label>
-              <input v-model="leaveForm.student" class="input" placeholder="姓名">
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group w-50">
-              <label>离班时间 *</label>
-              <input v-model="leaveForm.time" type="time" class="input">
+              <select v-model="leaveForm.student" class="input">
+                <option value="">— 请选择学生 —</option>
+                <option v-for="s in students" :key="s.id" :value="s.name">{{ s.name }}<span v-if="s.studentId">（{{ s.studentId }}）</span></option>
+              </select>
             </div>
             <div class="form-group w-50">
-              <label>去向 *</label>
-              <select v-model="leaveForm.destination" class="input">
-                <option value="医务室">医务室</option>
-                <option value="厕所">厕所</option>
-                <option value="办公室">办公室</option>
+              <label>请假事由 *</label>
+              <select v-model="leaveForm.type" class="input">
+                <option value="病假">病假 🤒</option>
+                <option value="事假">事假 📋</option>
                 <option value="其他">其他</option>
               </select>
             </div>
           </div>
           <div class="form-row">
             <div class="form-group w-50">
-              <label>预计返回时间</label>
-              <input v-model="leaveForm.returnTime" type="time" class="input">
+              <label>请假开始日期 *</label>
+              <input v-model="leaveForm.startDate" type="date" class="input">
             </div>
             <div class="form-group w-50">
-              <label>备注</label>
-              <input v-model="leaveForm.note" class="input" placeholder="其他说明">
+              <label>请假结束日期 *</label>
+              <input v-model="leaveForm.endDate" type="date" class="input">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>家长是否知晓 *</label>
+              <select v-model="leaveForm.parentKnown" class="input">
+                <option value="是">是 ✅</option>
+                <option value="否">否 ❌</option>
+              </select>
+            </div>
+            <div class="form-group w-50">
+              <label>事由说明</label>
+              <input v-model="leaveForm.reason" class="input" placeholder="如：感冒发烧、家中有事">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>📷 家长知晓截图（选填）</label>
+            <button class="btn-small" @click="handlePhotoUpload(leaveForm.parentScreenshot, 9)">+ 添加截图</button>
+            <div v-if="leaveForm.parentScreenshot && leaveForm.parentScreenshot.length" class="record-photos">
+              <div v-for="(p, pi) in leaveForm.parentScreenshot" :key="pi" style="position:relative;display:inline-block">
+                <img :src="p" style="width:64px;height:64px;border-radius:8px;object-fit:cover;margin:2px">
+                <span style="position:absolute;top:-4px;right:-4px;background:var(--danger);color:#fff;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center" @click="removePhoto(leaveForm.parentScreenshot, pi)">×</span>
+              </div>
             </div>
           </div>
         </div>
         <div class="modal-footer">
           <button class="btn-cancel" @click="showAddLeave=false; editingLeave=null">取消</button>
-          <button class="btn-primary" @click="addLeave">登记</button>
+          <button class="btn-primary" @click="addLeave">保存</button>
         </div>
       </div>
     </div>
@@ -1524,45 +1554,37 @@ textarea.input { resize: vertical; min-height: 60px; }
       </div>
     </div>
 
-    <!-- 班规执行弹窗 -->
+    <!-- 班费收支弹窗 -->
     <div v-if="showAddRule" class="modal-overlay" @click.self="showAddRule=false; editingRule=null">
       <div class="modal modal-wide">
-        <div class="modal-header">{{ editingRule ? "✏️ 编辑班规记录" : "📏 班规执行记录" }}</div>
+        <div class="modal-header">{{ editingRule ? "✏️ 编辑班费记录" : "💰 班费收支登记" }}</div>
         <div class="modal-body">
           <div class="form-row">
+            <div class="form-group w-50">
+              <label>收支类型 *</label>
+              <select v-model="ruleForm.type" class="input">
+                <option value="收入">收入 🟢</option>
+                <option value="支出">支出 🔴</option>
+              </select>
+            </div>
             <div class="form-group w-50">
               <label>日期 *</label>
               <input v-model="ruleForm.date" type="date" class="input">
             </div>
-            <div class="form-group w-50">
-              <label>学生姓名 *</label>
-              <input v-model="ruleForm.student" class="input" placeholder="姓名">
-            </div>
           </div>
           <div class="form-row">
             <div class="form-group w-50">
-              <label>类别 *</label>
-              <select v-model="ruleForm.type" class="input">
-                <option value="加分">加分 🟢</option>
-                <option value="扣分">扣分 🔴</option>
-              </select>
+              <label>金额（元）*</label>
+              <input v-model.number="ruleForm.amount" type="number" class="input" min="0" step="0.01" placeholder="如：50">
             </div>
             <div class="form-group w-50">
-              <label>分值 *</label>
-              <input v-model.number="ruleForm.score" type="number" class="input" placeholder="如：1、-2">
+              <label>资金去向 / 来源 *</label>
+              <input v-model="ruleForm.detail" class="input" placeholder="收入：如收班费；支出：如买扫把">
             </div>
           </div>
           <div class="form-group">
-            <label>事由 *</label>
-            <input v-model="ruleForm.reason" class="input" placeholder="如：自习课说话、主动打扫卫生">
-          </div>
-          <div class="form-group">
-            <label>处理方式</label>
-            <input v-model="ruleForm.action" class="input" placeholder="如：口头警告、擦黑板一周">
-          </div>
-          <div class="form-group">
-            <label>📷 佐证照片</label>
-            <button class="btn-small" @click="handlePhotoUpload(ruleForm.photos, 9)">+ 添加照片</button>
+            <label>📷 凭证{{ ruleForm.type === '支出' ? '（支出必传）*' : '（选填）' }}</label>
+            <button class="btn-small" @click="handlePhotoUpload(ruleForm.photos, 9)">+ 上传凭证</button>
             <div v-if="ruleForm.photos && ruleForm.photos.length" class="record-photos">
               <div v-for="(p, pi) in ruleForm.photos" :key="pi" style="position:relative;display:inline-block">
                 <img :src="p" style="width:64px;height:64px;border-radius:8px;object-fit:cover;margin:2px">
@@ -1926,9 +1948,9 @@ createApp({
     const dailySubs = [
       { key: 'schedule', label: '班表', icon: '📅' },
       { key: 'meeting', label: '班会台账', icon: '📋' },
-      { key: 'leave', label: '离班记录', icon: '🚶' },
+      { key: 'leave', label: '学生请假', icon: '📝' },
       { key: 'notice', label: '通知回执', icon: '📄' },
-      { key: 'rule', label: '班规执行', icon: '📏' },
+      { key: 'rule', label: '班费收支', icon: '💰' },
       { key: 'honor', label: '荣誉榜', icon: '🏆' },
       { key: 'duty', label: '值日排程', icon: '🧹' },
     ];
@@ -2573,51 +2595,51 @@ createApp({
       }
     }
 
-    // ====== 临时离班记录 ======
+    // ====== 学生请假记录 ======
     const leaveRecords = ref([]);
     const showAddLeave = ref(false);
     const editingLeave = ref(null);
-    const leaveForm = reactive({ date: '', student: '', time: '', destination: '医务室', returnTime: '', note: '' });
+    const leaveForm = reactive({ student: '', type: '病假', startDate: '', endDate: '', reason: '', parentKnown: '是', parentScreenshot: [] });
 
     const sortedLeaves = computed(() => {
-      return [...leaveRecords.value].sort((a, b) => b.date.localeCompare(a.date) || b.time.localeCompare(a.time));
+      return [...leaveRecords.value].sort((a, b) => (b.startDate || b.date || '').localeCompare(a.startDate || a.date || ''));
     });
 
     function editLeave(l) {
       editingLeave.value = l;
-      leaveForm.date = l.date; leaveForm.student = l.student; leaveForm.time = l.time;
-      leaveForm.destination = l.destination; leaveForm.returnTime = l.returnTime || ''; leaveForm.note = l.note || '';
+      leaveForm.student = l.student || ''; leaveForm.type = l.type || '事假';
+      leaveForm.startDate = l.startDate || ''; leaveForm.endDate = l.endDate || '';
+      leaveForm.reason = l.reason || ''; leaveForm.parentKnown = l.parentKnown || '是';
+      leaveForm.parentScreenshot = l.parentScreenshot ? [...l.parentScreenshot] : [];
       showAddLeave.value = true;
     }
 
     function addLeave() {
-      if (!leaveForm.student.trim() || !leaveForm.date || !leaveForm.time) return;
+      if (!leaveForm.student.trim() || !leaveForm.startDate || !leaveForm.endDate) { alert('请选择学生并填写请假起止日期'); return; }
+      if (leaveForm.startDate > leaveForm.endDate) { alert('开始日期不能晚于结束日期'); return; }
+      const stu = students.value.find(s => s.name === leaveForm.student.trim());
+      const payload = {
+        student: leaveForm.student.trim(),
+        studentId: stu ? (stu.studentId || '') : '',
+        type: leaveForm.type,
+        startDate: leaveForm.startDate, endDate: leaveForm.endDate,
+        reason: leaveForm.reason || '', parentKnown: leaveForm.parentKnown,
+        parentScreenshot: leaveForm.parentScreenshot ? [...leaveForm.parentScreenshot] : []
+      };
       if (editingLeave.value) {
-        Object.assign(editingLeave.value, {
-          date: leaveForm.date, student: leaveForm.student.trim(), time: leaveForm.time,
-          destination: leaveForm.destination, returnTime: leaveForm.returnTime || '', note: leaveForm.note || ''
-        });
+        Object.assign(editingLeave.value, payload);
       } else {
-        leaveRecords.value.unshift({
-          id: Date.now(),
-          date: leaveForm.date, student: leaveForm.student.trim(), time: leaveForm.time,
-          destination: leaveForm.destination, returnTime: leaveForm.returnTime || '',
-          note: leaveForm.note || '', returned: false
-        });
+        leaveRecords.value.unshift({ id: Date.now(), ...payload });
       }
       showAddLeave.value = false;
       editingLeave.value = null;
-      leaveForm.date = ''; leaveForm.student = ''; leaveForm.time = ''; leaveForm.destination = '医务室'; leaveForm.returnTime = ''; leaveForm.note = '';
+      leaveForm.student = ''; leaveForm.type = '病假'; leaveForm.startDate = ''; leaveForm.endDate = '';
+      leaveForm.reason = ''; leaveForm.parentKnown = '是'; leaveForm.parentScreenshot = [];
       saveData();
     }
 
-    function markReturned(id) {
-      const r = leaveRecords.value.find(x => x.id === id);
-      if (r) { r.returned = true; saveData(); }
-    }
-
     function deleteLeave(id) {
-      if (confirm('确定删除？')) {
+      if (confirm('确定删除该请假记录？')) {
         leaveRecords.value = leaveRecords.value.filter(r => r.id !== id);
         saveData();
       }
@@ -2674,47 +2696,53 @@ createApp({
       }
     }
 
-    // ====== 班规执行记录 ======
+    // ====== 班费收支记录 ======
     const ruleRecords = ref([]);
     const showAddRule = ref(false);
     const editingRule = ref(null);
-    const ruleForm = reactive({ date: '', student: '', type: '加分', score: 1, reason: '', action: '', photos: [] });
+    const ruleForm = reactive({ type: '收入', date: '', amount: 0, detail: '', photos: [] });
 
     const sortedRules = computed(() => {
       return [...ruleRecords.value].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
     });
 
+    const totalIncome = computed(() => ruleRecords.value.filter(r => r.type === '收入').reduce((s, r) => s + (Number(r.amount) || 0), 0));
+    const totalExpense = computed(() => ruleRecords.value.filter(r => r.type === '支出').reduce((s, r) => s + (Number(r.amount) || 0), 0));
+    const balance = computed(() => totalIncome.value - totalExpense.value);
+
     function editRule(r) {
       editingRule.value = r;
-      ruleForm.date = r.date; ruleForm.student = r.student; ruleForm.type = r.score >= 0 ? '加分' : '扣分';
-      ruleForm.score = Math.abs(r.score); ruleForm.reason = r.reason; ruleForm.action = r.action || ''; ruleForm.photos = r.photos ? [...r.photos] : [];
+      ruleForm.type = (r.type === '收入' || r.type === '支出') ? r.type : '支出';
+      ruleForm.date = r.date || '';
+      ruleForm.amount = Math.abs(r.amount != null ? r.amount : (r.score || 0));
+      ruleForm.detail = r.detail || r.reason || '';
+      ruleForm.photos = r.photos ? [...r.photos] : [];
       showAddRule.value = true;
     }
 
     function addRule() {
-      if (!ruleForm.student.trim() || !ruleForm.date || !ruleForm.reason.trim()) return;
+      if (!ruleForm.date || !(ruleForm.amount > 0)) { alert('请填写日期和金额'); return; }
+      if (!ruleForm.detail.trim()) { alert('请填写资金去向 / 来源'); return; }
+      if (ruleForm.type === '支出' && (!ruleForm.photos || ruleForm.photos.length === 0)) { alert('支出必须上传凭证！'); return; }
+      const payload = {
+        type: ruleForm.type, date: ruleForm.date,
+        amount: Number(ruleForm.amount) || 0,
+        detail: ruleForm.detail.trim(),
+        photos: ruleForm.photos ? [...ruleForm.photos] : []
+      };
       if (editingRule.value) {
-        Object.assign(editingRule.value, {
-          date: ruleForm.date, student: ruleForm.student.trim(),
-          type: ruleForm.type, score: ruleForm.type === '加分' ? Math.abs(ruleForm.score) : -Math.abs(ruleForm.score),
-          reason: ruleForm.reason.trim(), action: ruleForm.action || '', photos: ruleForm.photos ? [...ruleForm.photos] : []
-        });
+        Object.assign(editingRule.value, payload);
       } else {
-        ruleRecords.value.unshift({
-          id: Date.now(),
-          date: ruleForm.date, student: ruleForm.student.trim(), type: ruleForm.type,
-          score: ruleForm.type === '加分' ? Math.abs(ruleForm.score) : -Math.abs(ruleForm.score),
-          reason: ruleForm.reason.trim(), action: ruleForm.action || '', photos: ruleForm.photos ? [...ruleForm.photos] : []
-        });
+        ruleRecords.value.unshift({ id: Date.now(), ...payload });
       }
       showAddRule.value = false;
       editingRule.value = null;
-      ruleForm.date = ''; ruleForm.student = ''; ruleForm.type = '加分'; ruleForm.score = 1; ruleForm.reason = ''; ruleForm.action = ''; ruleForm.photos = [];
+      ruleForm.type = '收入'; ruleForm.date = ''; ruleForm.amount = 0; ruleForm.detail = ''; ruleForm.photos = [];
       saveData();
     }
 
     function deleteRule(id) {
-      if (confirm('确定删除？')) {
+      if (confirm('确定删除该班费记录？')) {
         ruleRecords.value = ruleRecords.value.filter(r => r.id !== id);
         saveData();
       }
@@ -3369,9 +3397,36 @@ createApp({
       if (data.exams) exams.value = data.exams;
       if (data.homework) homework.value = data.homework;
       if (data.meetingRecords) meetingRecords.value = data.meetingRecords;
-      if (data.leaveRecords) leaveRecords.value = data.leaveRecords;
+      // 旧版「离班记录」→「学生请假」迁移
+      if (data.leaveRecords) {
+        leaveRecords.value = data.leaveRecords.map(r => {
+          if (r.startDate) return r;
+          const { date, time, destination, returnTime, note, returned, ...rest } = r;
+          return {
+            ...rest,
+            type: '其他',
+            startDate: date || '', endDate: date || '',
+            reason: note || (destination ? '去向：' + destination : ''),
+            parentKnown: '是', parentScreenshot: []
+          };
+        });
+      }
       if (data.noticeRecords) noticeRecords.value = data.noticeRecords;
-      if (data.ruleRecords) ruleRecords.value = data.ruleRecords;
+      // 旧版「班规执行」→「班费收支」迁移
+      if (data.ruleRecords) {
+        ruleRecords.value = data.ruleRecords.map(r => {
+          if (r.type === '收入' || r.type === '支出') return r;
+          const { student, score, reason, action, ...rest } = r;
+          const isIncome = r.type === '加分' || (Number(score) || 0) >= 0;
+          return {
+            ...rest,
+            type: isIncome ? '收入' : '支出',
+            amount: Math.abs(Number(score) || 0),
+            detail: reason || '',
+            photos: r.photos || []
+          };
+        });
+      }
       if (data.honorRecords) honorRecords.value = data.honorRecords;
       if (data.dutyRecords) dutyRecords.value = data.dutyRecords;
       if (data.warningRecords) warningRecords.value = data.warningRecords;
@@ -3413,12 +3468,12 @@ createApp({
       homework, showAddHomework, hwForm, hwFilter, hwFilters, filteredHomework, getPendingHomework, addHomework, markHomeworkDone, deleteHomework,
       // 主题班会
       meetingRecords, showAddMeeting, editingMeeting, meetingForm, sortedMeetings, addMeeting, editMeeting, deleteMeeting,
-      // 离班记录
-      leaveRecords, showAddLeave, editingLeave, leaveForm, sortedLeaves, addLeave, editLeave, markReturned, deleteLeave,
+      // 学生请假
+      leaveRecords, showAddLeave, editingLeave, leaveForm, sortedLeaves, addLeave, editLeave, deleteLeave,
       // 通知回执
       noticeRecords, showAddNotice, editingNotice, noticeForm, sortedNotices, addNotice, editNotice, markCollected, deleteNotice,
-      // 班规执行
-      ruleRecords, showAddRule, editingRule, ruleForm, sortedRules, addRule, editRule, deleteRule,
+      // 班费收支
+      ruleRecords, showAddRule, editingRule, ruleForm, sortedRules, totalIncome, totalExpense, balance, addRule, editRule, deleteRule,
       // 荣誉榜
       honorRecords, showAddHonor, editingHonor, honorForm, sortedHonors, addHonor, editHonor, deleteHonor,
       // 值日排程
