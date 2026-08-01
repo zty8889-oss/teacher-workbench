@@ -131,6 +131,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFa
 .contact-nophone { font-size: 11px; color: var(--text-tertiary); white-space: nowrap; }
 .welcome-text h2 { font-size: 18px; margin-bottom: 4px; position: relative; z-index: 1; }
 .welcome-text p { font-size: 13px; opacity: .85; position: relative; z-index: 1; }
+/* 名言（大字）+ 问候（小字） */
+.welcome-quote { font-size: 16px; font-weight: 700; line-height: 1.55; margin-bottom: 5px; position: relative; z-index: 1; }
+.welcome-greeting { font-size: 12px; opacity: .85; position: relative; z-index: 1; }
 .welcome-avatar { width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,.2); display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; position: relative; z-index: 1; border: 2px solid rgba(255,255,255,0.3); }
 
 /* ===== Stats Grid ===== */
@@ -494,8 +497,8 @@ textarea.input { resize: vertical; min-height: 60px; }
       </div>
       <div class="welcome-card">
         <div class="welcome-text">
-          <h2>{{ teacherName || '教师' }}，{{ timeGreeting }}</h2>
-          <p>{{ welcomeSub }}</p>
+          <div class="welcome-quote">📖 {{ dailyQuote }}</div>
+          <div class="welcome-greeting">{{ teacherName || '教师' }}，{{ timeGreeting }}</div>
         </div>
         <div class="welcome-avatar">{{ (teacherName || '教').charAt(0) }}</div>
       </div>
@@ -2688,6 +2691,41 @@ createApp({
     const tab = ref('home');
     const hasNotch = ref(false);
     const welcomeSub = ref('新的一天，加油！💪');
+
+    // 教育名言库（每天自动换一条）
+    const QUOTES = [
+      '教育不是注满一桶水，而是点燃一把火。——叶芝',
+      '师者，所以传道受业解惑也。——韩愈',
+      '一棵树摇动另一棵树，一朵云推动另一朵云，一个灵魂唤醒另一个灵魂。——雅斯贝尔斯',
+      '教育的根是苦的，但其果实是甜的。——亚里士多德',
+      '捧着一颗心来，不带半根草去。——陶行知',
+      '千教万教教人求真，千学万学学做真人。——陶行知',
+      '教育的艺术不在于传授本领，而在于激励、唤醒和鼓舞。——第斯多惠',
+      '兴趣是最好的老师。——爱因斯坦',
+      '知之者不如好之者，好之者不如乐之者。——孔子',
+      '学而不厌，诲人不倦。——孔子',
+      '授人以鱼，不如授人以渔。——《淮南子》',
+      '十年树木，百年树人。——《管子》',
+      '教育的本质意味着：一棵树摇动另一棵树。——雅斯贝尔斯',
+      '教学的艺术不在于传授的本领，而在于善于激励、唤醒、鼓舞。——第斯多惠',
+      '好老师是民族的希望。——习近平',
+      '教师是人类灵魂的工程师。——斯大林',
+      '学高为师，身正为范。——陶行知',
+      '教育的目的在于能让青年人毕生进行自我教育。——哈钦斯',
+      '只有能够激发学生去进行自我教育的教育，才是真正的教育。——苏霍姆林斯基',
+      '让学生体验到一种自己在亲身参与掌握知识的情感，乃是唤起少年特有的对知识的兴趣的重要条件。——苏霍姆林斯基',
+      '玉不琢，不成器；人不学，不知道。——《礼记·学记》',
+      '温故而知新，可以为师矣。——孔子',
+      '读书破万卷，下笔如有神。——杜甫',
+      '黑发不知勤学早，白首方悔读书迟。——颜真卿',
+      '博学之，审问之，慎思之，明辨之，笃行之。——《礼记·中庸》'
+    ];
+    // 按日期轮换：每天固定一条，次日自动更换
+    const dailyQuote = computed(() => {
+      const d = new Date();
+      const dayNum = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+      return QUOTES[dayNum % QUOTES.length];
+    });
 
     const tabs = [
       { key: 'home', label: '首页', icon: '🏠' },
@@ -5017,7 +5055,7 @@ const lastSaveTime = ref(null);
     loadFromStore();
 
     return {
-      tab, hasNotch, welcomeSub, tabs, currentDate, timeGreeting,
+      tab, hasNotch, welcomeSub, dailyQuote, tabs, currentDate, timeGreeting,
       // 班级管理导航
       mgmtTabs, classMgmtTab, dailySubs, classDailySub, gradeSubs, classGradeSub,
       detailTabs,
