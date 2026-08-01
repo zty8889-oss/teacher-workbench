@@ -287,6 +287,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFa
 .todo-meta-date { font-size: 11px; color: var(--text-secondary); }
 .todo-delete { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); cursor: pointer; border-radius: 50%; transition: all .2s; }
 .todo-delete:active { background: var(--border); color: var(--danger); }
+/* 自动紧急度标签 */
+.todo-urg { font-size: 10px; padding: 2px 8px; border-radius: 20px; font-weight: 700; flex-shrink: 0; background: var(--bg); white-space: nowrap; }
+/* 一键完成按钮 */
+.todo-done-btn { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 700; color: #fff; background: var(--success); border-radius: 20px; padding: 5px 12px; cursor: pointer; flex-shrink: 0; transition: all .2s; box-shadow: 0 2px 8px rgba(123,198,126,.35); }
+.todo-done-btn:active { transform: scale(.92); }
+.todo-done-label { font-size: 11px; font-weight: 700; color: var(--text-tertiary); flex-shrink: 0; white-space: nowrap; }
 
 /* ===== Schedule ===== */
 .class-card { background: var(--card); border-radius: 14px; padding: 14px 16px; margin-bottom: 8px; display: flex; align-items: center; gap: 14px; box-shadow: var(--shadow); border-left: 4px solid var(--primary); cursor: pointer; transition: all .2s; }
@@ -552,8 +558,10 @@ textarea.input { resize: vertical; min-height: 60px; }
         <div v-if="sortedPendingTodos.length === 0" class="empty-state">暂无待办，轻松一下 🎉</div>
         <div v-for="t in sortedPendingTodos.slice(0,5)" :key="t.id" class="todo-item" style="cursor:pointer" @click="editTodoFromHome(t)">
           <span :class="['todo-priority', {high:'p-high',medium:'p-medium',low:'p-low'}[t.priority]]">{{ {high:'高',medium:'中',low:'低'}[t.priority] }}</span>
+          <span v-if="todoUrgency(t).label" :class="['todo-urg', todoUrgency(t).key]" :style="{color: todoUrgency(t).color}">{{ todoUrgency(t).label }}</span>
           <span class="todo-text">{{ t.text }}</span>
-          <span class="todo-date" :style="{color: todoOverdue(t) ? 'var(--danger)' : ''}">{{ todoOverdue(t) ? '⚠️已过期 ' : '' }}{{ fmtTodoTime(t.date) }}</span>
+          <span class="todo-date" :style="{color: todoOverdue(t) ? 'var(--danger)' : ''}">{{ fmtTodoTime(t.date) }}</span>
+          <span class="todo-done-btn" @click.stop="toggleTodo(t.id)">✓ 完成</span>
         </div>
         <div v-if="sortedPendingTodos.length > 5" style="text-align:center;font-size:11px;color:var(--text-secondary);padding-top:6px;cursor:pointer" @click="tab='todo'">还有 {{ sortedPendingTodos.length - 5 }} 条待办，点此查看 ›</div>
         <!-- 待批改作业 -->
@@ -584,10 +592,12 @@ textarea.input { resize: vertical; min-height: 60px; }
       </div>
       <div v-if="filteredTodos.length === 0" class="empty-state">暂无待办事项 🎉</div>
       <div v-for="t in filteredTodos" :key="t.id" class="todo-item" :style="{opacity: t.done ? .55 : 1}">
-        <span style="cursor:pointer;font-size:16px" @click="toggleTodo(t.id)">{{ t.done ? '✅' : '⬜' }}</span>
         <span :class="['todo-priority', {high:'p-high',medium:'p-medium',low:'p-low'}[t.priority]]">{{ {high:'高',medium:'中',low:'低'}[t.priority] }}</span>
+        <span v-if="!t.done && todoUrgency(t).label" :class="['todo-urg', todoUrgency(t).key]" :style="{color: todoUrgency(t).color}">{{ todoUrgency(t).label }}</span>
         <span class="todo-text" :style="{textDecoration: t.done ? 'line-through' : 'none'}">{{ t.text }}</span>
-        <span class="todo-date" :style="{color: todoOverdue(t) ? 'var(--danger)' : ''}">{{ fmtTodoTime(t.date) }}{{ todoOverdue(t) && !t.done ? ' ⚠️已过期' : '' }}</span>
+        <span class="todo-date" :style="{color: todoOverdue(t) ? 'var(--danger)' : ''}">{{ fmtTodoTime(t.date) }}</span>
+        <span v-if="!t.done" class="todo-done-btn" @click="toggleTodo(t.id)">✓ 完成</span>
+        <span v-else class="todo-done-label">✅ 已完成</span>
         <span style="cursor:pointer;color:var(--danger);font-size:14px" @click="deleteTodo(t.id)">✕</span>
       </div>
     </div>
@@ -615,7 +625,8 @@ textarea.input { resize: vertical; min-height: 60px; }
               <input v-model="newTodo.date" type="datetime-local" class="input">
             </div>
           </div>
-          <div style="font-size:11px;color:var(--text-secondary)">完成时间精确到小时，首页按紧急程度排序（时间越近越靠前，过期标红）</div>
+          <div style="font-size:11px;color:var(--text-secondary)">完成时间精确到小时，将自动按截止时间排紧急度（🔴已过期/🟠今天/🔵明天），未完成待办一键✓完成</div>
+          <div style="font-size:12px;margin-top:6px">自动紧急度：<span v-if="todoUrgency(newTodo).label" :style="{color: todoUrgency(newTodo).color, fontWeight:700}">{{ todoUrgency(newTodo).label }}</span><span v-else style="color:var(--text-tertiary)">正常（无紧急标记）</span></div>
         </div>
         <div class="modal-footer">
           <button class="btn-cancel" @click="showAddTodo=false; editingTodo=null">取消</button>
@@ -2684,7 +2695,7 @@ document.head.appendChild(tabStyle);
 
 // ====== 版本自检：放在 Vue 启动前，避免冲突 ======
 (function() {
-  const APP_VER = '20260801.1';
+  const APP_VER = '20260801.2';
   const lastVer = localStorage.getItem('teacher-app-version');
   if (lastVer && lastVer !== APP_VER) {
     localStorage.setItem('teacher-app-version', APP_VER);
@@ -2892,6 +2903,20 @@ const lastSaveTime = ref(null);
     function todoOverdue(t) {
       if (t.done || !t.date || t.date.length <= 10) return false;
       return t.date < getNowDT();
+    }
+    // 自动紧急度：根据截止时间自动计算（过期/今天/明天），无紧急不显示
+    function todoUrgency(t) {
+      if (t.done || !t.date || t.date.length <= 10) return { key: 'none', label: '', color: 'var(--text-tertiary)' };
+      const now = getNowDT();
+      if (t.date < now) return { key: 'overdue', label: '⚠️ 已过期', color: 'var(--danger)' };
+      const tp = n => String(n).padStart(2, '0');
+      const today = now.slice(0, 10);
+      const tm = new Date(); tm.setDate(tm.getDate() + 1);
+      const tmr = `${tm.getFullYear()}-${tp(tm.getMonth()+1)}-${tp(tm.getDate())}`;
+      const d = t.date.slice(0, 10);
+      if (d === today) return { key: 'today', label: '⏰ 今天到期', color: '#E8890C' };
+      if (d === tmr) return { key: 'tomorrow', label: '📅 明天到期', color: '#4A90D9' };
+      return { key: 'normal', label: '', color: 'var(--text-secondary)' };
     }
 
     const filteredTodos = computed(() => {
@@ -5095,7 +5120,7 @@ const lastSaveTime = ref(null);
       detailTabs,
       // Todos
       todos, todoFilter, showAddTodo, editingTodo, newTodo, todoFilters, filteredTodos, toggleTodo, addTodo, deleteTodo,
-      sortedPendingTodos, sortedTodos, fmtTodoTime, todoOverdue, openAddTodoHome, editTodoFromHome,
+      sortedPendingTodos, sortedTodos, fmtTodoTime, todoOverdue, todoUrgency, openAddTodoHome, editTodoFromHome,
       // Schedule
       classes, weekday, showAddClass, editingClass, classForm, weekdays, classColors,
       getClassesByDay, getTodayClasses, todayClasses, saveClass, editClass, deleteClass, resetClassForm,
