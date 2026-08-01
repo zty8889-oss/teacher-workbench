@@ -488,11 +488,9 @@ textarea.input { resize: vertical; min-height: 60px; }
   <main class="app-main">
     <!-- 首页 -->
     <div v-show="tab==='home'">
-      <!-- 顶部信息条：日期/星期/第几周/期末倒计时 -->
+      <!-- 顶部信息条：日期/星期 -->
       <div class="home-info-bar" @click="showSemesterSet=true">
         <span class="home-info-item">📅 {{ homeDateText }}</span>
-        <span class="home-info-item">🗓 第 {{ weekOfSemester }} 周</span>
-        <span v-if="examEndDate" class="home-info-item">{{ examCountdownText }}</span>
         <span class="home-info-gear">⚙️</span>
       </div>
       <div class="welcome-card">
@@ -546,14 +544,18 @@ textarea.input { resize: vertical; min-height: 60px; }
       <div class="section-card">
         <div class="section-header">
           <h3>✅ 待办事项</h3>
-          <div class="section-more" @click="tab='todo'">管理 ›</div>
+          <div style="display:flex;gap:12px">
+            <span class="section-more" @click="openAddTodoHome">➕ 新增</span>
+            <span class="section-more" @click="tab='todo'">管理 ›</span>
+          </div>
         </div>
         <div v-if="sortedPendingTodos.length === 0" class="empty-state">暂无待办，轻松一下 🎉</div>
-        <div v-for="t in sortedPendingTodos.slice(0,5)" :key="t.id" class="todo-item">
+        <div v-for="t in sortedPendingTodos.slice(0,5)" :key="t.id" class="todo-item" style="cursor:pointer" @click="editTodoFromHome(t)">
           <span :class="['todo-priority', {high:'p-high',medium:'p-medium',low:'p-low'}[t.priority]]">{{ {high:'高',medium:'中',low:'低'}[t.priority] }}</span>
           <span class="todo-text">{{ t.text }}</span>
           <span class="todo-date" :style="{color: todoOverdue(t) ? 'var(--danger)' : ''}">{{ todoOverdue(t) ? '⚠️已过期 ' : '' }}{{ fmtTodoTime(t.date) }}</span>
         </div>
+        <div v-if="sortedPendingTodos.length > 5" style="text-align:center;font-size:11px;color:var(--text-secondary);padding-top:6px;cursor:pointer" @click="tab='todo'">还有 {{ sortedPendingTodos.length - 5 }} 条待办，点此查看 ›</div>
         <!-- 待批改作业 -->
         <div v-if="pendingHomeworks.length" style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
@@ -590,10 +592,10 @@ textarea.input { resize: vertical; min-height: 60px; }
       </div>
     </div>
 
-    <!-- 新建待办弹窗 -->
-    <div v-if="showAddTodo" class="modal-overlay" @click.self="showAddTodo=false">
+    <!-- 新建/编辑待办弹窗 -->
+    <div v-if="showAddTodo" class="modal-overlay" @click.self="showAddTodo=false; editingTodo=null">
       <div class="modal">
-        <div class="modal-header">✅ 新建待办</div>
+        <div class="modal-header">{{ editingTodo ? "✏️ 编辑待办" : "✅ 新建待办" }}</div>
         <div class="modal-body">
           <div class="form-group">
             <label>待办内容 *</label>
@@ -616,8 +618,8 @@ textarea.input { resize: vertical; min-height: 60px; }
           <div style="font-size:11px;color:var(--text-secondary)">完成时间精确到小时，首页按紧急程度排序（时间越近越靠前，过期标红）</div>
         </div>
         <div class="modal-footer">
-          <button class="btn-cancel" @click="showAddTodo=false">取消</button>
-          <button class="btn-primary" @click="addTodo">保存</button>
+          <button class="btn-cancel" @click="showAddTodo=false; editingTodo=null">取消</button>
+          <button class="btn-primary" @click="addTodo">{{ editingTodo ? '保存修改' : '保存' }}</button>
         </div>
       </div>
     </div>
@@ -2851,6 +2853,7 @@ const lastSaveTime = ref(null);
     const todos = ref([]);
     const todoFilter = ref('all');
     const showAddTodo = ref(false);
+    const editingTodo = ref(null);
     function defaultTodoTime() {
       const d = new Date();
       d.setHours(18, 0, 0, 0);
@@ -2900,16 +2903,40 @@ const lastSaveTime = ref(null);
     function addTodo() {
       if (!newTodo.text.trim()) { alert('请填写待办内容'); return; }
       if (!newTodo.date) { alert('请填写完成时间'); return; }
-      todos.value.unshift({
-        id: Date.now(),
-        text: newTodo.text.trim(),
-        priority: newTodo.priority,
-        date: newTodo.date,
-        done: false
-      });
+      if (editingTodo.value) {
+        Object.assign(editingTodo.value, {
+          text: newTodo.text.trim(),
+          priority: newTodo.priority,
+          date: newTodo.date
+        });
+      } else {
+        todos.value.unshift({
+          id: Date.now(),
+          text: newTodo.text.trim(),
+          priority: newTodo.priority,
+          date: newTodo.date,
+          done: false
+        });
+      }
       showAddTodo.value = false;
+      editingTodo.value = null;
       newTodo.text = ''; newTodo.priority = 'medium'; newTodo.date = defaultTodoTime();
       saveData();
+    }
+
+    // 首页：新增入口
+    function openAddTodoHome() {
+      editingTodo.value = null;
+      newTodo.text = ''; newTodo.priority = 'medium'; newTodo.date = defaultTodoTime();
+      showAddTodo.value = true;
+    }
+    // 首页：点击待办修改
+    function editTodoFromHome(t) {
+      editingTodo.value = t;
+      newTodo.text = t.text;
+      newTodo.priority = t.priority || 'medium';
+      newTodo.date = t.date || defaultTodoTime();
+      showAddTodo.value = true;
     }
 
     function deleteTodo(id) {
@@ -5060,8 +5087,8 @@ const lastSaveTime = ref(null);
       mgmtTabs, classMgmtTab, dailySubs, classDailySub, gradeSubs, classGradeSub,
       detailTabs,
       // Todos
-      todos, todoFilter, showAddTodo, newTodo, todoFilters, filteredTodos, toggleTodo, addTodo, deleteTodo,
-      sortedPendingTodos, sortedTodos, fmtTodoTime, todoOverdue,
+      todos, todoFilter, showAddTodo, editingTodo, newTodo, todoFilters, filteredTodos, toggleTodo, addTodo, deleteTodo,
+      sortedPendingTodos, sortedTodos, fmtTodoTime, todoOverdue, openAddTodoHome, editTodoFromHome,
       // Schedule
       classes, weekday, showAddClass, editingClass, classForm, weekdays, classColors,
       getClassesByDay, getTodayClasses, todayClasses, saveClass, editClass, deleteClass, resetClassForm,
