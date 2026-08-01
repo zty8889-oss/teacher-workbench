@@ -1325,6 +1325,19 @@ textarea.input { resize: vertical; min-height: 60px; }
       </div>
 
       <div class="profile-card">
+        <div style="font-size:12px;font-weight:700;padding:10px 16px 0;color:var(--text-secondary)">💾 数据存储</div>
+        <div class="profile-item"><label>📦 数据大小</label><span>{{ storageInfo.kb }} KB</span></div>
+        <div class="profile-item"><label>🕐 最后保存</label><span>{{ storageInfo.savedAt }}</span></div>
+        <div class="profile-item"><label>👨‍🎓 学生</label><span>{{ storageInfo.students }} 人</span></div>
+        <div class="profile-item"><label>📊 考试</label><span>{{ storageInfo.exams }} 场</span></div>
+        <div class="profile-item"><label>📝 作业</label><span>{{ storageInfo.homeworks }} 条</span></div>
+        <div style="padding:8px 16px 14px;font-size:11px;color:var(--text-secondary);line-height:1.7">
+          ✅ 数据<b>自动保存在当前浏览器</b>，下次打开无需登录、无需重新录入。<br>
+          ⚠️ 清除浏览器缓存 / 换设备 / 换浏览器会丢失数据，重要数据请定期「💾 导出数据」备份，换设备后用「📥 导入数据」恢复。
+        </div>
+      </div>
+
+      <div class="profile-card">
         <div class="profile-item" @click="showEditProfile = true">
           <label>✏️ 编辑资料</label>
           <span>›</span>
@@ -2679,18 +2692,28 @@ createApp({
 
     // ====== Store  ======
     const STORE_KEY = 'teache…data';
+const BACKUP_KEY = 'teache…data_bak';
+const lastSaveTime = ref(null);
 
     function loadData() {
       try {
         const raw = localStorage.getItem(STORE_KEY);
         if (raw) return JSON.parse(raw);
+      } catch(e) { console.warn('主数据损坏，尝试从备份恢复'); }
+      // 主数据损坏/丢失时从备份恢复
+      try {
+        const bak = localStorage.getItem(BACKUP_KEY);
+        if (bak) {
+          localStorage.setItem(STORE_KEY, bak);
+          return JSON.parse(bak);
+        }
       } catch(e) {}
       return null;
     }
 
     function saveData() {
       try {
-        localStorage.setItem(STORE_KEY, JSON.stringify({
+        const payload = JSON.stringify({
           todos: todos.value,
           classes: classes.value,
           students: students.value,
@@ -2718,7 +2741,11 @@ createApp({
           teachRecords: teachRecords.value,
           teacherInfo: teacherInfo,
           teacherName: teacherName.value
-        }));
+        });
+        localStorage.setItem(STORE_KEY, payload);
+        // 双备份：写一份到备份键，主数据损坏时可自动恢复
+        try { localStorage.setItem(BACKUP_KEY, payload); } catch(e) {}
+        lastSaveTime.value = new Date();
       } catch(e) { console.warn('Save failed', e); }
     }
 
@@ -4738,9 +4765,23 @@ createApp({
     }
 
     // ====== Load / Persist  ======
+    const storageInfo = computed(() => {
+      let bytes = 0;
+      try { bytes = (localStorage.getItem(STORE_KEY) || '').length; } catch(e) {}
+      const t = lastSaveTime.value;
+      return {
+        kb: (bytes / 1024).toFixed(1),
+        savedAt: t ? `${t.getMonth()+1}月${t.getDate()}日 ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}` : '—',
+        students: students.value.length,
+        exams: exams.value.length,
+        homeworks: homework.value.length,
+        teaches: teachRecords.value.length
+      };
+    });
     function loadFromStore() {
       const data = loadData();
       if (!data) return;
+      lastSaveTime.value = new Date();
       if (data.todos) todos.value = data.todos;
       if (data.classes) classes.value = data.classes;
       if (data.students) students.value = data.students;
@@ -4901,7 +4942,7 @@ createApp({
       // Profile
       showEditProfile, teacherName, teacherInfo,
       showImagePreview, previewImageUrl, previewImage, handlePhotoUpload, removePhoto,
-      exportData, importData, resetData, saveData,
+      exportData, importData, resetData, saveData, storageInfo,
       // Word Import
       showWordImport, wordFile, wordFileName, wordFileSelected, wordImportType,
       wordImporting, wordPreview, wordImportResult, wordExamName, wordExamFullScore,
