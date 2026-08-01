@@ -116,7 +116,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFa
 .home-info-gear { margin-left: auto; font-size: 13px; color: var(--text-tertiary); flex-shrink: 0; }
 /* 悬浮窗 */
 .fab-wrap { position: fixed; right: 16px; bottom: 76px; z-index: 999; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
-.fab-btn { width: 52px; height: 52px; border-radius: 50%; background: var(--primary-gradient); color: #fff; font-size: 22px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(74,144,217,.4); cursor: pointer; transition: transform .15s; }
+.fab-btn { width: 52px; height: 52px; border-radius: 50%; background: var(--primary-gradient); color: #fff; font-size: 22px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(74,144,217,.4); cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; transition: transform .15s; }
 .fab-btn:active { transform: scale(.92); }
 .fab-menu { display: flex; flex-direction: column; gap: 8px; }
 .fab-item { background: var(--card); border-radius: 20px; padding: 8px 16px; font-size: 13px; font-weight: 600; color: var(--text); box-shadow: var(--shadow); cursor: pointer; }
@@ -2520,13 +2520,16 @@ textarea.input { resize: vertical; min-height: 60px; }
     </div>
   </main>
 
-    <!-- 悬浮窗：快速记录 / 一键通讯录 -->
-    <div class="fab-wrap">
+    <!-- 悬浮窗：快速记录 / 一键通讯录（可拖动） -->
+    <div class="fab-wrap" :style="fabStyle">
       <div v-if="fabOpen" class="fab-menu">
         <div class="fab-item" @click="openQuickRecord">📝 快速记录</div>
         <div class="fab-item" @click="openContacts">📞 一键通讯录</div>
       </div>
-      <div class="fab-btn" @click="fabOpen=!fabOpen">{{ fabOpen ? '✕' : '➕' }}</div>
+      <div class="fab-btn"
+        @click="toggleFab"
+        @touchstart.passive="fabStart($event)" @touchmove.passive="fabMove($event)" @touchend="fabEnd"
+        @mousedown="fabMouseDown($event)">{{ fabOpen ? '✕' : '➕' }}</div>
     </div>
 
     <!-- 快速记录弹窗 -->
@@ -3685,6 +3688,58 @@ const lastSaveTime = ref(null);
 
     // ====== 悬浮窗：快速记录 / 一键通讯录 ======
     const fabOpen = ref(false);
+    // 悬浮球可拖动（位置持久化）
+    const FAB_POS_KEY = 'teache…data_fabpos';
+    const fabPos = ref(null);
+    try { const p = localStorage.getItem(FAB_POS_KEY); if (p) fabPos.value = JSON.parse(p); } catch(e) {}
+    const fabStyle = computed(() => {
+      if (!fabPos.value) return {};
+      return { left: fabPos.value.x + 'px', top: fabPos.value.y + 'px', right: 'auto', bottom: 'auto' };
+    });
+    let fabDrag = null;
+    let fabDragging = false;
+    function saveFabPos() {
+      try { localStorage.setItem(FAB_POS_KEY, JSON.stringify(fabPos.value)); } catch(e) {}
+    }
+    function fabStart(e) {
+      const t = e.touches ? e.touches[0] : e;
+      const rect = e.currentTarget.getBoundingClientRect();
+      fabDrag = { startX: t.clientX, startY: t.clientY, baseLeft: rect.left, baseTop: rect.top, moved: false };
+    }
+    function fabMove(e) {
+      if (!fabDrag) return;
+      const t = e.touches ? e.touches[0] : e;
+      const dx = t.clientX - fabDrag.startX;
+      const dy = t.clientY - fabDrag.startY;
+      if (Math.abs(dx) + Math.abs(dy) > 6) {
+        fabDrag.moved = true;
+        fabDragging = true;
+        fabPos.value = {
+          x: Math.max(0, Math.min(window.innerWidth - 56, fabDrag.baseLeft + dx)),
+          y: Math.max(0, Math.min(window.innerHeight - 76, fabDrag.baseTop + dy))
+        };
+      }
+    }
+    function fabEnd() {
+      if (fabDrag && fabDrag.moved) saveFabPos();
+      fabDrag = null;
+      setTimeout(() => { fabDragging = false; }, 50);
+    }
+    function fabMouseDown(e) {
+      fabStart(e);
+      const onMove = (ev) => { fabMove(ev); };
+      const onUp = () => {
+        window.removeEventListener('mousemove', onMove);
+        window.removeEventListener('mouseup', onUp);
+        fabEnd();
+      };
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
+    }
+    function toggleFab() {
+      if (fabDragging) return;
+      fabOpen.value = !fabOpen.value;
+    }
     const showQuickRecord = ref(false);
     const quickForm = reactive({ type: '班会', student: '', content: '' });
     const quickPickerOpen = ref(false);
@@ -4928,7 +4983,8 @@ const lastSaveTime = ref(null);
       scheduleRecords, showAddSchedule, editingSchedule, scheduleForm, scheduleWeekFilter, filteredSchedule, addSchedule, editSchedule, deleteSchedule, getScheduleCell, clickScheduleCell, semesterStart, getDateStr,
       // 首页信息条 + 悬浮窗
       homeDateText, weekOfSemester, examEndDate, examCountdownText, showSemesterSet,
-      fabOpen, showQuickRecord, quickForm, quickPickerOpen, filteredQuickStudents, pickQuickStudent, closeQuickPicker,
+      fabOpen, fabStyle, toggleFab, fabStart, fabMove, fabEnd, fabMouseDown,
+      showQuickRecord, quickForm, quickPickerOpen, filteredQuickStudents, pickQuickStudent, closeQuickPicker,
       openQuickRecord, saveQuickRecord, showContacts, contactSearch, filteredContacts, openContacts,
       // 学业分析
       gradeExamId, scoreBenke, scoreTekong, deviationView, selectedExam, overviewGroups,
