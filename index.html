@@ -109,11 +109,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFa
 /* ===== Welcome Card ===== */
 .welcome-card { background: var(--primary-gradient); border-radius: 20px; padding: 22px; color: #fff; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; box-shadow: var(--shadow-lg); position: relative; overflow: hidden; }
 .welcome-card::after { content: ''; position: absolute; top: -50%; right: -30%; width: 200px; height: 200px; background: rgba(255,255,255,0.08); border-radius: 50%; }
-/* 首页顶部信息条 */
-.home-info-bar { display: flex; align-items: center; gap: 10px; background: var(--card); border-radius: 12px; padding: 8px 12px; margin-bottom: 10px; box-shadow: var(--shadow); font-size: 12px; cursor: pointer; overflow-x: auto; white-space: nowrap; }
-.home-info-item { color: var(--text-secondary); }
-.home-info-item:first-child { color: var(--primary); font-weight: 600; }
-.home-info-gear { margin-left: auto; font-size: 13px; color: var(--text-tertiary); flex-shrink: 0; }
 /* 悬浮窗 */
 .fab-wrap { position: fixed; right: 16px; bottom: 76px; z-index: 999; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
 .fab-btn { width: 52px; height: 52px; border-radius: 50%; background: var(--primary-gradient); color: #fff; font-size: 22px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(74,144,217,.4); cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; transition: transform .15s; }
@@ -488,11 +483,6 @@ textarea.input { resize: vertical; min-height: 60px; }
   <main class="app-main">
     <!-- 首页 -->
     <div v-show="tab==='home'">
-      <!-- 顶部信息条：日期/星期 -->
-      <div class="home-info-bar" @click="showSemesterSet=true">
-        <span class="home-info-item">📅 {{ homeDateText }}</span>
-        <span class="home-info-gear">⚙️</span>
-      </div>
       <div class="welcome-card">
         <div class="welcome-text">
           <div class="welcome-quote">📖 {{ dailyQuote }}</div>
@@ -1398,6 +1388,10 @@ textarea.input { resize: vertical; min-height: 60px; }
       <div class="profile-card">
         <div class="profile-item" @click="showEditProfile = true">
           <label>✏️ 编辑资料</label>
+          <span>›</span>
+        </div>
+        <div class="profile-item" @click="showSemesterSet = true">
+          <label>🗓 开学 / 考试设置</label>
           <span>›</span>
         </div>
         <div class="profile-item" @click="checkUpdate">
