@@ -126,6 +126,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFa
 .fab-menu { display: flex; flex-direction: column; gap: 8px; }
 .fab-item { background: var(--card); border-radius: 20px; padding: 8px 16px; font-size: 13px; font-weight: 600; color: var(--text); box-shadow: var(--shadow); cursor: pointer; }
 .fab-item:active { background: var(--bg); }
+/* 快速记录撤销提示 */
+.quick-toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(var(--tab-height) + 20px); z-index: 2000; background: rgba(28,28,32,.94); color: #fff; border-radius: 24px; padding: 10px 14px 10px 18px; font-size: 13px; display: flex; align-items: center; gap: 10px; max-width: 88vw; box-shadow: 0 6px 24px rgba(0,0,0,.28); animation: toastIn .25s ease; }
+.quick-toast .qt-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.quick-toast .qt-undo { background: var(--primary); color: #fff; border: none; border-radius: 16px; padding: 6px 16px; font-size: 12px; font-weight: 700; cursor: pointer; flex-shrink: 0; }
+.quick-toast .qt-undo:active { transform: scale(.94); }
+.quick-toast .qt-close { background: transparent; color: rgba(255,255,255,.65); border: none; font-size: 15px; cursor: pointer; flex-shrink: 0; padding: 2px; }
+@keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
 /* 一键通讯录 */
 .contact-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--border); }
 .contact-item:last-child { border-bottom: none; }
@@ -2605,6 +2612,13 @@ textarea.input { resize: vertical; min-height: 60px; }
         @mousedown="fabMouseDown($event)">{{ fabOpen ? '✕' : '➕' }}</div>
     </div>
 
+    <!-- 快速记录撤销提示 -->
+    <div v-if="quickUndo.visible" class="quick-toast">
+      <span class="qt-text">✅ 已添加待办：{{ quickUndo.text }}</span>
+      <button class="qt-undo" @click="undoQuickRecord">撤销</button>
+      <button class="qt-close" @click="hideQuickUndo">✕</button>
+    </div>
+
     <!-- 快速记录弹窗 -->
     <div v-if="showQuickRecord" class="modal-overlay" @click.self="showQuickRecord=false">
       <div class="modal">
@@ -3919,12 +3933,40 @@ const lastSaveTime = ref(null);
       quickForm.content = ''; quickForm.time = defaultTodoTime();
       showQuickRecord.value = true;
     }
+    // 快速记录待办：保存后可撤销（防止误点）
+    const quickUndo = reactive({ visible: false, text: '', id: null });
+    let quickUndoTimer = null;
+    function showQuickUndo(id, text) {
+      quickUndo.id = id; quickUndo.text = text; quickUndo.visible = true;
+      clearTimeout(quickUndoTimer);
+      quickUndoTimer = setTimeout(hideQuickUndo, 8000);
+    }
+    function hideQuickUndo() {
+      quickUndo.visible = false; quickUndo.id = null;
+      clearTimeout(quickUndoTimer);
+    }
+    function undoQuickRecord() {
+      const id = quickUndo.id;
+      const idx = todos.value.findIndex(t => t.id === id);
+      // 安全校验：待办必须还在、未完成、内容未被改动，才允许撤销
+      if (idx === -1 || todos.value[idx].done || todos.value[idx].text !== quickUndo.text) {
+        hideQuickUndo();
+        alert('该待办已无法撤销（可能已被修改或完成）');
+        return;
+      }
+      todos.value.splice(idx, 1);
+      hideQuickUndo();
+      saveData();
+    }
     function saveQuickRecord() {
       if (!quickForm.content.trim()) { alert('请填写待办内容'); return; }
-      todos.value.unshift({ id: Date.now(), text: quickForm.content.trim(), priority: 'medium', date: quickForm.time || defaultTodoTime(), done: false });
+      const text = quickForm.content.trim();
+      const newId = Date.now();
+      todos.value.unshift({ id: newId, text: text, priority: 'medium', date: quickForm.time || defaultTodoTime(), done: false });
       showQuickRecord.value = false;
       quickForm.content = ''; quickForm.time = defaultTodoTime();
       saveData();
+      showQuickUndo(newId, text);
     }
     const showContacts = ref(false);
     const contactSearch = ref('');
@@ -5139,7 +5181,8 @@ const lastSaveTime = ref(null);
       homeDateText, weekOfSemester, examEndDate, examCountdownText, showSemesterSet,
       fabOpen, fabStyle, toggleFab, fabStart, fabMove, fabEnd, fabMouseDown,
       showQuickRecord, quickForm,
-      openQuickRecord, saveQuickRecord, showContacts, contactSearch, filteredContacts, openContacts,
+      openQuickRecord, saveQuickRecord, quickUndo, undoQuickRecord, hideQuickUndo,
+      showContacts, contactSearch, filteredContacts, openContacts,
       // 学业分析
       gradeExamId, scoreBenke, scoreTekong, deviationView, selectedExam, overviewGroups,
       expandedGroup, toggleGroup, scoreOf,
