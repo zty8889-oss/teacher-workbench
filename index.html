@@ -3933,17 +3933,13 @@ const lastSaveTime = ref(null);
       quickForm.content = ''; quickForm.time = defaultTodoTime();
       showQuickRecord.value = true;
     }
-    // 快速记录待办：保存后可撤销（防止误点）
+    // 快速记录待办：保存后可撤销（防止误点），提示不自动消失，点撤销/✕ 才关闭
     const quickUndo = reactive({ visible: false, text: '', id: null });
-    let quickUndoTimer = null;
     function showQuickUndo(id, text) {
       quickUndo.id = id; quickUndo.text = text; quickUndo.visible = true;
-      clearTimeout(quickUndoTimer);
-      quickUndoTimer = setTimeout(hideQuickUndo, 8000);
     }
     function hideQuickUndo() {
       quickUndo.visible = false; quickUndo.id = null;
-      clearTimeout(quickUndoTimer);
     }
     function undoQuickRecord() {
       const id = quickUndo.id;
