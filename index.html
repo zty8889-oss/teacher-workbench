@@ -2608,38 +2608,23 @@ textarea.input { resize: vertical; min-height: 60px; }
     <!-- 快速记录弹窗 -->
     <div v-if="showQuickRecord" class="modal-overlay" @click.self="showQuickRecord=false">
       <div class="modal">
-        <div class="modal-header">📝 快速记录</div>
+        <div class="modal-header">✅ 快速记录（待办）</div>
         <div class="modal-body">
           <div class="form-row">
             <div class="form-group w-50">
-              <label>类型 *</label>
-              <select v-model="quickForm.type" class="input">
-                <option value="班会">班会 📋</option>
-                <option value="违纪">违纪 ⚠️</option>
-                <option value="表扬">表扬 🌟</option>
-                <option value="待办">待办 ✅</option>
-              </select>
+              <label>类型</label>
+              <input class="input" value="待办 ✅" disabled>
             </div>
-            <div v-if="quickForm.type==='违纪' || quickForm.type==='表扬'" class="form-group w-50">
-              <label>学生 *</label>
-              <div class="picker-wrap">
-                <input v-model="quickForm.student" class="input" placeholder="搜索或选择学生" @focus="quickPickerOpen=true" @input="quickPickerOpen=true" @blur="closeQuickPicker()">
-                <div v-if="quickPickerOpen" class="picker-list">
-                  <div v-for="s in filteredQuickStudents" :key="s.id" class="picker-item" @mousedown.prevent="pickQuickStudent(s)">{{ s.name }}<span v-if="s.studentId" style="font-size:11px;color:var(--text-secondary)">（{{ s.studentId }}）</span></div>
-                  <div v-if="filteredQuickStudents.length === 0" class="picker-empty">无匹配学生</div>
-                </div>
-              </div>
-            </div>
-            <div v-if="quickForm.type==='待办'" class="form-group w-50">
+            <div class="form-group w-50">
               <label>完成时间 *</label>
               <input v-model="quickForm.time" type="datetime-local" class="input">
             </div>
           </div>
           <div class="form-group">
-            <label>内容 *</label>
-            <input v-model="quickForm.content" class="input" placeholder="如：班会主题 / 违纪行为 / 表扬事迹 / 待办事项">
+            <label>待办内容 *</label>
+            <input v-model="quickForm.content" class="input" placeholder="如：批改作业 / 通知家长">
           </div>
-          <div style="font-size:11px;color:var(--text-secondary)">班会记入班会台账，违纪/表扬记入学生成长记录，待办记入待办清单。</div>
+          <div style="font-size:11px;color:var(--text-secondary)">待办将记入待办清单。</div>
         </div>
         <div class="modal-footer">
           <button class="btn-cancel" @click="showQuickRecord=false">取消</button>
@@ -3928,36 +3913,17 @@ const lastSaveTime = ref(null);
       fabOpen.value = !fabOpen.value;
     }
     const showQuickRecord = ref(false);
-    const quickForm = reactive({ type: '班会', student: '', content: '', time: defaultTodoTime() });
-    const quickPickerOpen = ref(false);
-    const filteredQuickStudents = computed(() => {
-      const q = quickForm.student.trim().toLowerCase();
-      if (!q) return students.value;
-      return students.value.filter(s => s.name.toLowerCase().includes(q) || (s.studentId || '').toLowerCase().includes(q));
-    });
-    function pickQuickStudent(s) { quickForm.student = s.name; quickPickerOpen.value = false; }
-    function closeQuickPicker() { setTimeout(() => { quickPickerOpen.value = false; }, 150); }
+    const quickForm = reactive({ content: '', time: defaultTodoTime() });
     function openQuickRecord() {
       fabOpen.value = false;
-      quickForm.type = '班会'; quickForm.student = ''; quickForm.content = ''; quickForm.time = defaultTodoTime();
+      quickForm.content = ''; quickForm.time = defaultTodoTime();
       showQuickRecord.value = true;
     }
     function saveQuickRecord() {
-      if (!quickForm.content.trim()) { alert('请填写内容'); return; }
-      if ((quickForm.type === '违纪' || quickForm.type === '表扬') && !quickForm.student.trim()) { alert('请选择学生'); return; }
-      const today = new Date().toISOString().slice(0, 10);
-      if (quickForm.type === '班会') {
-        meetingRecords.value.unshift({ id: Date.now(), date: today, type: '其他', topic: quickForm.content.trim(), summary: '', archived: false, photos: [] });
-      } else if (quickForm.type === '待办') {
-        todos.value.unshift({ id: Date.now(), text: quickForm.content.trim(), priority: 'medium', date: quickForm.time || defaultTodoTime(), done: false });
-      } else {
-        const stu = students.value.find(s => s.name === quickForm.student.trim());
-        if (!stu) { alert('未找到该学生'); return; }
-        if (!stu.records) stu.records = [];
-        stu.records.push({ id: 'r' + Date.now(), date: today, type: quickForm.type === '违纪' ? 'criticism' : 'praise', subType: '快速记录', text: quickForm.content.trim(), action: '' });
-      }
+      if (!quickForm.content.trim()) { alert('请填写待办内容'); return; }
+      todos.value.unshift({ id: Date.now(), text: quickForm.content.trim(), priority: 'medium', date: quickForm.time || defaultTodoTime(), done: false });
       showQuickRecord.value = false;
-      quickForm.type = '班会'; quickForm.student = ''; quickForm.content = ''; quickForm.time = defaultTodoTime();
+      quickForm.content = ''; quickForm.time = defaultTodoTime();
       saveData();
     }
     const showContacts = ref(false);
@@ -5172,7 +5138,7 @@ const lastSaveTime = ref(null);
       // 首页信息条 + 悬浮窗
       homeDateText, weekOfSemester, examEndDate, examCountdownText, showSemesterSet,
       fabOpen, fabStyle, toggleFab, fabStart, fabMove, fabEnd, fabMouseDown,
-      showQuickRecord, quickForm, quickPickerOpen, filteredQuickStudents, pickQuickStudent, closeQuickPicker,
+      showQuickRecord, quickForm,
       openQuickRecord, saveQuickRecord, showContacts, contactSearch, filteredContacts, openContacts,
       // 学业分析
       gradeExamId, scoreBenke, scoreTekong, deviationView, selectedExam, overviewGroups,
