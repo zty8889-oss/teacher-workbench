@@ -632,7 +632,7 @@ textarea.input { resize: vertical; min-height: 60px; }
               <input v-model="newTodo.date" type="datetime-local" class="input">
             </div>
           </div>
-          <div style="font-size:11px;color:var(--text-secondary)">完成时间精确到小时，将自动按截止时间排紧急度（🔴已过期/🟠今天/🔵明天），未完成待办一键✓完成</div>
+          <div style="font-size:11px;color:var(--text-secondary)">⏰ 完成时间按添加时间自动推荐：上午→今天13点 / 下午→今天19点 / 19点后→明天12点，可手动改。完成时间精确到小时，将自动按截止时间排紧急度（🔴已过期/🟠今天/🔵明天），未完成待办一键✓完成</div>
           <div style="font-size:12px;margin-top:6px">自动紧急度：<span v-if="todoUrgency(newTodo).label" :style="{color: todoUrgency(newTodo).color, fontWeight:700}">{{ todoUrgency(newTodo).label }}</span><span v-else style="color:var(--text-tertiary)">正常（无紧急标记）</span></div>
         </div>
         <div class="modal-footer">
@@ -2638,7 +2638,7 @@ textarea.input { resize: vertical; min-height: 60px; }
             <label>待办内容 *</label>
             <input v-model="quickForm.content" class="input" placeholder="如：批改作业 / 通知家长">
           </div>
-          <div style="font-size:11px;color:var(--text-secondary)">待办将记入待办清单。</div>
+          <div style="font-size:11px;color:var(--text-secondary)">⏰ 完成时间按添加时间自动推荐：上午→今天13点 / 下午→今天19点 / 19点后→明天12点，可手动改。待办将记入待办清单。</div>
         </div>
         <div class="modal-footer">
           <button class="btn-cancel" @click="showQuickRecord=false">取消</button>
@@ -2871,11 +2871,21 @@ const lastSaveTime = ref(null);
     const todoFilter = ref('all');
     const showAddTodo = ref(false);
     const editingTodo = ref(null);
+    // 智能默认完成时间：上午添加→今天13:00，下午添加→今天19:00，19点后添加→明天12:00
     function defaultTodoTime() {
       const d = new Date();
-      d.setHours(18, 0, 0, 0);
+      const h = d.getHours();
       const p = n => String(n).padStart(2, '0');
-      return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T18:00`;
+      const fmt = t => `${t.getFullYear()}-${p(t.getMonth()+1)}-${p(t.getDate())}T${p(t.getHours())}:${p(t.getMinutes())}`;
+      if (h < 12) {
+        d.setHours(13, 0, 0, 0);            // 上午 → 今天13点
+      } else if (h < 19) {
+        d.setHours(19, 0, 0, 0);            // 下午 → 今天19点
+      } else {
+        d.setDate(d.getDate() + 1);         // 19点后 → 明天12点
+        d.setHours(12, 0, 0, 0);
+      }
+      return fmt(d);
     }
     const newTodo = reactive({ text: '', priority: 'medium', date: defaultTodoTime() });
     const todoFilters = [
