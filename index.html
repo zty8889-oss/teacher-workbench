@@ -467,6 +467,24 @@ textarea.input { resize: vertical; min-height: 60px; }
 .duty-members strong { color: var(--text); }
 .duty-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border); }
 
+/* ====== 排座位 ====== */
+.seat-stage { background: var(--card); border-radius: 14px; box-shadow: var(--shadow); padding: 14px 8px 16px; overflow-x: auto; }
+.seat-podium { max-width: 200px; margin: 0 auto 14px; text-align: center; background: var(--primary-gradient); color: #fff; font-size: 13px; font-weight: 600; border-radius: 10px; padding: 7px 0; letter-spacing: 8px; }
+.seat-row { display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: 8px; min-width: max-content; }
+.seat-row-label { font-size: 10px; color: var(--text-secondary); min-width: 28px; text-align: right; }
+.seat-desk { display: flex; gap: 4px; }
+.seat-cell { width: 42px; height: 42px; border-radius: 8px; background: var(--bg); border: 1.5px dashed var(--border); display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--text-secondary); cursor: pointer; transition: all .15s; overflow: hidden; text-align: center; line-height: 1.2; }
+.seat-cell.occupied { background: #5B7FFF; border: 1.5px solid #5B7FFF; color: #fff; font-weight: 600; }
+.seat-cell.female { background: #FF7BAC; border-color: #FF7BAC; }
+.seat-cell.selected { outline: 2.5px solid var(--danger); outline-offset: 1px; box-shadow: 0 0 0 3px rgba(255,59,48,.15); }
+.seat-cell:active { transform: scale(.93); }
+.seat-picker { margin-top: 10px; background: var(--card); border-radius: 14px; box-shadow: var(--shadow); padding: 12px; }
+@media (max-width: 420px) {
+  .seat-cell { width: 34px; height: 34px; font-size: 10px; }
+  .seat-row { gap: 5px; }
+  .seat-desk { gap: 3px; }
+}
+
 .notice-card { background: var(--card); border-radius: 14px; padding: 14px 16px; margin-bottom: 8px; box-shadow: var(--shadow); }
 .notice-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
 .notice-meta { display: flex; gap: 12px; font-size: 11px; color: var(--text-secondary); margin-bottom: 6px; }
@@ -1107,6 +1125,50 @@ textarea.input { resize: vertical; min-height: 60px; }
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+        <!-- ========== 排座位 ========== -->
+        <div v-show="classDailySub==='seat'">
+          <div class="page-actions">
+            <span style="font-size:13px;color:var(--text-secondary)">已坐 {{ seatedCount }} / {{ students.length }} 人</span>
+            <button class="btn-small" @click="showSeatConfig=true">⚙️ 设置</button>
+            <button class="btn-small" @click="randomSeat()">🎲 随机排</button>
+            <button class="btn-small" @click="clearSeat()">清空</button>
+          </div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;line-height:1.7">
+            👆 点空位选学生入座 · 点已入座学生可互换/移出 · 未入座 {{ unseatedStudents.length }} 人
+          </div>
+          <div v-if="selectedSeat" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:8px 12px;background:var(--card);border-radius:10px;box-shadow:var(--shadow)">
+            <span style="font-size:12px">已选中 <b>{{ seatNameOf(selectedSeat) }}</b>（{{ seatPosLabel(selectedSeat) }}）再点一个座位互换</span>
+            <button class="btn-small" style="margin-left:auto" @click="removeSeatSelected()">移出</button>
+            <button class="btn-small" @click="selectedSeat=''">取消</button>
+          </div>
+          <div class="seat-stage">
+            <div class="seat-podium">讲 台</div>
+            <div v-if="seatConfig.rows === 0 || seatConfig.cols === 0" class="empty-state">先点右上角「⚙️ 设置」行列数 🪑</div>
+            <div v-for="r in seatConfig.rows" :key="'row'+r" class="seat-row">
+              <div class="seat-row-label">{{ r }}</div>
+              <div v-for="d in seatConfig.cols" :key="'desk'+r+'-'+d" class="seat-desk">
+                <template v-if="seatConfig.pairs">
+                  <div class="seat-cell" :class="seatCellClass(r, d*2-1)" @click="clickSeat(r, d*2-1)">{{ seatName(r, d*2-1) }}</div>
+                  <div class="seat-cell" :class="seatCellClass(r, d*2)" @click="clickSeat(r, d*2)">{{ seatName(r, d*2) }}</div>
+                </template>
+                <div v-else class="seat-cell" :class="seatCellClass(r, d)" @click="clickSeat(r, d)">{{ seatName(r, d) }}</div>
+              </div>
+            </div>
+          </div>
+          <div v-if="seatPickerOpen" class="seat-picker">
+            <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+              <span style="font-size:12px;font-weight:600">🪑 入座位置：{{ seatPosLabel(seatPickerTarget) }}</span>
+              <button class="btn-small" style="margin-left:auto" @click="closeSeatPicker()">✕ 取消</button>
+            </div>
+            <input v-model="seatPickerSearch" class="input" placeholder="🔍 搜索学生姓名/学号">
+            <div class="picker-list" style="position:static;max-height:200px">
+              <div v-for="s in filteredSeatStudents" :key="s.id" class="picker-item" @mousedown.prevent="pickSeatStudent(s)">
+                {{ s.name }}<span v-if="s.studentId" style="font-size:11px;color:var(--text-secondary)">（{{ s.studentId }}）</span>
+              </div>
+              <div v-if="filteredSeatStudents.length === 0" class="picker-empty">无匹配学生，或学生都已入座 ✅</div>
             </div>
           </div>
         </div>
@@ -2414,6 +2476,35 @@ textarea.input { resize: vertical; min-height: 60px; }
       </div>
     </div>
 
+    <!-- 排座位设置弹窗 -->
+    <div v-if="showSeatConfig" class="modal-overlay" @click.self="showSeatConfig=false">
+      <div class="modal">
+        <div class="modal-header">🪑 排座位设置</div>
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group w-50">
+              <label>排数（行）</label>
+              <input v-model.number="seatConfig.rows" type="number" min="1" max="12" class="input">
+            </div>
+            <div class="form-group w-50">
+              <label>每排桌数（列）</label>
+              <input v-model.number="seatConfig.cols" type="number" min="1" max="10" class="input">
+            </div>
+          </div>
+          <div class="form-group">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+              <input type="checkbox" v-model="seatConfig.pairs" style="width:16px;height:16px"> 双人桌（同桌两人并排）
+            </label>
+          </div>
+          <div style="font-size:11px;color:var(--text-secondary);line-height:1.6">💡 双人桌时每排座位数 = 桌数 × 2；修改行列后超出范围的座位会自动清掉，已排学生保留。</div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showSeatConfig=false">取消</button>
+          <button class="btn-primary" @click="saveSeatConfig">保存</button>
+        </div>
+      </div>
+    </div>
+
     <!-- 学业预警弹窗 -->
     <div v-if="showAddWarning" class="modal-overlay" @click.self="showAddWarning=false; editingWarning=null">
       <div class="modal modal-wide">
@@ -2784,6 +2875,7 @@ createApp({
       { key: 'rule', label: '班费收支', icon: '💰' },
       { key: 'honor', label: '荣誉榜', icon: '🏆' },
       { key: 'duty', label: '值日排程', icon: '🧹' },
+      { key: 'seat', label: '排座位', icon: '🪑' },
     ];
     const classDailySub = ref('meeting');
 
@@ -2859,6 +2951,8 @@ const lastSaveTime = ref(null);
           ruleRecords: ruleRecords.value,
           honorRecords: honorRecords.value,
           dutyRecords: dutyRecords.value,
+          seatConfig: { rows: seatConfig.rows, cols: seatConfig.cols, pairs: seatConfig.pairs },
+          seatLayout: seatLayout.value,
           warningRecords: warningRecords.value,
           teacherCommRecords: teacherCommRecords.value,
           scheduleRecords: scheduleRecords.value,
@@ -3100,7 +3194,14 @@ const lastSaveTime = ref(null);
     }
 
     function viewStudent(s) { selectedStudent.value = s; showStudentDetail.value = true; detailTab.value = 'info'; }
-    function deleteStudent(id) { students.value = students.value.filter(s => s.id !== id); saveData(); }
+    function deleteStudent(id) {
+      students.value = students.value.filter(s => s.id !== id);
+      // 同步清理座位安排
+      for (const k in seatLayout.value) {
+        if (seatLayout.value[k] === id) delete seatLayout.value[k];
+      }
+      saveData();
+    }
     function confirmDeleteStudent(s) {
       if (!confirm(`确定删除学生「${s.name}」吗？\n\n删除后该生的历史记录（请假/作业/成绩等）仍会保留。`)) return;
       deleteStudent(s.id);
@@ -4491,6 +4592,135 @@ const lastSaveTime = ref(null);
       }
     }
 
+    // ====== 排座位 ======
+    const seatConfig = reactive({ rows: 6, cols: 6, pairs: false });
+    const seatLayout = ref({});            // { "r1c1": studentId }
+    const showSeatConfig = ref(false);
+    const seatPickerOpen = ref(false);
+    const seatPickerSearch = ref('');
+    const seatPickerTarget = ref('');
+    const selectedSeat = ref('');
+
+    function seatKey(r, c) { return 'r' + r + 'c' + c; }
+    function seatStudent(k) {
+      const id = seatLayout.value[k];
+      return id ? students.value.find(s => s.id === id) || null : null;
+    }
+    function seatOf(r, c) { return seatStudent(seatKey(r, c)); }
+    function seatName(r, c) { const s = seatOf(r, c); return s ? s.name : ''; }
+    function seatNameOf(k) { const s = seatStudent(k); return s ? s.name : ''; }
+    function seatKeyOfStudent(sid) {
+      for (const k in seatLayout.value) if (seatLayout.value[k] === sid) return k;
+      return '';
+    }
+    function seatPosLabel(k) {
+      const m = k.match(/^r(\d+)c(\d+)$/);
+      return m ? `第${m[1]}排第${m[2]}列` : '';
+    }
+    const seatedCount = computed(() => Object.keys(seatLayout.value).length);
+    const unseatedStudents = computed(() => students.value.filter(s => !seatKeyOfStudent(s.id)));
+    const filteredSeatStudents = computed(() => {
+      const kw = seatPickerSearch.value.trim();
+      let list = unseatedStudents.value;
+      if (kw) list = list.filter(s => (s.name || '').includes(kw) || (s.studentId || '').includes(kw));
+      return list;
+    });
+
+    function seatCellClass(r, c) {
+      const k = seatKey(r, c);
+      const s = seatOf(r, c);
+      return {
+        occupied: !!s,
+        male: !!s && s.gender === '男',
+        female: !!s && s.gender === '女',
+        selected: selectedSeat.value === k
+      };
+    }
+    function openSeatPicker(r, c) { seatPickerTarget.value = seatKey(r, c); seatPickerSearch.value = ''; seatPickerOpen.value = true; }
+    function closeSeatPicker() { seatPickerOpen.value = false; seatPickerTarget.value = ''; seatPickerSearch.value = ''; }
+
+    function clickSeat(r, c) {
+      const k = seatKey(r, c);
+      const st = seatOf(r, c);
+      if (st) {
+        // 已有人：第一次点选中，再点自己取消，点其他座位互换/移动
+        if (!selectedSeat.value) { selectedSeat.value = k; return; }
+        if (selectedSeat.value === k) { selectedSeat.value = ''; return; }
+        const fromK = selectedSeat.value;
+        const fromId = seatLayout.value[fromK];
+        if (seatLayout.value[k]) seatLayout.value[fromK] = seatLayout.value[k];
+        else delete seatLayout.value[fromK];
+        seatLayout.value[k] = fromId;
+        selectedSeat.value = '';
+        saveData();
+      } else {
+        // 空座：若已选中某学生则移动过来，否则打开选人
+        if (selectedSeat.value) {
+          const fromK = selectedSeat.value;
+          seatLayout.value[k] = seatLayout.value[fromK];
+          delete seatLayout.value[fromK];
+          selectedSeat.value = '';
+          saveData();
+        } else {
+          openSeatPicker(r, c);
+        }
+      }
+    }
+    function removeSeatSelected() {
+      if (!selectedSeat.value) return;
+      delete seatLayout.value[selectedSeat.value];
+      selectedSeat.value = '';
+      saveData();
+    }
+    function pickSeatStudent(s) {
+      // 清除该生所有旧座位（防止重复占座残留）
+      for (const k in seatLayout.value) {
+        if (seatLayout.value[k] === s.id) delete seatLayout.value[k];
+      }
+      seatLayout.value[seatPickerTarget.value] = s.id;
+      closeSeatPicker();
+      saveData();
+    }
+    function randomSeat() {
+      if (students.value.length === 0) { alert('还没有学生，先去「学生档案」添加吧 🙋'); return; }
+      const keys = [];
+      for (let r = 1; r <= seatConfig.rows; r++) {
+        const maxC = seatConfig.cols * (seatConfig.pairs ? 2 : 1);
+        for (let c = 1; c <= maxC; c++) keys.push(seatKey(r, c));
+      }
+      if (!confirm(`把全部 ${students.value.length} 名学生随机打乱入座？\n座位不足时多余学生保持未入座。`)) return;
+      const arr = [...students.value];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      const layout = {};
+      arr.forEach((s, i) => { if (keys[i]) layout[keys[i]] = s.id; });
+      seatLayout.value = layout;
+      selectedSeat.value = '';
+      saveData();
+    }
+    function clearSeat() {
+      if (Object.keys(seatLayout.value).length === 0) return;
+      if (!confirm('确定清空所有座位安排？')) return;
+      seatLayout.value = {};
+      selectedSeat.value = '';
+      saveData();
+    }
+    function saveSeatConfig() {
+      seatConfig.rows = Math.max(1, Math.min(12, Number(seatConfig.rows) || 6));
+      seatConfig.cols = Math.max(1, Math.min(10, Number(seatConfig.cols) || 6));
+      const maxC = seatConfig.cols * (seatConfig.pairs ? 2 : 1);
+      const layout = {};
+      for (const k in seatLayout.value) {
+        const m = k.match(/^r(\d+)c(\d+)$/);
+        if (m && Number(m[1]) <= seatConfig.rows && Number(m[2]) <= maxC) layout[k] = seatLayout.value[k];
+      }
+      seatLayout.value = layout;
+      showSeatConfig.value = false;
+      saveData();
+    }
+
     // ====== 学业预警 ======
     const warningRecords = ref([]);
     const showAddWarning = ref(false);
@@ -5226,6 +5456,16 @@ const lastSaveTime = ref(null);
       }
       if (data.honorRecords) honorRecords.value = data.honorRecords;
       if (data.dutyRecords) dutyRecords.value = data.dutyRecords;
+      // 排座位数据（seatLayout 只保留现存学生的座位，避免残留）
+      if (data.seatConfig) { seatConfig.rows = Number(data.seatConfig.rows) || 6; seatConfig.cols = Number(data.seatConfig.cols) || 6; seatConfig.pairs = !!data.seatConfig.pairs; }
+      if (data.seatLayout) {
+        const seatMap = {};
+        for (const k in data.seatLayout) {
+          const sid = data.seatLayout[k];
+          if (students.value.some(s => s.id === sid)) seatMap[k] = sid;
+        }
+        seatLayout.value = seatMap;
+      }
       if (data.warningRecords) warningRecords.value = data.warningRecords;
       if (data.teacherCommRecords) teacherCommRecords.value = data.teacherCommRecords;
       if (data.scheduleRecords) scheduleRecords.value = data.scheduleRecords;
@@ -5318,6 +5558,11 @@ const lastSaveTime = ref(null);
       honorRecords, showAddHonor, editingHonor, honorForm, sortedHonors, addHonor, editHonor, deleteHonor,
       // 值日排程
       dutyRecords, showAddDuty, editingDuty, dutyForm, sortedDuties, addDuty, editDuty, markDutyDone, deleteDuty,
+      // 排座位
+      seatConfig, seatLayout, showSeatConfig, seatedCount, unseatedStudents,
+      seatOf, seatName, seatNameOf, seatPosLabel, seatCellClass, clickSeat,
+      removeSeatSelected, seatPickerOpen, seatPickerSearch, seatPickerTarget, filteredSeatStudents,
+      pickSeatStudent, closeSeatPicker, randomSeat, clearSeat, saveSeatConfig, selectedSeat,
       // 班表
       scheduleRecords, showAddSchedule, editingSchedule, scheduleForm, scheduleWeekFilter, filteredSchedule, addSchedule, editSchedule, deleteSchedule, getScheduleCell, clickScheduleCell, semesterStart, getDateStr,
       // 首页信息条 + 悬浮窗
