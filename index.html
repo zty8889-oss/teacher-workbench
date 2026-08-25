@@ -1438,7 +1438,7 @@ textarea.input { resize: vertical; min-height: 60px; }
         </div>
         <!-- ====== Excel 导入功能 ====== -->
         <div class="profile-item" @click="showWordImport = true">
-          <label>📊 从 Excel 导入</label>
+          <label>📊 导入信息（文件/微信/QQ）</label>
           <span>›</span>
         </div>
         <div class="profile-item" @click="showThemePicker = true">
@@ -1499,32 +1499,54 @@ textarea.input { resize: vertical; min-height: 60px; }
     <!-- ====== Word 导入弹窗 ====== -->
     <div v-if="showWordImport" class="modal-overlay" @click.self="showWordImport=false">
       <div class="modal">
-        <div class="modal-header">📊 从 Excel 导入</div>
+        <div class="modal-header">📊 导入信息</div>
         <div class="modal-body">
-          <p style="font-size:13px; color:var(--text-secondary); margin-bottom:10px">选择 Excel 文件（.xlsx / .xls），系统自动读取第一个工作表中的表格数据。</p>
-
-          <div style="display:flex; gap:8px; margin-bottom:14px; font-size:12px">
-            <a v-show="wordImportType==='students'" href="学生信息导入模板.xlsx" download style="flex:1; text-align:center; padding:8px; border:1.5px dashed var(--primary); border-radius:10px; color:var(--primary); text-decoration:none">👇 下载学生模板</a>
-            <a v-show="wordImportType==='exams'" href="考试成绩导入模板.xlsx" download style="flex:1; text-align:center; padding:8px; border:1.5px dashed var(--primary); border-radius:10px; color:var(--primary); text-decoration:none">👇 下载成绩模板</a>
-            <a v-show="wordImportType==='schedule'" href="班表导入模板.xlsx" download style="flex:1; text-align:center; padding:8px; border:1.5px dashed var(--primary); border-radius:10px; color:var(--primary); text-decoration:none">👇 下载班表模板</a>
+          <!-- 导入来源选择：文件 / 微信 / QQ -->
+          <div style="display:flex; gap:8px; margin-bottom:14px">
+            <button class="btn-small" :style="sourceBtnStyle('file')" @click="wordImportSource='file'">📁 文件(Excel)</button>
+            <button class="btn-small" :style="sourceBtnStyle('wechat')" @click="wordImportSource='wechat'">📱 微信导入</button>
+            <button class="btn-small" :style="sourceBtnStyle('qq')" @click="wordImportSource='qq'">💬 QQ导入</button>
           </div>
 
-          <div v-if="!wordFileSelected" style="margin-bottom:14px">
-            <button class="btn-primary" style="width:100%; text-align:center" @click="selectWordFile">选择 Excel 文件</button>
+          <!-- 📁 文件导入 -->
+          <div v-if="wordImportSource==='file'">
+            <p style="font-size:13px; color:var(--text-secondary); margin-bottom:10px">选择 Excel 文件（.xlsx / .xls），系统自动读取第一个工作表中的表格数据。微信/QQ 里收到的文件保存到手机后，也可以在这里选择。</p>
+            <div style="display:flex; gap:8px; margin-bottom:14px; font-size:12px">
+              <a v-show="wordImportType==='students'" href="学生信息导入模板.xlsx" download style="flex:1; text-align:center; padding:8px; border:1.5px dashed var(--primary); border-radius:10px; color:var(--primary); text-decoration:none">👇 下载学生模板</a>
+              <a v-show="wordImportType==='exams'" href="考试成绩导入模板.xlsx" download style="flex:1; text-align:center; padding:8px; border:1.5px dashed var(--primary); border-radius:10px; color:var(--primary); text-decoration:none">👇 下载成绩模板</a>
+              <a v-show="wordImportType==='schedule'" href="班表导入模板.xlsx" download style="flex:1; text-align:center; padding:8px; border:1.5px dashed var(--primary); border-radius:10px; color:var(--primary); text-decoration:none">👇 下载班表模板</a>
+            </div>
+            <button class="btn-primary" style="width:100%; text-align:center" @click="selectWordFile">{{ wordFileSelected ? '重新选择文件' : '选择 Excel 文件' }}</button>
             <p v-if="wordFileName" style="font-size:12px; color:var(--success); margin-top:8px">✅ 已选择：{{ wordFileName }}</p>
+            <div v-if="wordPreview" style="margin-top:14px; background:#f8f9fc; border-radius:10px; padding:12px; max-height:200px; overflow-y:auto">
+              <p style="font-size:12px; font-weight:600; color:var(--text-secondary); margin-bottom:8px">解析结果预览：</p>
+              <p style="font-size:12px; color:var(--text)">{{ wordPreview }}</p>
+            </div>
           </div>
 
-          <div v-if="wordFileSelected">
-            <p style="font-size:13px; font-weight:600; margin-bottom:10px">请选择导入类型：</p>
+          <!-- 📱 微信 / 💬 QQ 粘贴导入 -->
+          <div v-else>
+            <p style="font-size:13px; color:var(--text-secondary); margin-bottom:8px">把{{ wordImportSource==='wechat' ? '微信' : 'QQ' }}聊天里复制的内容（学生名单 / 成绩表 / 班表）粘贴到下方，自动识别导入。</p>
+            <textarea v-model="wordPasteText" rows="5" class="input" :placeholder="pastePlaceholder" style="width:100%; box-sizing:border-box; font-size:13px; resize:vertical"></textarea>
+            <p v-if="pastePreviewText" style="font-size:12px; color:var(--text-secondary); margin-top:8px">{{ pastePreviewText }}</p>
+            <p style="font-size:11px; color:var(--text-tertiary); margin-top:6px">提示：成绩表需带表头（姓名 语文 数学…）；学生名单可用「姓名 电话 家长」格式，每行一条。</p>
+          </div>
 
+          <!-- 导入类型 -->
+          <div style="margin-top:16px">
+            <p style="font-size:13px; font-weight:600; margin-bottom:10px">请选择导入类型：</p>
             <div style="display:flex; flex-direction:column; gap:10px">
               <div class="profile-item" style="border:1.5px solid var(--border); border-radius:12px; margin-bottom:0; padding:14px 16px; cursor:pointer" :style="{borderColor: wordImportType==='students' ? 'var(--primary)' : 'var(--border)'}" @click="wordImportType='students'">
-                <label>👨‍🎓 学生信息</label>
+                <label>👨🎓 学生信息</label>
                 <span v-if="wordImportType==='students'" style="color:var(--primary)">✓</span>
               </div>
               <div class="profile-item" style="border:1.5px solid var(--border); border-radius:12px; margin-bottom:0; padding:14px 16px; cursor:pointer" :style="{borderColor: wordImportType==='exams' ? 'var(--primary)' : 'var(--border)'}" @click="wordImportType='exams'">
                 <label>📊 考试成绩</label>
                 <span v-if="wordImportType==='exams'" style="color:var(--primary)">✓</span>
+              </div>
+              <div class="profile-item" style="border:1.5px solid var(--border); border-radius:12px; margin-bottom:0; padding:14px 16px; cursor:pointer" :style="{borderColor: wordImportType==='schedule' ? 'var(--primary)' : 'var(--border)'}" @click="wordImportType='schedule'">
+                <label>📅 班表课程</label>
+                <span v-if="wordImportType==='schedule'" style="color:var(--primary)">✓</span>
               </div>
             </div>
 
@@ -1539,29 +1561,23 @@ textarea.input { resize: vertical; min-height: 60px; }
                   <input v-model="wordExamFullScore" type="number" class="input" placeholder="如：100">
                 </div>
               </div>
-              <p style="font-size:12px; color:var(--text-tertiary); margin-top:-8px; margin-bottom:8px">Excel 表头除「姓名」外自动识别为科目列</p>
+              <p style="font-size:12px; color:var(--text-tertiary); margin-top:-8px; margin-bottom:8px">表头除「姓名」外自动识别为科目列</p>
             </div>
+          </div>
 
-            <div v-if="wordPreview" style="margin-top:14px; background:#f8f9fc; border-radius:10px; padding:12px; max-height:200px; overflow-y:auto">
-              <p style="font-size:12px; font-weight:600; color:var(--text-secondary); margin-bottom:8px">解析结果预览：</p>
-              <p style="font-size:12px; color:var(--text)">{{ wordPreview }}</p>
-            </div>
-
-            <div v-if="wordImportResult" style="margin-top:14px">
-              <p :style="{fontSize:'13px', fontWeight:600, color: wordImportResult.success ? 'var(--success)' : 'var(--danger)'}">
-                {{ wordImportResult.success ? '✅ 导入成功！' : '❌ 导入失败' }}
-              </p>
-              <p v-if="wordImportResult.msg" style="font-size:12px; color:var(--text-secondary); margin-top:4px">{{ wordImportResult.msg }}</p>
-            </div>
+          <div v-if="wordImportResult" style="margin-top:14px">
+            <p :style="{fontSize:'13px', fontWeight:600, color: wordImportResult.success ? 'var(--success)' : 'var(--danger)'}">
+              {{ wordImportResult.success ? '✅ 导入成功！' : '❌ 导入失败' }}
+            </p>
+            <p v-if="wordImportResult.msg" style="font-size:12px; color:var(--text-secondary); margin-top:4px">{{ wordImportResult.msg }}</p>
           </div>
         </div>
         <div class="modal-footer">
           <button class="btn-cancel" @click="showWordImport=false; resetWordImport()">关闭</button>
-          <button v-if="wordFileSelected && wordImportType && !wordImportResult.success" class="btn-primary" @click="doWordImport" :disabled="wordImporting">{{ wordImporting ? '解析中...' : '开始导入' }}</button>
+          <button v-if="canStartImport && !wordImportResult.success" class="btn-primary" @click="wordImportSource==='file' ? doWordImport() : doPasteImport()" :disabled="wordImporting">{{ wordImporting ? '解析中...' : '开始导入' }}</button>
         </div>
       </div>
     </div>
-
     <!-- 添加学生弹窗 -->
     <div v-if="showAddStudent" class="modal-overlay" @click.self="showAddStudent=false">
       <div class="modal modal-wide">
@@ -4724,6 +4740,9 @@ const lastSaveTime = ref(null);
     const wordImportResult = ref({ success: false, msg: '' });
     const wordExamName = ref('');
     const wordExamFullScore = ref(100);
+    // 导入来源：file(Excel) / wechat / qq
+    const wordImportSource = ref('file');
+    const wordPasteText = ref('');
 
     // ====== Theme 主题切换 ======
     const showThemePicker = ref(false);
@@ -4770,6 +4789,8 @@ const lastSaveTime = ref(null);
       wordImportResult.value = { success: false, msg: '' };
       wordExamName.value = '';
       wordExamFullScore.value = 100;
+      wordImportSource.value = 'file';
+      wordPasteText.value = '';
     }
 
     function selectWordFile() {
@@ -4805,6 +4826,81 @@ const lastSaveTime = ref(null);
         wordPreview.value = '⚠️ 无法解析 Excel 文件：' + e.message;
       }
     }
+
+    // ====== 微信/QQ 粘贴导入 ======
+    const PASTE_HEADER_KWS = {
+      students: ['姓名','学生','名字','学号','性别','家长','电话','手机','地址'],
+      exams: ['姓名','学生','名字','语文','数学','英语','分数','成绩','科目','物理','化学','生物','政治','历史','地理'],
+      schedule: ['周次','星期','节次','第几节','课程名称','科目','老师','教师','地点']
+    };
+    function splitPasteLine(line) {
+      if (line.includes('\t')) return line.split('\t').map(c => String(c || '').trim()).filter(Boolean);
+      return line.split(/[、，,]+|\s+/).map(c => String(c || '').trim()).filter(Boolean);
+    }
+    function pasteTextToRows(text) {
+      return text.split(/\r?\n/).map(l => l.trim()).filter(Boolean).map(splitPasteLine).filter(r => r.length > 0);
+    }
+    function isHeaderRow(row, type) {
+      const kws = PASTE_HEADER_KWS[type] || [];
+      return row.some(c => kws.some(kw => c.toLowerCase().includes(kw)));
+    }
+    // 粘贴无表头时按内容位置推断列名
+    function synthHeaderFor(row, type) {
+      if (type === 'schedule') {
+        if (row.length >= 6) return ['周次','星期','节次','课程名称','老师','地点'];
+        if (row.length === 5) return ['周次','星期','节次','课程名称','老师'];
+        return ['周次','星期','节次','课程名称'];
+      }
+      if (type === 'exams') return null; // 成绩必须带表头才能识别科目
+      const header = ['姓名'];
+      let phoneN = 0, parentN = 0;
+      for (let i = 1; i < row.length; i++) {
+        const c = row[i];
+        if (/^1[3-9]\d{9}$/.test(c) || /^\d{7,11}$/.test(c)) header.push(phoneN++ ? '电话2' : '电话');
+        else if (c === '男' || c === '女') header.push('性别');
+        else if (/^\d{4,10}$/.test(c)) header.push('学号');
+        else header.push(parentN++ ? '家长2' : '家长');
+      }
+      return header;
+    }
+    function buildPasteData() {
+      const rows = pasteTextToRows(wordPasteText.value);
+      if (!rows.length) return null;
+      let header;
+      if (isHeaderRow(rows[0], wordImportType.value)) {
+        header = rows[0];
+        rows.shift();
+      } else {
+        header = synthHeaderFor(rows[0], wordImportType.value);
+        if (!header) return { error: '成绩粘贴需要带表头，请复制「姓名 语文 数学…」格式的内容' };
+      }
+      return [header, ...rows];
+    }
+    function sourceBtnStyle(key) {
+      return wordImportSource.value === key
+        ? { background: 'var(--primary)', color: '#fff', border: '1px solid var(--primary)' }
+        : { background: 'var(--bg)', color: 'var(--text)', border: '1px solid var(--border)' };
+    }
+    const pastePlaceholder = computed(() => {
+      if (wordImportType.value === 'exams') return '姓名 语文 数学 英语\n张三 85 92 78';
+      if (wordImportType.value === 'schedule') return '周次 星期 节次 课程名称\n1 周一 1 语文';
+      return '姓名 电话 家长\n张三 13800138000 张三爸爸';
+    });
+    const pastePreviewText = computed(() => {
+      if (!wordPasteText.value.trim()) return '';
+      const rows = pasteTextToRows(wordPasteText.value);
+      if (!rows.length) return '未识别到有效内容';
+      const data = buildPasteData();
+      if (data && data.error) return data.error;
+      const hasHeader = isHeaderRow(rows[0], wordImportType.value);
+      const header = hasHeader ? rows[0] : synthHeaderFor(rows[0], wordImportType.value);
+      return `📋 共 ${rows.length} 行，${header ? header.length + ' 列' : '?'}${hasHeader ? '（含表头）' : '（已自动识别列）'}`;
+    });
+    const canStartImport = computed(() => {
+      if (!wordImportType.value || wordImportResult.value.success) return false;
+      if (wordImportSource.value === 'file') return wordFileSelected.value;
+      return !!wordPasteText.value.trim();
+    });
 
     function getColumnIndex(headers, keywords) {
       for (let i = 0; i < headers.length; i++) {
@@ -4962,6 +5058,56 @@ const lastSaveTime = ref(null);
       return { scores, subjects };
     }
 
+    // 共用：把二维表格数据按类型解析并写入
+    function applyImportData(data) {
+      if (wordImportType.value === 'students') {
+        const newStudents = parseStudentExcel(data);
+        if (newStudents.length === 0) {
+          wordImportResult.value = { success: false, msg: '未找到可导入的学生数据，可能缺少姓名列或所有学生已存在' };
+        } else {
+          students.value.push(...newStudents);
+          saveData();
+          wordImportResult.value = {
+            success: true,
+            msg: `成功导入 ${newStudents.length} 名学生信息 👨🎓`
+          };
+        }
+      } else if (wordImportType.value === 'exams') {
+        const result = parseExamExcel(data, parseInt(wordExamFullScore.value) || 100);
+        if (result.scores.length === 0) {
+          wordImportResult.value = { success: false, msg: '未找到可导入的成绩数据，请确认表格包含姓名和成绩列' };
+        } else {
+          exams.value.unshift({
+            id: Date.now(),
+            name: wordExamName.value.trim(),
+            date: new Date().toISOString().slice(0, 10),
+            fullScore: parseInt(wordExamFullScore.value) || 100,
+            subjects: result.subjects,
+            scores: result.scores,
+            subjectFilter: '',
+            open: true
+          });
+          saveData();
+          wordImportResult.value = {
+            success: true,
+            msg: `成功导入 ${result.scores.length} 条成绩（${result.subjects.length}科）📊`
+          };
+        }
+      } else if (wordImportType.value === 'schedule') {
+        const newSchedule = parseScheduleExcel(data);
+        if (newSchedule.length === 0) {
+          wordImportResult.value = { success: false, msg: '未找到可导入的课程数据，请确认表头包含：周次、星期、节次、课程名称' };
+        } else {
+          scheduleRecords.value.push(...newSchedule);
+          saveData();
+          wordImportResult.value = {
+            success: true,
+            msg: `成功导入 ${newSchedule.length} 条课程 📅`
+          };
+        }
+      }
+    }
+
     async function doWordImport() {
       if (!wordFile.value) { alert('请先选择 Excel 文件'); return; }
       if (!wordImportType.value) { alert('请选择导入类型'); return; }
@@ -4982,58 +5128,30 @@ const lastSaveTime = ref(null);
 
         if (data.length < 2) {
           wordImportResult.value = { success: false, msg: 'Excel 数据不足（至少需要表头+1行数据）' };
-          wordImporting.value = false;
           return;
         }
 
-        if (wordImportType.value === 'students') {
-          const newStudents = parseStudentExcel(data);
-          if (newStudents.length === 0) {
-            wordImportResult.value = { success: false, msg: '未找到可导入的学生数据，可能缺少姓名列或所有学生已存在' };
-          } else {
-            students.value.push(...newStudents);
-            saveData();
-            wordImportResult.value = {
-              success: true,
-              msg: `成功导入 ${newStudents.length} 名学生信息 👨🎓`
-            };
-          }
-        } else if (wordImportType.value === 'exams') {
-          const result = parseExamExcel(data, parseInt(wordExamFullScore.value) || 100);
-          if (result.scores.length === 0) {
-            wordImportResult.value = { success: false, msg: '未找到可导入的成绩数据，请确认表格包含姓名和成绩列' };
-          } else {
-            exams.value.unshift({
-              id: Date.now(),
-              name: wordExamName.value.trim(),
-              date: new Date().toISOString().slice(0, 10),
-              fullScore: parseInt(wordExamFullScore.value) || 100,
-              subjects: result.subjects,
-              scores: result.scores,
-              subjectFilter: '',
-              open: true
-            });
-            saveData();
-            wordImportResult.value = {
-              success: true,
-              msg: `成功导入 ${result.scores.length} 条成绩（${result.subjects.length}科）📊`
-            };
-          }
-        } else if (wordImportType.value === 'schedule') {
-          const newSchedule = parseScheduleExcel(data);
-          if (newSchedule.length === 0) {
-            wordImportResult.value = { success: false, msg: '未找到可导入的课程数据，请确认表头包含：周次、星期、节次、课程名称' };
-          } else {
-            scheduleRecords.value.push(...newSchedule);
-            saveData();
-            wordImportResult.value = {
-              success: true,
-              msg: `成功导入 ${newSchedule.length} 条课程 📅`
-            };
-          }
-        }
+        applyImportData(data);
       } catch(e) {
         wordImportResult.value = { success: false, msg: '解析 Excel 文件失败：' + e.message };
+      } finally {
+        wordImporting.value = false;
+      }
+    }
+
+    // 微信/QQ 粘贴文本导入
+    function doPasteImport() {
+      if (!wordPasteText.value.trim()) { alert('请先粘贴内容'); return; }
+      if (!wordImportType.value) { alert('请选择导入类型'); return; }
+      if (wordImportType.value === 'exams' && !wordExamName.value.trim()) { alert('请输入考试名称'); return; }
+      const data = buildPasteData();
+      if (!data) { alert('未识别到有效内容，请检查粘贴格式'); return; }
+      if (data.error) { wordImportResult.value = { success: false, msg: data.error }; return; }
+      if (data.length < 2) { wordImportResult.value = { success: false, msg: '内容数据不足（至少需要表头+1行数据）' }; return; }
+      wordImporting.value = true;
+      wordImportResult.value = { success: false, msg: '' };
+      try {
+        applyImportData(data);
       } finally {
         wordImporting.value = false;
       }
@@ -5224,7 +5342,8 @@ const lastSaveTime = ref(null);
       // Word Import
       showWordImport, wordFile, wordFileName, wordFileSelected, wordImportType,
       wordImporting, wordPreview, wordImportResult, wordExamName, wordExamFullScore,
-      selectWordFile, doWordImport, resetWordImport,
+      wordImportSource, wordPasteText, sourceBtnStyle, pastePlaceholder, pastePreviewText, canStartImport,
+      selectWordFile, doWordImport, doPasteImport, resetWordImport,
       // Theme
       showThemePicker, currentTheme, themeNames, themeList, setTheme,
       // Version
