@@ -2497,6 +2497,7 @@ textarea.input { resize: vertical; min-height: 60px; }
             </label>
           </div>
           <div style="font-size:11px;color:var(--text-secondary);line-height:1.6">💡 双人桌时每排座位数 = 桌数 × 2；修改行列后超出范围的座位会自动清掉，已排学生保留。</div>
+          <div style="margin-top:10px;padding:10px 12px;background:var(--bg);border-radius:10px;font-size:12px;color:var(--text)">当前座位：<b style="color:var(--primary);font-size:15px">{{ seatCapacity }}</b> 个（{{ seatConfig.rows }}排 × {{ seatConfig.cols }}列{{ seatConfig.pairs ? '，双人桌' : '' }}）</div>
         </div>
         <div class="modal-footer">
           <button class="btn-cancel" @click="showSeatConfig=false">取消</button>
@@ -2951,7 +2952,7 @@ const lastSaveTime = ref(null);
           ruleRecords: ruleRecords.value,
           honorRecords: honorRecords.value,
           dutyRecords: dutyRecords.value,
-          seatConfig: { rows: seatConfig.rows, cols: seatConfig.cols, pairs: seatConfig.pairs },
+          seatConfig: { rows: seatConfig.rows, cols: seatConfig.cols, pairs: seatConfig.pairs, v: 1 },
           seatLayout: seatLayout.value,
           warningRecords: warningRecords.value,
           teacherCommRecords: teacherCommRecords.value,
@@ -4593,7 +4594,7 @@ const lastSaveTime = ref(null);
     }
 
     // ====== 排座位 ======
-    const seatConfig = reactive({ rows: 6, cols: 6, pairs: false });
+    const seatConfig = reactive({ rows: 10, cols: 6, pairs: false });
     const seatLayout = ref({});            // { "r1c1": studentId }
     const showSeatConfig = ref(false);
     const seatPickerOpen = ref(false);
@@ -4618,6 +4619,8 @@ const lastSaveTime = ref(null);
       return m ? `第${m[1]}排第${m[2]}列` : '';
     }
     const seatedCount = computed(() => Object.keys(seatLayout.value).length);
+    // 当前座位总容量（双人桌按×2 计算）
+    const seatCapacity = computed(() => seatConfig.rows * seatConfig.cols * (seatConfig.pairs ? 2 : 1));
     const unseatedStudents = computed(() => students.value.filter(s => !seatKeyOfStudent(s.id)));
     const filteredSeatStudents = computed(() => {
       const kw = seatPickerSearch.value.trim();
@@ -5457,7 +5460,16 @@ const lastSaveTime = ref(null);
       if (data.honorRecords) honorRecords.value = data.honorRecords;
       if (data.dutyRecords) dutyRecords.value = data.dutyRecords;
       // 排座位数据（seatLayout 只保留现存学生的座位，避免残留）
-      if (data.seatConfig) { seatConfig.rows = Number(data.seatConfig.rows) || 6; seatConfig.cols = Number(data.seatConfig.cols) || 6; seatConfig.pairs = !!data.seatConfig.pairs; }
+      if (data.seatConfig) {
+        seatConfig.rows = Number(data.seatConfig.rows) || 6;
+        seatConfig.cols = Number(data.seatConfig.cols) || 6;
+        seatConfig.pairs = !!data.seatConfig.pairs;
+        // 旧默认 6×6=36 一次性升级为 60 个座位（10排×6列），仅旧数据触发一次（v 标记）
+        if (!data.seatConfig.v && seatConfig.rows === 6 && seatConfig.cols === 6) {
+          seatConfig.rows = 10;
+          seatConfig.cols = 6;
+        }
+      }
       if (data.seatLayout) {
         const seatMap = {};
         for (const k in data.seatLayout) {
@@ -5559,7 +5571,7 @@ const lastSaveTime = ref(null);
       // 值日排程
       dutyRecords, showAddDuty, editingDuty, dutyForm, sortedDuties, addDuty, editDuty, markDutyDone, deleteDuty,
       // 排座位
-      seatConfig, seatLayout, showSeatConfig, seatedCount, unseatedStudents,
+      seatConfig, seatLayout, showSeatConfig, seatedCount, unseatedStudents, seatCapacity,
       seatOf, seatName, seatNameOf, seatPosLabel, seatCellClass, clickSeat,
       removeSeatSelected, seatPickerOpen, seatPickerSearch, seatPickerTarget, filteredSeatStudents,
       pickSeatStudent, closeSeatPicker, randomSeat, clearSeat, saveSeatConfig, selectedSeat,
