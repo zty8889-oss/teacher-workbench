@@ -857,6 +857,7 @@ textarea.input { resize: vertical; min-height: 60px; }
           </div>
           <div style="display:flex;gap:4px;align-items:center">
             <span style="font-size:14px;color:var(--primary);cursor:pointer;padding:4px" @click.stop="editStudent(s)">✏️</span>
+            <span style="font-size:14px;color:var(--danger);cursor:pointer;padding:4px" title="删除学生" @click.stop="confirmDeleteStudent(s)">🗑️</span>
             <span class="student-arrow">›</span>
           </div>
         </div>
@@ -3085,6 +3086,11 @@ const lastSaveTime = ref(null);
 
     function viewStudent(s) { selectedStudent.value = s; showStudentDetail.value = true; detailTab.value = 'info'; }
     function deleteStudent(id) { students.value = students.value.filter(s => s.id !== id); saveData(); }
+    function confirmDeleteStudent(s) {
+      if (!confirm(`确定删除学生「${s.name}」吗？\n\n删除后该生的历史记录（请假/作业/成绩等）仍会保留。`)) return;
+      deleteStudent(s.id);
+      if (selectedStudent.value && selectedStudent.value.id === s.id) { showStudentDetail.value = false; selectedStudent.value = {}; }
+    }
 
     // ====== Student Timeline ======
     const detailTab = ref('info');
@@ -4810,6 +4816,16 @@ const lastSaveTime = ref(null);
       }
       return -1;
     }
+    function getColumnIndexExcluding(headers, keywords, excludeIdx) {
+      for (let i = 0; i < headers.length; i++) {
+        if (i === excludeIdx) continue;
+        const h = headers[i].toLowerCase().trim();
+        for (const kw of keywords) {
+          if (h.includes(kw)) return i;
+        }
+      }
+      return -1;
+    }
 
     function parseStudentExcel(data) {
       const newStudents = [];
@@ -4820,8 +4836,10 @@ const lastSaveTime = ref(null);
       const nameIdx = getColumnIndex(headers, ['姓名', '学生', '名字', 'name']);
       const idIdx = getColumnIndex(headers, ['学号', '编号', 'id', '序号']);
       const genderIdx = getColumnIndex(headers, ['性别', 'gender']);
-      const parentIdx = getColumnIndex(headers, ['家长', '父母', 'parent']);
-      const phoneIdx = getColumnIndex(headers, ['电话', '手机', 'phone', '联系方式']);
+      const parent2Idx = getColumnIndex(headers, ['家长2', '父母2', '第二家长', '备用家长', 'parent2']);
+      const phone2Idx = getColumnIndex(headers, ['电话2', '手机2', '备用电话', '备用号码', '联系方式2', 'phone2']);
+      const parentIdx = getColumnIndexExcluding(headers, ['家长', '父母', 'parent'], parent2Idx);
+      const phoneIdx = getColumnIndexExcluding(headers, ['电话', '手机', 'phone', '联系方式'], phone2Idx);
       const addressIdx = getColumnIndex(headers, ['地址', '住址', '家庭', 'address']);
 
       if (nameIdx === -1) return newStudents;
@@ -4841,6 +4859,8 @@ const lastSaveTime = ref(null);
           gender: genderIdx >= 0 ? (String(row[genderIdx] || '').trim() || '男') : '男',
           parent: parentIdx >= 0 ? String(row[parentIdx] || '').trim() : '',
           phone: phoneIdx >= 0 ? String(row[phoneIdx] || '').trim() : '',
+          parent2: parent2Idx >= 0 ? String(row[parent2Idx] || '').trim() : '',
+          phone2: phone2Idx >= 0 ? String(row[phone2Idx] || '').trim() : '',
           address: addressIdx >= 0 ? String(row[addressIdx] || '').trim() : '',
           note: '',
           avatarColor: colors[(students.value.length + newStudents.length) % colors.length]
