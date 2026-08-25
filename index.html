@@ -851,7 +851,7 @@ textarea.input { resize: vertical; min-height: 60px; }
             <div class="student-meta">
               <span v-if="s.studentId">#{{ s.studentId }}&nbsp;·&nbsp;</span>
               <span v-if="s.gender">{{ s.gender }}&nbsp;·&nbsp;</span>
-              <span v-if="s.parent">{{ s.parent }}</span>
+              <span v-if="s.parent">父：{{ s.parent }}</span>
               <span v-if="s.phone">&nbsp;{{ s.phone }}</span>
             </div>
           </div>
@@ -1596,22 +1596,22 @@ textarea.input { resize: vertical; min-height: 60px; }
           </div>
           <div class="form-row">
             <div class="form-group w-50">
-              <label>家长1姓名</label>
-              <input v-model="studentForm.parent" class="input" placeholder="家长姓名">
+              <label>父亲姓名</label>
+              <input v-model="studentForm.parent" class="input" placeholder="父亲姓名">
             </div>
             <div class="form-group w-50">
-              <label>家长1电话</label>
+              <label>父亲电话</label>
               <input v-model="studentForm.phone" class="input" placeholder="11位手机号" type="tel">
             </div>
           </div>
           <div class="form-row">
             <div class="form-group w-50">
-              <label>家长2姓名</label>
-              <input v-model="studentForm.parent2" class="input" placeholder="家长姓名">
+              <label>母亲姓名</label>
+              <input v-model="studentForm.parent2" class="input" placeholder="母亲姓名">
             </div>
             <div class="form-group w-50">
-              <label>家长2电话</label>
-              <input v-model="studentForm.phone2" class="input" placeholder="备用号码" type="tel">
+              <label>母亲电话</label>
+              <input v-model="studentForm.phone2" class="input" placeholder="11位手机号" type="tel">
             </div>
           </div>
           <div class="form-group">
@@ -1719,8 +1719,8 @@ textarea.input { resize: vertical; min-height: 60px; }
               <div class="detail-item"><label>性别</label><span>{{ selectedStudent.gender || '—' }}</span></div>
               <div class="detail-item"><label>学号</label><span>{{ selectedStudent.studentId || '—' }}</span></div>
               <div class="detail-item"><label>住宿情况</label><span>{{ selectedStudent.accommodation || '—' }}</span></div>
-              <div class="detail-item"><label>家长1</label><span>{{ (selectedStudent.parent || '—') + ' ' + (selectedStudent.phone || '') }}</span></div>
-              <div class="detail-item"><label>家长2</label><span>{{ (selectedStudent.parent2 || '—') + ' ' + (selectedStudent.phone2 || '') }}</span></div>
+              <div class="detail-item"><label>父亲</label><span>{{ (selectedStudent.parent || '—') + ' ' + (selectedStudent.phone || '') }}</span></div>
+              <div class="detail-item"><label>母亲</label><span>{{ (selectedStudent.parent2 || '—') + ' ' + (selectedStudent.phone2 || '') }}</span></div>
               <div class="detail-item"><label>家庭住址</label><span>{{ selectedStudent.address || '—' }}</span></div>
               <div class="detail-item full"><label>特殊体质/病史</label><span>{{ selectedStudent.healthNote || '无' }}</span></div>
             </div>
@@ -2658,10 +2658,9 @@ textarea.input { resize: vertical; min-height: 60px; }
           <div v-for="s in filteredContacts" :key="s.id" class="contact-item">
             <div class="contact-info">
               <span class="contact-name">{{ s.name }}</span>
-              <span class="contact-parent">{{ s.parent ? ('家长：' + s.parent) : '未填家长' }}</span>
+              <span class="contact-parent">父：{{ s.parent || '未填' }} <a v-if="s.phone" :href="'tel:' + s.phone" class="contact-call" @click.stop>📞 {{ s.phone }}</a></span>
+              <span class="contact-parent" v-if="s.parent2 || s.phone2">母：{{ s.parent2 || '未填' }} <a v-if="s.phone2" :href="'tel:' + s.phone2" class="contact-call" @click.stop>📞 {{ s.phone2 }}</a></span>
             </div>
-            <a v-if="s.phone" :href="'tel:' + s.phone" class="contact-call">📞 {{ s.phone }}</a>
-            <span v-else class="contact-nophone">无电话</span>
           </div>
         </div>
       </div>
@@ -4836,9 +4835,9 @@ const lastSaveTime = ref(null);
       const nameIdx = getColumnIndex(headers, ['姓名', '学生', '名字', 'name']);
       const idIdx = getColumnIndex(headers, ['学号', '编号', 'id', '序号']);
       const genderIdx = getColumnIndex(headers, ['性别', 'gender']);
-      const parent2Idx = getColumnIndex(headers, ['家长2', '父母2', '第二家长', '备用家长', 'parent2']);
-      const phone2Idx = getColumnIndex(headers, ['电话2', '手机2', '备用电话', '备用号码', '联系方式2', 'phone2']);
-      const parentIdx = getColumnIndexExcluding(headers, ['家长', '父母', 'parent'], parent2Idx);
+      const parent2Idx = getColumnIndex(headers, ['家长2', '父母2', '第二家长', '备用家长', 'parent2', '母亲', '妈妈']);
+      const phone2Idx = getColumnIndex(headers, ['电话2', '手机2', '备用电话', '备用号码', '联系方式2', 'phone2', '母亲电话']);
+      const parentIdx = getColumnIndexExcluding(headers, ['家长', '父母', 'parent', '父亲', '爸爸'], parent2Idx);
       const phoneIdx = getColumnIndexExcluding(headers, ['电话', '手机', 'phone', '联系方式'], phone2Idx);
       const addressIdx = getColumnIndex(headers, ['地址', '住址', '家庭', 'address']);
 
@@ -5160,7 +5159,7 @@ const lastSaveTime = ref(null);
       getClassesByDay, getTodayClasses, todayClasses, saveClass, editClass, deleteClass, resetClassForm,
       // Students
       students, showAddStudent, showStudentDetail, selectedStudent, studentSearch, studentForm,
-      filteredStudents, addStudent, editStudent, viewStudent, deleteStudent,
+      filteredStudents, addStudent, editStudent, viewStudent, deleteStudent, confirmDeleteStudent,
       // Student Timeline
       detailTab, showAddRecord, recordForm, getRecordStats, getViolations, getPraises, sortedRecords, addRecord, deleteRecord,
       showAddTalk, talkForm, getTalks, addTalk, deleteTalk, startRecording, isRecording, recordingTime,
