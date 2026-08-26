@@ -4284,12 +4284,26 @@ const lastSaveTime = ref(null);
     function closeLeavePicker() { setTimeout(() => { leavePickerOpen.value = false; }, 150); }
 
     // 时间工具
-    function parseDT(v) {
-      const [d, t] = String(v || '').split('T');
+    // 归一化时间字符串：斜杠日期→横杠、空格分隔→T分隔（兼容不同浏览器/手动输入）
+    function normDT(v) {
+      if (!v) return '';
+      return String(v).trim().replace(/\//g, '-').replace(' ', 'T');
+    }
+    // 解析为毫秒时间戳；endOfDay=true 时纯日期按当天23:59:59算（整天请假）
+    function parseDTms(v, endOfDay) {
+      const s = normDT(v);
+      if (!s) return null;
+      const [d, t] = s.split('T');
       if (!d) return null;
       const [y, m, dd] = d.split('-').map(Number);
-      const [hh, mi] = (t || '00:00').split(':').map(Number);
-      return new Date(y, (m || 1) - 1, dd || 1, hh || 0, mi || 0);
+      if (!y || !m || !dd) return null;
+      if (!t) return new Date(y, m - 1, dd, endOfDay ? 23 : 0, endOfDay ? 59 : 0, endOfDay ? 59 : 0).getTime();
+      const [hh, mi, ss] = t.split(':').map(Number);
+      return new Date(y, m - 1, dd, hh || 0, mi || 0, ss || 0).getTime();
+    }
+    function parseDT(v) {
+      const ms = parseDTms(v, false);
+      return ms === null ? null : new Date(ms);
     }
     function getNowDT() {
       const d = new Date();
@@ -4298,7 +4312,7 @@ const lastSaveTime = ref(null);
     }
     function fmtDT(v) {
       if (!v) return '';
-      const [d, t] = v.split('T');
+      const [d, t] = normDT(v).split('T');
       return t ? `${d.slice(5)} ${t.slice(0, 5)}` : d.slice(5);
     }
     function fmtLeaveRange(r) {
@@ -4324,9 +4338,20 @@ const lastSaveTime = ref(null);
     });
 
     // 首页统计：当前请假人数 / 在校人数
+    // 兼容三种记录格式：①start/end（精确到分钟）②startDate/endDate（整天）③旧离班记录迁移
     const leaveCount = computed(() => {
-      const now = getNowDT();
-      return leaveRecords.value.filter(r => r.start && r.end && r.start <= now && now <= r.end).length;
+      const now = Date.now();
+      return leaveRecords.value.filter(r => {
+        let s, e;
+        if (r.start || r.end) {
+          s = parseDTms(r.start, false);
+          e = parseDTms(r.end, true);
+        } else if (r.startDate || r.endDate) {
+          s = parseDTms(r.startDate, false);
+          e = parseDTms(r.endDate, true);
+        }
+        return s !== null && e !== null && s <= now && now <= e;
+      }).length;
     });
     const onCampusCount = computed(() => Math.max(0, students.value.length - leaveCount.value));
 
@@ -4352,7 +4377,7 @@ const lastSaveTime = ref(null);
         student: leaveForm.student.trim(),
         studentId: stu ? (stu.studentId || '') : '',
         type: leaveForm.type,
-        start: leaveForm.start, end: leaveForm.end,
+        start: normDT(leaveForm.start), end: normDT(leaveForm.end),
         reason: leaveForm.reason || '', parentKnown: leaveForm.parentKnown,
         parentScreenshot: leaveForm.parentScreenshot ? [...leaveForm.parentScreenshot] : []
       };
@@ -5418,7 +5443,11 @@ const lastSaveTime = ref(null);
       // 旧版「离班记录」→「学生请假」迁移（新格式含 start/end，上轮格式含 startDate/endDate）
       if (data.leaveRecords) {
         leaveRecords.value = data.leaveRecords.map(r => {
-          if (r.start || r.startDate) return r;
+          if (r.start || r.startDate) {
+            if (r.start) r.start = normDT(r.start);
+            if (r.end) r.end = normDT(r.end);
+            return r;
+          }
           const { date, time, destination, returnTime, note, returned, ...rest } = r;
           return {
             ...rest,
