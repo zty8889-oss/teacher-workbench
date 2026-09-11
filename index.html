@@ -2801,22 +2801,7 @@ textarea.input { resize: vertical; min-height: 60px; }
 </div>
 
 <script>
-const { createApp, ref, reactive, computed, nextTick, watch } = Vue;
-
-// ====== 底部 Tab 样式（动态注入） ======
-const tabStyle = document.createElement('style');
-tabStyle.textContent = `
-.tab-bar { position: fixed; bottom: 0; left: 0; right: 0; max-width: 100%; margin: 0 auto; height: calc(var(--tab-height) + env(safe-area-inset-bottom, 0px)); background: rgba(255,255,255,0.92); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); display: flex; border-top: 1px solid var(--border); z-index: 100; padding-bottom: env(safe-area-inset-bottom, 0px); }
-@media (min-width: 900px) {
-  .tab-bar { max-width: 1280px; }
-}
-.tab-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: var(--text-tertiary); cursor: pointer; transition: all .2s; gap: 2px; }
-.tab-item.active { color: var(--primary); }
-.tab-icon { font-size: 20px; line-height: 1; }
-.tab-label { font-size: 10px; font-weight: 500; }
-`;
-document.head.appendChild(tabStyle);
-
+/* 闪退自救工具：独立脚本，先于 Vue 加载 —— 保证白屏/闪退时也能导出本地数据 */
 // ====== 数据自救援工具（不依赖 Vue，页面即使崩了也能把本地数据导出） ======
 function rescueCollectText() {
   try {
@@ -2906,17 +2891,34 @@ function rescueDownload() {
   (function bootCheck(n) {
     setTimeout(function() {
       try {
+        if (window.__appBooted) return;
         if (document.getElementById('__rescue')) return;
-        const app = document.getElementById('app');
-        const rendered = app && app.innerHTML.replace(/\s/g, '').length;
-        if (!rendered || rendered < 200) {
-          if (n >= 1) window.showRescue('页面启动超时，可能是旧缓存/网络较慢或数据异常。');
-          else bootCheck(n + 1);
-        }
+        if (n >= 1) {
+          window.showRescue(window.Vue ? '页面启动超时，可能是旧缓存或本地数据异常。' : '外部脚本没加载成功（多半是网络问题）。请联网后重试，或换用系统浏览器打开。');
+        } else bootCheck(n + 1);
       } catch (e) {}
-    }, n === 0 ? 7000 : 6000);
+    }, n === 0 ? 4500 : 3500);
   })(0);
 })();
+</script>
+
+<script>
+const { createApp, ref, reactive, computed, nextTick, watch } = Vue;
+
+// ====== 底部 Tab 样式（动态注入） ======
+const tabStyle = document.createElement('style');
+tabStyle.textContent = `
+.tab-bar { position: fixed; bottom: 0; left: 0; right: 0; max-width: 100%; margin: 0 auto; height: calc(var(--tab-height) + env(safe-area-inset-bottom, 0px)); background: rgba(255,255,255,0.92); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); display: flex; border-top: 1px solid var(--border); z-index: 100; padding-bottom: env(safe-area-inset-bottom, 0px); }
+@media (min-width: 900px) {
+  .tab-bar { max-width: 1280px; }
+}
+.tab-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: var(--text-tertiary); cursor: pointer; transition: all .2s; gap: 2px; }
+.tab-item.active { color: var(--primary); }
+.tab-icon { font-size: 20px; line-height: 1; }
+.tab-label { font-size: 10px; font-weight: 500; }
+`;
+document.head.appendChild(tabStyle);
+
 
 const __app = createApp({
   setup() {
@@ -5910,6 +5912,8 @@ __app.config.errorHandler = function(err) {
 };
 try {
   __app.mount('#app');
+  window.__appBooted = true;
+  try { var _r = document.getElementById('__rescue'); if (_r) _r.remove(); } catch (_) {}
 } catch (e) {
   console.error('[Mount Error]', e);
   try { window.showRescue && window.showRescue('启动失败：' + (e && e.message ? e.message : e)); } catch (_) {}
