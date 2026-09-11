@@ -9,8 +9,10 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="./vendor/vue.global.prod.js"></script>
+  <script>window.Vue||document.write('<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"><\/script>');</script>
+  <script src="./vendor/xlsx.full.min.js"></script>
+  <script>window.XLSX||document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"><\/script>');</script>
   <title>教师工作台</title>
   <style>/* ===== 教师工作台 v2.0 全新主题 ===== */
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -916,7 +918,7 @@ textarea.input { resize: vertical; min-height: 60px; }
             <div v-if="m.archived" style="font-size:11px;color:var(--success);margin-top:4px">✅ 已归档</div>
             <div v-if="m.photos && m.photos.length" class="record-photos">
               <div v-for="(p, pi) in m.photos" :key="pi" style="display:inline-block">
-                <img :src="p" style="width:60px;height:60px;border-radius:8px;object-fit:cover;margin:2px;cursor:pointer" @click="previewImage(p)">
+                <img :src="p" loading="lazy" decoding="async" style="width:60px;height:60px;border-radius:8px;object-fit:cover;margin:2px;cursor:pointer" @click="previewImage(p)">
               </div>
             </div>
           </div>
@@ -941,7 +943,7 @@ textarea.input { resize: vertical; min-height: 60px; }
               <div v-if="r.reason" class="offclass-note">事由：{{ r.reason }}</div>
               <div v-if="r.parentScreenshot && r.parentScreenshot.length" class="record-photos">
                 <div v-for="(p, pi) in r.parentScreenshot" :key="pi" style="display:inline-block">
-                  <img :src="p" style="width:60px;height:60px;border-radius:8px;object-fit:cover;margin:2px;cursor:pointer" @click="previewImage(p)">
+                  <img :src="p" loading="lazy" decoding="async" style="width:60px;height:60px;border-radius:8px;object-fit:cover;margin:2px;cursor:pointer" @click="previewImage(p)">
                 </div>
               </div>
             </div>
@@ -1017,7 +1019,7 @@ textarea.input { resize: vertical; min-height: 60px; }
             <div v-if="n.note" style="font-size:11px;color:var(--text-secondary);margin-top:4px">备注：{{ n.note }}</div>
             <div v-if="n.photos && n.photos.length" class="record-photos">
               <div v-for="(p, pi) in n.photos" :key="pi" style="display:inline-block">
-                <img :src="p" style="width:60px;height:60px;border-radius:8px;object-fit:cover;margin:2px;cursor:pointer" @click="previewImage(p)">
+                <img :src="p" loading="lazy" decoding="async" style="width:60px;height:60px;border-radius:8px;object-fit:cover;margin:2px;cursor:pointer" @click="previewImage(p)">
               </div>
             </div>
             <div style="margin-top:8px;display:flex;gap:8px">
@@ -1063,7 +1065,7 @@ textarea.input { resize: vertical; min-height: 60px; }
             </div>
             <div v-if="r.photos && r.photos.length" class="record-photos">
               <div v-for="(p, pi) in r.photos" :key="pi" style="display:inline-block">
-                <img :src="p" style="width:60px;height:60px;border-radius:8px;object-fit:cover;margin:2px;cursor:pointer" @click="previewImage(p)">
+                <img :src="p" loading="lazy" decoding="async" style="width:60px;height:60px;border-radius:8px;object-fit:cover;margin:2px;cursor:pointer" @click="previewImage(p)">
               </div>
             </div>
           </div>
@@ -1121,7 +1123,7 @@ textarea.input { resize: vertical; min-height: 60px; }
                 <span style="font-size:11px;color:var(--text-secondary);min-width:30px">{{ d.week }}周</span>
                 <div class="record-photos" style="margin:0">
                   <div v-for="(p, pi) in d.photos" :key="pi" style="display:inline-block">
-                    <img :src="p" style="width:50px;height:50px;border-radius:6px;object-fit:cover;margin:1px;cursor:pointer" @click="previewImage(p)">
+                    <img :src="p" loading="lazy" decoding="async" style="width:50px;height:50px;border-radius:6px;object-fit:cover;margin:1px;cursor:pointer" @click="previewImage(p)">
                   </div>
                 </div>
               </div>
@@ -1388,7 +1390,7 @@ textarea.input { resize: vertical; min-height: 60px; }
               <div v-if="w.communicated" class="warning-check">✅ 已沟通</div>
               <div v-if="w.photos && w.photos.length" class="record-photos" style="margin-top:4px">
                 <div v-for="(p, pi) in w.photos" :key="pi" style="display:inline-block">
-                  <img :src="p" style="width:50px;height:50px;border-radius:6px;object-fit:cover;margin:1px;cursor:pointer" @click="previewImage(p)">
+                  <img :src="p" loading="lazy" decoding="async" style="width:50px;height:50px;border-radius:6px;object-fit:cover;margin:1px;cursor:pointer" @click="previewImage(p)">
                 </div>
               </div>
             </div>
@@ -1417,7 +1419,7 @@ textarea.input { resize: vertical; min-height: 60px; }
             <div v-if="c.followup" class="comm-followup">👉 跟进：{{ c.followup }}</div>
             <div v-if="c.photos && c.photos.length" class="record-photos" style="margin:4px 0">
               <div v-for="(p, pi) in c.photos" :key="pi" style="display:inline-block">
-                <img :src="p" style="width:50px;height:50px;border-radius:6px;object-fit:cover;margin:1px;cursor:pointer" @click="previewImage(p)">
+                <img :src="p" loading="lazy" decoding="async" style="width:50px;height:50px;border-radius:6px;object-fit:cover;margin:1px;cursor:pointer" @click="previewImage(p)">
               </div>
             </div>
             <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
@@ -2208,7 +2210,7 @@ textarea.input { resize: vertical; min-height: 60px; }
             <button class="btn-small" @click="handlePhotoUpload(meetingForm.photos, 9)" style="margin-bottom:6px">+ 添加照片</button>
             <div v-if="meetingForm.photos && meetingForm.photos.length" class="record-photos">
               <div v-for="(p, pi) in meetingForm.photos" :key="pi" style="position:relative;display:inline-block">
-                <img :src="p" style="width:64px;height:64px;border-radius:8px;object-fit:cover;margin:2px">
+                <img :src="p" loading="lazy" decoding="async" style="width:64px;height:64px;border-radius:8px;object-fit:cover;margin:2px">
                 <span style="position:absolute;top:-4px;right:-4px;background:var(--danger);color:#fff;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center" @click="removePhoto(meetingForm.photos, pi)">×</span>
               </div>
             </div>
@@ -2279,7 +2281,7 @@ textarea.input { resize: vertical; min-height: 60px; }
             <button class="btn-small" @click="handlePhotoUpload(leaveForm.parentScreenshot, 9)">+ 添加截图</button>
             <div v-if="leaveForm.parentScreenshot && leaveForm.parentScreenshot.length" class="record-photos">
               <div v-for="(p, pi) in leaveForm.parentScreenshot" :key="pi" style="position:relative;display:inline-block">
-                <img :src="p" style="width:64px;height:64px;border-radius:8px;object-fit:cover;margin:2px">
+                <img :src="p" loading="lazy" decoding="async" style="width:64px;height:64px;border-radius:8px;object-fit:cover;margin:2px">
                 <span style="position:absolute;top:-4px;right:-4px;background:var(--danger);color:#fff;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center" @click="removePhoto(leaveForm.parentScreenshot, pi)">×</span>
               </div>
             </div>
@@ -2332,7 +2334,7 @@ textarea.input { resize: vertical; min-height: 60px; }
             <button class="btn-small" @click="handlePhotoUpload(noticeForm.photos, 9)">+ 添加照片</button>
             <div v-if="noticeForm.photos && noticeForm.photos.length" class="record-photos">
               <div v-for="(p, pi) in noticeForm.photos" :key="pi" style="position:relative;display:inline-block">
-                <img :src="p" style="width:64px;height:64px;border-radius:8px;object-fit:cover;margin:2px">
+                <img :src="p" loading="lazy" decoding="async" style="width:64px;height:64px;border-radius:8px;object-fit:cover;margin:2px">
                 <span style="position:absolute;top:-4px;right:-4px;background:var(--danger);color:#fff;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center" @click="removePhoto(noticeForm.photos, pi)">×</span>
               </div>
             </div>
@@ -2378,7 +2380,7 @@ textarea.input { resize: vertical; min-height: 60px; }
             <button class="btn-small" @click="handlePhotoUpload(ruleForm.photos, 9)">+ 上传凭证</button>
             <div v-if="ruleForm.photos && ruleForm.photos.length" class="record-photos">
               <div v-for="(p, pi) in ruleForm.photos" :key="pi" style="position:relative;display:inline-block">
-                <img :src="p" style="width:64px;height:64px;border-radius:8px;object-fit:cover;margin:2px">
+                <img :src="p" loading="lazy" decoding="async" style="width:64px;height:64px;border-radius:8px;object-fit:cover;margin:2px">
                 <span style="position:absolute;top:-4px;right:-4px;background:var(--danger);color:#fff;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center" @click="removePhoto(ruleForm.photos, pi)">×</span>
               </div>
             </div>
@@ -2423,7 +2425,7 @@ textarea.input { resize: vertical; min-height: 60px; }
             <button class="btn-small" @click="handlePhotoUpload(honorForm.photos, 9)">+ 添加照片</button>
             <div v-if="honorForm.photos && honorForm.photos.length" class="record-photos">
               <div v-for="(p, pi) in honorForm.photos" :key="pi" style="position:relative;display:inline-block">
-                <img :src="p" style="width:64px;height:64px;border-radius:8px;object-fit:cover;margin:2px">
+                <img :src="p" loading="lazy" decoding="async" style="width:64px;height:64px;border-radius:8px;object-fit:cover;margin:2px">
                 <span style="position:absolute;top:-4px;right:-4px;background:var(--danger);color:#fff;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center" @click="removePhoto(honorForm.photos, pi)">×</span>
               </div>
             </div>
@@ -2464,7 +2466,7 @@ textarea.input { resize: vertical; min-height: 60px; }
             <button class="btn-small" @click="handlePhotoUpload(dutyForm.photos, 9)">+ 添加照片</button>
             <div v-if="dutyForm.photos && dutyForm.photos.length" class="record-photos">
               <div v-for="(p, pi) in dutyForm.photos" :key="pi" style="position:relative;display:inline-block">
-                <img :src="p" style="width:64px;height:64px;border-radius:8px;object-fit:cover;margin:2px">
+                <img :src="p" loading="lazy" decoding="async" style="width:64px;height:64px;border-radius:8px;object-fit:cover;margin:2px">
                 <span style="position:absolute;top:-4px;right:-4px;background:var(--danger);color:#fff;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center" @click="removePhoto(dutyForm.photos, pi)">×</span>
               </div>
             </div>
@@ -2561,7 +2563,7 @@ textarea.input { resize: vertical; min-height: 60px; }
             <button class="btn-small" @click="handlePhotoUpload(warningForm.photos, 9)">+ 添加照片</button>
             <div v-if="warningForm.photos && warningForm.photos.length" class="record-photos">
               <div v-for="(p, pi) in warningForm.photos" :key="pi" style="position:relative;display:inline-block">
-                <img :src="p" style="width:64px;height:64px;border-radius:8px;object-fit:cover;margin:2px">
+                <img :src="p" loading="lazy" decoding="async" style="width:64px;height:64px;border-radius:8px;object-fit:cover;margin:2px">
                 <span style="position:absolute;top:-4px;right:-4px;background:var(--danger);color:#fff;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center" @click="removePhoto(warningForm.photos, pi)">×</span>
               </div>
             </div>
@@ -2612,7 +2614,7 @@ textarea.input { resize: vertical; min-height: 60px; }
             <button class="btn-small" @click="handlePhotoUpload(commForm.photos, 9)">+ 添加照片</button>
             <div v-if="commForm.photos && commForm.photos.length" class="record-photos">
               <div v-for="(p, pi) in commForm.photos" :key="pi" style="position:relative;display:inline-block">
-                <img :src="p" style="width:64px;height:64px;border-radius:8px;object-fit:cover;margin:2px">
+                <img :src="p" loading="lazy" decoding="async" style="width:64px;height:64px;border-radius:8px;object-fit:cover;margin:2px">
                 <span style="position:absolute;top:-4px;right:-4px;background:var(--danger);color:#fff;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center" @click="removePhoto(commForm.photos, pi)">×</span>
               </div>
             </div>
@@ -2827,7 +2829,7 @@ function rescueDownload() {
 
 // ====== 版本自检 + 闪退兜底：放在 Vue 启动前，避免冲突 ======
 (function() {
-  const APP_VER = '20260911.1';
+  const APP_VER = '20260911.2';
   try {
     const lastVer = localStorage.getItem('teacher-app-version');
     if (lastVer && lastVer !== APP_VER) {
@@ -4313,12 +4315,39 @@ const lastSaveTime = ref(null);
         if (!file) return;
         const reader = new FileReader();
         reader.onload = (ev) => {
-          if (!Array.isArray(formField)) return;
-          formField.push(ev.target.result);
-          if (maxPhotos && formField.length > maxPhotos) {
-            formField.splice(0, formField.length - maxPhotos);
-          }
-          saveData();
+          const raw = ev.target.result;
+          const img = new Image();
+          img.onload = () => {
+            let dataUrl = raw;
+            try {
+              const MAX = 1280;
+              let w = img.width, h = img.height;
+              if (w > MAX || h > MAX) {
+                const scale = MAX / Math.max(w, h);
+                w = Math.round(w * scale); h = Math.round(h * scale);
+              }
+              const canvas = document.createElement('canvas');
+              canvas.width = w; canvas.height = h;
+              canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+              const out = canvas.toDataURL('image/jpeg', 0.72);
+              if (out && out.length && out.length < raw.length) dataUrl = out;
+            } catch (_) {}
+            if (!Array.isArray(formField)) return;
+            formField.push(dataUrl);
+            if (maxPhotos && formField.length > maxPhotos) {
+              formField.splice(0, formField.length - maxPhotos);
+            }
+            saveData();
+          };
+          img.onerror = () => {
+            if (!Array.isArray(formField)) return;
+            formField.push(raw);
+            if (maxPhotos && formField.length > maxPhotos) {
+              formField.splice(0, formField.length - maxPhotos);
+            }
+            saveData();
+          };
+          img.src = raw;
         };
         reader.readAsDataURL(file);
       };
@@ -5286,7 +5315,7 @@ const lastSaveTime = ref(null);
       document.documentElement.setAttribute('data-theme', savedTheme);
     }
 
-    const APP_VERSION = '20260911.1';
+    const APP_VERSION = '20260911.2';
 
     const updating = ref(false);
     function checkUpdate() {
