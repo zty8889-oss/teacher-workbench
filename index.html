@@ -2817,19 +2817,108 @@ tabStyle.textContent = `
 `;
 document.head.appendChild(tabStyle);
 
-// ====== 版本自检：放在 Vue 启动前，避免冲突 ======
+// ====== 数据自救援工具（不依赖 Vue，页面即使崩了也能把本地数据导出） ======
+function rescueCollectText() {
+  try {
+    const out = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.indexOf('teache') === 0) out[k] = localStorage.getItem(k);
+    }
+    return JSON.stringify(out, null, 2);
+  } catch (e) { return '导出失败：' + (e && e.message ? e.message : e); }
+}
+function rescueDownload() {
+  try {
+    const blob = new Blob([rescueCollectText()], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = '教师工作台_数据备份_' + new Date().toISOString().slice(0, 10) + '.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 3000);
+  } catch (e) {}
+}
+
+// ====== 版本自检 + 闪退兜底：放在 Vue 启动前，避免冲突 ======
 (function() {
-  const APP_VER = '20260801.2';
-  const lastVer = localStorage.getItem('teacher-app-version');
-  if (lastVer && lastVer !== APP_VER) {
-    localStorage.setItem('teacher-app-version', APP_VER);
-    window.location.href = window.location.pathname.split('?')[0] + '?v=' + Date.now();
-  } else if (!lastVer) {
-    localStorage.setItem('teacher-app-version', APP_VER);
-  }
+  const APP_VER = '20260911.1';
+  try {
+    const lastVer = localStorage.getItem('teacher-app-version');
+    if (lastVer && lastVer !== APP_VER) {
+      localStorage.setItem('teacher-app-version', APP_VER);
+      window.location.href = window.location.pathname.split('?')[0] + '?v=' + Date.now();
+      return;
+    } else if (!lastVer) {
+      localStorage.setItem('teacher-app-version', APP_VER);
+    }
+  } catch (e) { /* 存储被禁用/写满也不能让页面挂掉 */ }
+
+  // 全局错误兜底：脚本报错不再变白屏，只在顶部提示（数据不受影响）
+  window.__bootErrors = [];
+  window.__recordErr = function(msg) {
+    try { window.__bootErrors.push(String(msg)); } catch (e) {}
+    try {
+      if (document.getElementById('__err_banner')) return;
+      const b = document.createElement('div');
+      b.id = '__err_banner';
+      b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99998;background:#fff3cd;color:#7a5b00;font:12px/1.5 -apple-system,system-ui,sans-serif;padding:8px 84px 8px 12px;box-shadow:0 2px 8px rgba(0,0,0,.12)';
+      b.innerHTML = '⚠️ 页面出现异常，已自动拦截，<b>数据未丢失</b>。<button id="__err_open" style="position:absolute;right:30px;top:6px;border:1px solid #d8b400;background:#fff;color:#7a5b00;border-radius:6px;font-size:11px;padding:2px 6px">🛠 备份</button><button id="__err_close" style="position:absolute;right:6px;top:4px;border:0;background:transparent;font-size:15px;color:#7a5b00">✕</button>';
+      document.body.appendChild(b);
+      b.querySelector('#__err_close').onclick = function(){ b.remove(); };
+      b.querySelector('#__err_open').onclick = function(){ window.showRescue('页面出现了异常，已自动拦截。建议先导出备份。'); };
+    } catch (e) {}
+  };
+  window.__rescueExportText = rescueCollectText;
+  window.__rescueDownload = rescueDownload;
+
+  // 自救页：页面起不来（闪退/白屏）时用，纯原生实现，保证能打开
+  window.showRescue = function(msg) {
+    try {
+      if (document.getElementById('__rescue')) return;
+      const box = document.createElement('div');
+      box.id = '__rescue';
+      box.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#fff;padding:20px 18px 40px;overflow:auto;font:14px/1.7 -apple-system,system-ui,sans-serif;color:#222';
+      box.innerHTML = '<h2 style="font-size:18px;margin:0 0 10px">😥 页面没能正常启动</h2>'
+        + '<p style="color:#555;font-size:13px;margin:0 0 14px">' + (msg || '') + '<br>你的数据还在本机缓存里，<b>先导出备份</b>再操作最稳妥。</p>'
+        + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">'
+        + '<button id="__r_export" style="flex:1;min-width:130px;padding:12px;border:0;border-radius:10px;background:#5B7FFF;color:#fff;font-size:14px">💾 导出数据备份</button>'
+        + '<button id="__r_reload" style="flex:1;min-width:130px;padding:12px;border:0;border-radius:10px;background:#eee;color:#333;font-size:14px">🔄 修复并重载</button>'
+        + '</div>'
+        + '<p style="color:#999;font-size:12px;margin:0 0 6px">下面是本地全部数据，可长按全选复制，发给技术人员保存：</p>'
+        + '<textarea id="__r_text" style="width:100%;height:180px;font:11px/1.4 monospace;border:1px solid #ddd;border-radius:8px;padding:8px;-webkit-user-select:text"></textarea>'
+        + '<p style="color:#bbb;font-size:11px;margin:10px 0 0">错误信息：<br><span id="__r_err"></span></p>';
+      document.body.appendChild(box);
+      box.querySelector('#__r_text').value = rescueCollectText();
+      box.querySelector('#__r_err').textContent = (window.__bootErrors || []).join('\n') || '(无)';
+      box.querySelector('#__r_export').onclick = function(){ rescueDownload(); };
+      box.querySelector('#__r_reload').onclick = function(){
+        try { localStorage.setItem('teacher-app-version', 'reload-' + Date.now()); } catch (e) {}
+        window.location.href = window.location.pathname.split('?')[0] + '?v=' + Date.now();
+      };
+    } catch (e) {}
+  };
+
+  window.addEventListener('error', function(e){ window.__recordErr('[error] ' + ((e.error && e.error.stack) ? e.error.stack : e.message)); });
+  window.addEventListener('unhandledrejection', function(e){ window.__recordErr('[promise] ' + ((e.reason && e.reason.stack) ? e.reason.stack : e.reason)); });
+
+  // 启动看门狗：界面迟迟没渲染出来 → 判定“闪退”，给出自救页（两次确认，避免误报）
+  (function bootCheck(n) {
+    setTimeout(function() {
+      try {
+        if (document.getElementById('__rescue')) return;
+        const app = document.getElementById('app');
+        const rendered = app && app.innerHTML.replace(/\s/g, '').length;
+        if (!rendered || rendered < 200) {
+          if (n >= 1) window.showRescue('页面启动超时，可能是旧缓存/网络较慢或数据异常。');
+          else bootCheck(n + 1);
+        }
+      } catch (e) {}
+    }, n === 0 ? 7000 : 6000);
+  })(0);
 })();
 
-createApp({
+const __app = createApp({
   setup() {
     // ====== 全局状态 ======
     const tab = ref('home');
@@ -2991,7 +3080,12 @@ const lastSaveTime = ref(null);
         // 双备份：写一份到备份键，主数据损坏时可自动恢复
         try { localStorage.setItem(BACKUP_KEY, payload); } catch(e) {}
         lastSaveTime.value = new Date();
-      } catch(e) { console.warn('Save failed', e); }
+      } catch(e) {
+        console.warn('Save failed', e);
+        if (e && (e.name === 'QuotaExceededError' || /quota/i.test(e.message || ''))) {
+          try { alert('⚠️ 存储空间已满，最新改动可能未保存。\n请到「我的 → 💾 导出数据」备份，然后清理一些照片（支出凭证/请假截图/作业照片）后再试。'); } catch (_) {}
+        }
+      }
     }
 
     // ====== Todos  ======
@@ -5190,7 +5284,7 @@ const lastSaveTime = ref(null);
       document.documentElement.setAttribute('data-theme', savedTheme);
     }
 
-    const APP_VERSION = '20260729.8';
+    const APP_VERSION = '20260911.1';
 
     const updating = ref(false);
     function checkUpdate() {
@@ -5808,7 +5902,18 @@ const lastSaveTime = ref(null);
       showResetConfirm, resetConfirmText, resetData, confirmReset,
     };
   }
-}).mount('#app');
+});
+// 组件内部异常也拦住，不让整页白屏
+__app.config.errorHandler = function(err) {
+  console.error('[Vue Error]', err);
+  try { window.__recordErr && window.__recordErr('[vue] ' + ((err && err.stack) ? err.stack : err)); } catch (e) {}
+};
+try {
+  __app.mount('#app');
+} catch (e) {
+  console.error('[Mount Error]', e);
+  try { window.showRescue && window.showRescue('启动失败：' + (e && e.message ? e.message : e)); } catch (_) {}
+}
 </script>
 </body>
 </html>
