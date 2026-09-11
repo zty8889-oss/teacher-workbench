@@ -2831,12 +2831,8 @@ function rescueDownload() {
 (function() {
   const APP_VER = '20260911.2';
   try {
-    const lastVer = localStorage.getItem('teacher-app-version');
-    if (lastVer && lastVer !== APP_VER) {
-      localStorage.setItem('teacher-app-version', APP_VER);
-      window.location.href = window.location.pathname.split('?')[0] + '?v=' + Date.now();
-      return;
-    } else if (!lastVer) {
+    // 只记录版本号，不做自动跳转（iOS 主屏幕 App 自动跳转易白屏）
+    if (localStorage.getItem('teacher-app-version') !== APP_VER) {
       localStorage.setItem('teacher-app-version', APP_VER);
     }
   } catch (e) { /* 存储被禁用/写满也不能让页面挂掉 */ }
