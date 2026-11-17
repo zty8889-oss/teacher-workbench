@@ -68,6 +68,13 @@
   .sname{font-size:15.5px;font-weight:600}
   .sval{font-variant-numeric:tabular-nums;font-size:16px;font-weight:700}
   .sval i{font-style:normal;font-size:12px;color:var(--sub);font-weight:500;margin-left:3px}
+  .tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 6px;border-radius:6px;margin-left:7px;
+    background:#eef2f1;color:#5b6b68;vertical-align:2px;letter-spacing:.02em}
+  .tag.a{background:#dcfce7;color:#15803d}
+  .tag.b1{background:#e0f2fe;color:#0369a1}
+  .tag.b2{background:#fef3c7;color:#b45309}
+  .tag.t{background:#fee2e2;color:#b91c1c}
+  .rtotal .tag{font-size:12px;margin:0 0 0 6px;vertical-align:12px}
   .bar{grid-column:1/-1;height:5px;border-radius:99px;background:#eef4f3;overflow:hidden;margin-top:-3px}
   .bar>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#14b8a6,#0f766e);width:0;transition:width .7s cubic-bezier(.2,.8,.2,1)}
   .comment{margin-top:16px;background:#f8fbfa;border:1px solid var(--line);border-left:3px solid var(--brand2);
@@ -195,8 +202,9 @@
       var v = (st.s||{})[k];
       if(v===undefined || v===null || v==='') return;
       var pct = full ? Math.max(0, Math.min(100, v/full*100)) : 0;
+      var lv = st.g && st.g[k] ? '<span class="tag '+String(st.g[k]).toLowerCase()+'">'+esc(st.g[k])+'</span>' : '';
       rows += '<div class="srow"><span class="sname">'+esc(k)+'</span>'+
-              '<span class="sval">'+esc(v)+'<i>/'+full+'</i></span>'+
+              '<span class="sval">'+esc(v)+'<i>/'+full+'</i>'+lv+'</span>'+
               '<span class="bar"><i data-w="'+pct.toFixed(1)+'"></i></span></div>';
     });
 
@@ -208,12 +216,13 @@
     if(st.avg!=null) pills += '<span class="pill">平均分 '+esc(st.avg)+'</span>';
 
     var totalTxt = (st.t===undefined||st.t===null||st.t==='') ? '—' : st.t;
+    var totalTag = st.tv ? '<span class="tag '+String(st.tv).toLowerCase()+'">'+esc(st.tv)+'</span>' : '';
 
     var html =
       '<div class="rhead">'+
         '<div><div class="rname">'+esc(st.n)+'</div>'+
         (st.c?'<div class="rclass">'+esc(st.c)+'</div>':'')+'</div>'+
-        '<div class="rtotal"><b>'+esc(totalTxt)+'</b><small>总分</small></div>'+
+        '<div class="rtotal"><b>'+esc(totalTxt)+'</b>'+totalTag+'<small>总分</small></div>'+
       '</div>'+
       (pills?'<div class="pills">'+pills+'</div>':'')+
       (rows?'<div class="subj"><h3>各科成绩</h3>'+rows+'</div>':'')+
