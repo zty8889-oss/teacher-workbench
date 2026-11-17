@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>成绩查询 · 教师工具（生成数据 + 二维码）</title>
+<style>
+  :root{--bg:#f6f8f8;--card:#fff;--ink:#12211f;--sub:#5b6b68;--line:#e3ebe9;--brand:#0f766e;--brand2:#14b8a6;--warn:#b45309}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;font-size:15px}
+  .wrap{max-width:900px;margin:0 auto;padding:22px 16px 60px}
+  h1{font-size:21px;margin:0 0 4px}
+  .sub{color:var(--sub);font-size:13px;margin:0 0 18px}
+  .tabs{display:flex;gap:8px;margin-bottom:16px}
+  .tab{padding:10px 18px;border-radius:12px;border:1.5px solid var(--line);background:#fff;cursor:pointer;
+    font-weight:600;font-size:14px;color:var(--sub)}
+  .tab.on{background:var(--brand);border-color:var(--brand);color:#fff}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:16px;
+    box-shadow:0 6px 22px rgba(15,118,110,.06)}
+  .card h2{font-size:15px;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+  .card h2 span.num{background:#e6f7f4;color:var(--brand);width:22px;height:22px;border-radius:50%;
+    display:inline-flex;align-items:center;justify-content:center;font-size:12px}
+  label{display:block;font-size:12.5px;font-weight:600;color:var(--sub);margin:12px 0 6px}
+  input[type=text],textarea,select{width:100%;font-family:inherit;font-size:14px;padding:11px 13px;border-radius:11px;
+    border:1.5px solid var(--line);background:#fafcfa;outline:none;color:var(--ink)}
+  input:focus,textarea:focus{border-color:var(--brand2);background:#fff}
+  textarea{min-height:150px;resize:vertical;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;line-height:1.6}
+  .row{display:flex;gap:12px;flex-wrap:wrap}
+  .row>div{flex:1;min-width:180px}
+  button{font-family:inherit;font-size:14.5px;font-weight:700;padding:12px 20px;border-radius:12px;border:0;cursor:pointer;
+    background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;box-shadow:0 5px 14px rgba(15,118,110,.22)}
+  button.ghost{background:#fff;color:var(--brand);border:1.5px solid var(--line);box-shadow:none}
+  button:disabled{opacity:.5;box-shadow:none;cursor:not-allowed}
+  .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+  .tip{font-size:12.5px;color:var(--sub);line-height:1.7;background:#f7fbfa;border:1px solid var(--line);
+    border-radius:11px;padding:11px 13px;margin-top:12px}
+  .tip b{color:var(--brand)}
+  .warnbox{background:#fff7ed;border:1px solid #fed7aa;color:var(--warn);border-radius:11px;padding:11px 13px;
+    font-size:13px;line-height:1.7;margin-top:12px;display:none}
+  pre{background:#0f172a;color:#a7f3d0;padding:14px;border-radius:12px;overflow:auto;font-size:12px;line-height:1.6;
+    max-height:280px;margin:12px 0 0}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px}
+  th,td{border-bottom:1px solid var(--line);padding:7px 8px;text-align:left;white-space:nowrap}
+  th{background:#f7fbfa;color:var(--sub);font-size:12px;font-weight:700;position:sticky;top:0}
+  .scroll{max-height:320px;overflow:auto;border:1px solid var(--line);border-radius:12px}
+  .chk{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink);margin:12px 0 0;font-weight:600}
+  .chk input{width:18px;height:18px;accent-color:var(--brand)}
+  .subjfull{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+  .subjfull .it{display:flex;align-items:center;gap:6px;background:#f7fbfa;border:1px solid var(--line);
+    border-radius:10px;padding:7px 10px;font-size:13px}
+  .subjfull input{width:64px;padding:5px 8px;font-size:13px;border-radius:8px}
+  #qrBox{text-align:center;padding:18px}
+  #qrImg{width:260px;height:260px;image-rendering:pixelated;border-radius:12px;background:#fff}
+  .hide{display:none!important}
+
+  /* 打印版 */
+  #printArea{display:none}
+  @media print{
+    body{background:#fff}
+    .wrap,.noprint{display:none!important}
+    #printArea{display:block!important;padding:0}
+    .psheet{page-break-after:always;text-align:center;padding:26mm 12mm 0;color:#000}
+    .psheet h1{font-size:30pt;margin:0 0 6mm}
+    .psheet .sch{font-size:15pt;color:#333;margin-bottom:2mm}
+    .psheet .ex{font-size:14pt;color:#444;margin-bottom:10mm}
+    .psheet img{width:105mm;height:105mm}
+    .psheet ol{display:inline-block;text-align:left;font-size:15pt;line-height:2;margin-top:8mm;color:#222}
+    .psheet .foot{margin-top:10mm;font-size:11pt;color:#666}
+  }
+</style>
+</head>
+<body>
+<div class="wrap noprint">
+  <h1>成绩查询 · 教师工具</h1>
+  <p class="sub">从 Excel 粘贴成绩 → 生成 data.js → 上传到网站；再生成一个二维码，家长扫码即可查。</p>
+
+  <div class="tabs">
+    <div class="tab on" data-tab="data">① 生成成绩数据</div>
+    <div class="tab" data-tab="qr">② 生成二维码 / 打印</div>
+  </div>
+
+  <!-- ============ TAB 1 ============ -->
+  <div id="tab-data">
+    <div class="card">
+      <h2><span class="num">1</span>配置信息</h2>
+      <div class="row">
+        <div><label>学校名称</label><input id="fSchool" type="text" placeholder="例：三台县第一中学"></div>
+        <div><label>页面标题</label><input id="fTitle" type="text" placeholder="例：期末考试成绩查询"></div>
+        <div><label>考试名称（副标题）</label><input id="fExam" type="text" placeholder="例：2026年秋季学期期末考试"></div>
+      </div>
+      <label>页面底部说明</label>
+      <input id="fNote" type="text" placeholder="例：成绩仅供本人查询，如有疑问请联系班主任">
+      <div class="btns" style="margin-top:14px">
+        <label class="chk"><input id="fRank" type="checkbox" checked> 显示班级/年级排名</label>
+        <label class="chk"><input id="fCode" type="checkbox"> 启用查询码（姓名+查询码，更安全）</label>
+      </div>
+      <div class="tip" id="codeTip" style="display:none">
+        <b>查询码</b>：若表格里有「学号/考号」列，会自动取<b>后 4 位</b>；否则请自行加一列「查询码」。
+        家长需输入姓名+查询码才能看到成绩，可防止别人凭姓名乱查。
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="num">2</span>粘贴成绩表</h2>
+      <label>从 Excel 里选中表头+数据，Ctrl+C 复制，粘贴到这里</label>
+      <textarea id="paste" placeholder="姓名&#9;班级&#9;语文&#9;数学&#9;英语&#9;物理&#9;总分&#9;班级排名&#9;年级排名
+张三&#9;高一(1)班&#9;112&#9;128&#9;103&#9;88&#9;431&#9;12&#9;88
+李四&#9;高一(1)班&#9;98&#9;115&#9;96&#9;79&#9;388&#9;35&#9;210"></textarea>
+      <div class="btns">
+        <button id="parseBtn">解析表格</button>
+        <button class="ghost" id="demoBtn">填入示例数据</button>
+      </div>
+      <div class="warnbox" id="warn"></div>
+      <div id="previewWrap" class="hide">
+        <label style="margin-top:18px">识别结果（<span id="cnt">0</span> 名学生）</label>
+        <div class="scroll"><table id="preview"></table></div>
+        <label style="margin-top:16px">各科满分（用于画分数条，不影响分数本身）</label>
+        <div class="subjfull" id="subjFull"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="num">3</span>生成 data.js</h2>
+      <div class="btns" style="margin-top:0">
+        <button id="genBtn" disabled>生成 data.js</button>
+        <button class="ghost" id="dlBtn" disabled>下载 data.js</button>
+        <button class="ghost" id="copyBtn" disabled>复制代码</button>
+      </div>
+      <div class="tip">
+        生成后把 <b>data.js</b> 覆盖到网站的 <b>score/</b> 目录（和 index.html 同一层），上传即生效。
+        数据已做 base64 编码，家长在手机上看不到整张成绩表源码。
+      </div>
+      <pre id="out" class="hide"></pre>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2 ============ -->
+  <div id="tab-qr" class="hide">
+    <div class="card">
+      <h2><span class="num">1</span>输入查询网址</h2>
+      <label>家长扫码后打开的网址</label>
+      <input id="url" type="text" placeholder="https://zty8889-oss.github.io/teacher-workbench/score/">
+      <div class="btns">
+        <button id="qrBtn">生成二维码</button>
+        <button class="ghost" id="printBtn" disabled>打印海报（A4）</button>
+        <button class="ghost" id="dlQr" disabled>下载二维码图片</button>
+      </div>
+      <div id="qrBox" class="hide"><img id="qrImg" alt="查询二维码"></div>
+      <div class="tip">
+        开会前用<b>投屏</b>放二维码，或打印出来贴在教室门口。二维码在联网状态下生成，
+        生成后点「下载图片」，之后断网也能用这张图。
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 打印区域 -->
+<div id="printArea">
+  <div class="psheet">
+    <div class="sch" id="pSchool"></div>
+    <h1 id="pTitle">成绩查询</h1>
+    <div class="ex" id="pExam"></div>
+    <img id="pQr" alt="二维码">
+    <ol>
+      <li>打开微信「扫一扫」</li>
+      <li>扫描上方二维码</li>
+      <li>输入<b>学生姓名</b>即可查看成绩</li>
+    </ol>
+    <div class="foot" id="pFoot"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var $ = function(id){return document.getElementById(id)};
+  var SUBJ_DEFAULT_FULL = 100;
+
+  /* ---------------- 标签切换 ---------------- */
+  document.querySelectorAll('.tab').forEach(function(t){
+    t.onclick=function(){
+      document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('on')});
+      t.classList.add('on');
+      var k=t.getAttribute('data-tab');
+      $('tab-data').classList.toggle('hide', k!=='data');
+      $('tab-qr').classList.toggle('hide', k!=='qr');
+    };
+  });
+
+  $('fCode').onchange=function(){ $('codeTip').style.display = this.checked?'block':'none'; };
+
+  /* ---------------- 解析表格 ---------------- */
+  var parsed = null;   // {cols:[{k,full}], rows:[{n,c,t,tr,gr,code,cm,s}], warn:[]}
+
+  var KEYMAP = [
+    [/^(姓名|学生姓名|名字|学生)$/,'n'],
+    [/^(班级|班|所在班级)$/,'c'],
+    [/^(总分|合计|总成绩|总分数)$/,'t'],
+    [/^(班级排名|班名|班排|班内排名)$/,'tr'],
+    [/^(年级排名|级名|年排|年级名次|级排)$/,'gr'],
+    [/^(查询码|学号|考号|准考证号|学籍号)$/,'_sid'],
+    [/^(评语|备注|教师评语|班主任评语)$/,'cm'],
+    [/^(平均分|均分)$/,'avg']
+  ];
+
+  function detectDelim(line){
+    if(line.indexOf('\t')>=0) return '\t';
+    if(line.indexOf('|')>=0) return '|';
+    if(line.indexOf(',')>=0) return ',';
+    return null;
+  }
+
+  function splitLine(line, d){
+    if(d==='\t') return line.split('\t');
+    if(d==='|') return line.split('|');
+    if(d===',') return line.split(',');
+    return line.split(/\s{2,}/);   // 兜底：两个以上空格
+  }
+
+  function headerInfo(h){
+    var raw = h.trim();
+    if(!raw) return null;
+    // 满分标注：语文(150) 语文（150） 语文/150
+    var m = raw.match(/[（(\/]\s*(\d{2,3})\s*[)）]?\s*$/);
+    var full = m ? parseInt(m[1],10) : null;
+    var name = raw.replace(/[（(]?\s*\d{2,3}\s*[)）]?\s*$/,'').replace(/[\/]\s*\d{2,3}\s*$/,'').trim();
+    var clean = name.replace(/\s/g,'');
+    for(var i=0;i<KEYMAP.length;i++){
+      if(KEYMAP[i][0].test(clean)) return {k:KEYMAP[i][1], label:clean, full:full};
+    }
+    return {k:null, label:clean, full:full};
+  }
+
+  function toVal(v){
+    if(v==null) return '';
+    var s=String(v).trim();
+    if(s==='') return '';
+    if(/^-?\d+(\.\d+)?$/.test(s)) return parseFloat(s);
+    return s;   // 缺考、免考等文字保留
+  }
+
+  function parse(){
+    var txt = $('paste').value.replace(/\r/g,'');
+    var lines = txt.split('\n').filter(function(l){return l.trim()!==''});
+    var warnBox=$('warn'); warnBox.style.display='none'; warnBox.textContent='';
+
+    if(lines.length<2){
+      warnBox.style.display='block';
+      warnBox.textContent='至少需要「表头行 + 1 行数据」。请确认是从 Excel 直接复制的（含制表符）。';
+      return;
+    }
+
+    var d = detectDelim(lines[0]);
+    if(!d){
+      warnBox.style.display='block';
+      warnBox.textContent='没识别到分隔符。请从 Excel 选中区域复制（不是纯文本），或把数据粘贴成「制表符分隔」。';
+      return;
+    }
+
+    var hs = splitLine(lines[0], d).map(headerInfo);
+    var warns=[];
+    var nameIdx=-1, codeIdx=-1;
+    hs.forEach(function(h,i){ if(h&&h.k==='n') nameIdx=i; if(h&&h.k==='_sid') codeIdx=i; });
+    if(nameIdx<0){
+      warnBox.style.display='block';
+      warnBox.textContent='表头里没找到「姓名」列。请确保第一行包含「姓名」。';
+      return;
+    }
+
+    var cols=[], meta={};
+    hs.forEach(function(h,i){
+      if(!h||!h.label) return;
+      if(h.k){ meta[h.k]=i; }
+      else cols.push({k:h.label, full:h.full||SUBJ_DEFAULT_FULL, idx:i});
+    });
+    if(!cols.length) warns.push('没有识别到学科列，只会显示总分。');
+
+    var rows=[], seen={};
+    for(var r=1;r<lines.length;r++){
+      var cells = splitLine(lines[r], d).map(function(s){return s.trim()});
+      var n = (cells[nameIdx]||'').trim();
+      if(!n) continue;
+      var st = {n:n};
+      if(meta.c!=null && cells[meta.c]) st.c = cells[meta.c].trim();
+      if(meta.t!=null) { var t=toVal(cells[meta.t]); if(t!=='') st.t=t; }
+      if(meta.tr!=null){ var tr=toVal(cells[meta.tr]); if(tr!=='') st.tr=tr; }
+      if(meta.gr!=null){ var gr=toVal(cells[meta.gr]); if(gr!=='') st.gr=gr; }
+      if(meta.avg!=null){ var av=toVal(cells[meta.avg]); if(av!=='') st.avg=av; }
+      if(meta.cm!=null && cells[meta.cm]) st.cm=cells[meta.cm].trim();
+      var s={};
+      cols.forEach(function(c){
+        var v=toVal(cells[c.idx]);
+        if(v!=='') s[c.k]=v;
+      });
+      st.s=s;
+      if(st.t===undefined){
+        // 自动求和
+        var sum=0, ok=false;
+        cols.forEach(function(c){ if(typeof s[c.k]==='number'){ sum+=s[c.k]; ok=true; } });
+        if(ok) st.t=Math.round(sum*10)/10;
+      }
+      var key=st.n+'|'+(st.c||'');
+      if(seen[key]) { warns.push('重复学生：'+st.n+(st.c?'（'+st.c+'）':'')+'，已保留后出现的一条。'); }
+      seen[key]=1;
+      st._sid = (codeIdx>=0 && cells[codeIdx]) ? cells[codeIdx].trim() : '';
+      rows.push(st);
+    }
+
+    if(!rows.length){
+      warnBox.style.display='block';
+      warnBox.textContent='没有解析到任何学生数据，请检查是否从第二行开始是数据。';
+      return;
+    }
+
+    parsed = {cols:cols.map(function(c){return {k:c.k, full:c.full}}), rows:rows, warns:warns};
+
+    $('cnt').textContent = rows.length;
+    $('previewWrap').classList.remove('hide');
+    renderPreview();
+    renderSubjFull();
+
+    if(warns.length){
+      warnBox.style.display='block';
+      warnBox.textContent = warns.slice(0,6).join('；');
+    }
+    $('genBtn').disabled=false;
+  }
+
+  function renderPreview(){
+    var P=parsed; var p=$('preview');
+    var head='<tr><th>姓名</th><th>班级</th>';
+    P.cols.forEach(function(c){ head+='<th>'+esc(c.k)+'</th>'; });
+    head+='<th>总分</th><th>班排</th><th>级排</th></tr>';
+    var body='';
+    P.rows.slice(0,50).forEach(function(st){
+      body+='<tr><td><b>'+esc(st.n)+'</b></td><td>'+esc(st.c||'')+'</td>';
+      P.cols.forEach(function(c){ body+='<td>'+esc(st.s[c.k]==null?'':st.s[c.k])+'</td>'; });
+      body+='<td><b>'+esc(st.t==null?'':st.t)+'</b></td><td>'+esc(st.tr==null?'':st.tr)+'</td><td>'+esc(st.gr==null?'':st.gr)+'</td></tr>';
+    });
+    if(P.rows.length>50) body+='<tr><td colspan="'+(P.cols.length+5)+'" style="color:#888">… 仅预览前 50 行，共 '+P.rows.length+' 条</td></tr>';
+    p.innerHTML='<thead>'+head+'</thead><tbody>'+body+'</tbody>';
+  }
+
+  function renderSubjFull(){
+    var box=$('subjFull'); box.innerHTML='';
+    parsed.cols.forEach(function(c,i){
+      var d=document.createElement('div'); d.className='it';
+      d.innerHTML='<span>'+esc(c.k)+'</span><input type="number" min="1" max="300" value="'+c.full+'" data-i="'+i+'">';
+      d.querySelector('input').oninput=function(){
+        var v=parseInt(this.value,10); if(v>0) parsed.cols[i].full=v;
+      };
+      box.appendChild(d);
+    });
+  }
+
+  /* ---------------- 生成 ---------------- */
+  var generated=null;
+
+  function buildJS(){
+    var rows = parsed.rows;
+    var needCode = $('fCode').checked;
+    var hasCodeCol = rows.some(function(r){return r._sid});
+    var warns=[];
+
+    var students = rows.map(function(st){
+      var o={n:st.n};
+      if(st.c) o.c=st.c;
+      if(st.t!=null) o.t=st.t;
+      if(st.tr!=null) o.tr=st.tr;
+      if(st.gr!=null) o.gr=st.gr;
+      if(st.avg!=null) o.avg=st.avg;
+      if(st.cm) o.cm=st.cm;
+      o.s=st.s;
+      if(needCode){
+        var code='';
+        if(st._sid) code=String(st._sid).replace(/\D/g,'').slice(-4);
+        if(code) o.code=code;
+        else warns.push('「'+st.n+'」缺少学号，启用查询码后该生无法查询');
+      }
+      return o;
+    });
+
+    var meta={
+      school: $('fSchool').value.trim() || '',
+      title:  $('fTitle').value.trim()  || '成绩查询',
+      exam:   $('fExam').value.trim()   || '',
+      note:   $('fNote').value.trim()   || '',
+      rank:   $('fRank').checked,
+      code:   needCode,
+      cols:   parsed.cols.map(function(c){return {k:c.k, full:c.full}}),
+      updated: new Date().toISOString().slice(0,10)
+    };
+
+    var json = JSON.stringify({meta:meta, students:students});
+    var b64 = b64encode(json);
+    var out = '/* 成绩查询数据 · 由教师工具生成 · '+meta.updated+' */\n'+
+              'window.SCORE_DATA = {d:"'+b64+'"};\n';
+    return {code:out, warns:warns, count:students.length, meta:meta};
+  }
+
+  function b64encode(str){
+    var bytes = new TextEncoder().encode(str);
+    var bin='';
+    var CH=0x8000;
+    for(var i=0;i<bytes.length;i+=CH){
+      bin += String.fromCharCode.apply(null, bytes.subarray(i, i+CH));
+    }
+    return btoa(bin);
+  }
+
+  $('genBtn').onclick=function(){
+    if(!parsed) return;
+    var r=buildJS();
+    generated=r.code;
+    var pre=$('out'); pre.textContent=r.code; pre.classList.remove('hide');
+    $('dlBtn').disabled=false; $('copyBtn').disabled=false;
+    var w=$('warn');
+    if(r.warns.length){ w.style.display='block'; w.textContent=r.warns.slice(0,8).join('；'); }
+    else { w.style.display='none'; }
+    if($('fCode').checked && !parsed.rows.some(function(x){return x._sid})){
+      w.style.display='block';
+      w.textContent='已启用查询码，但表格里没有「学号」列。请在 Excel 增加「查询码」列（4位数字），或取消勾选。';
+    }
+    // 同步到打印区
+    $('pSchool').textContent = r.meta.school;
+    $('pTitle').textContent = r.meta.title;
+    $('pExam').textContent = r.meta.exam;
+    $('pFoot').textContent = r.meta.note;
+  };
+
+  $('dlBtn').onclick=function(){
+    if(!generated) return;
+    var blob=new Blob([generated],{type:'text/javascript;charset=utf-8'});
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob); a.download='data.js';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){URL.revokeObjectURL(a.href)},2000);
+  };
+
+  $('copyBtn').onclick=async function(){
+    if(!generated) return;
+    try{ await navigator.clipboard.writeText(generated); this.textContent='已复制 ✓';
+      var self=this; setTimeout(function(){self.textContent='复制代码'},1600);
+    }catch(e){ alert('复制失败，请手动全选文本框内容复制'); }
+  };
+
+  $('parseBtn').onclick=parse;
+
+  $('demoBtn').onclick=function(){
+    $('paste').value =
+      '姓名\t班级\t语文(150)\t数学(150)\t英语(150)\t物理(100)\t化学(100)\t总分\t班级排名\t年级排名\n'+
+      '张三\t高一(1)班\t112\t128\t103\t88\t76\t507\t3\t12\n'+
+      '李四\t高一(1)班\t98\t115\t96\t79\t71\t459\t11\t56\n'+
+      '王小明\t高一(1)班\t105\t132\t89\t82\t68\t476\t7\t34\n'+
+      '赵敏\t高一(2)班\t121\t108\t117\t91\t73\t510\t2\t9\n'+
+      '陈晨\t高一(2)班\t87\t94\t79\t65\t58\t383\t28\t180\n'+
+      '刘一诺\t高一(2)班\t110\t119\t108\t85\t77\t499\t4\t18';
+    $('fSchool').value='三台县示例中学';
+    $('fTitle').value='期末考试成绩查询';
+    $('fExam').value='2026年秋季学期期末考试';
+    $('fNote').value='成绩仅供本人查询 · 如有疑问请联系班主任';
+    parse();
+  };
+
+  /* ---------------- 二维码 ---------------- */
+  function qrUrl(data, size){
+    return 'https://api.qrserver.com/v1/create-qr-code/?margin=12&size='+size+'x'+size+
+           '&data='+encodeURIComponent(data);
+  }
+
+  var qrData=null;
+
+  $('qrBtn').onclick=function(){
+    var u=$('url').value.trim();
+    if(!u){ alert('请先输入查询网址'); return; }
+    if(!/^https?:\/\//i.test(u)) u='https://'+u;
+    $('url').value=u;
+    qrData=u;
+    var img=$('qrImg');
+    img.onload=function(){
+      $('qrBox').classList.remove('hide');
+      $('printBtn').disabled=false; $('dlQr').disabled=false;
+      $('pQr').src=qrUrl(u,900);
+    };
+    img.onerror=function(){ alert('二维码生成失败，请检查网络后重试'); };
+    img.src=qrUrl(u,600);
+  };
+
+  $('dlQr').onclick=function(){
+    if(!qrData) return;
+    var a=document.createElement('a');
+    a.href=qrUrl(qrData,1000); a.download='查询二维码.png'; a.target='_blank';
+    document.body.appendChild(a); a.click(); a.remove();
+  };
+
+  $('printBtn').onclick=function(){
+    if(!qrData) return;
+    if(!$('pQr').src) $('pQr').src=qrUrl(qrData,900);
+    $('pSchool').textContent = $('fSchool').value.trim();
+    $('pTitle').textContent  = $('fTitle').value.trim() || '成绩查询';
+    $('pExam').textContent   = $('fExam').value.trim();
+    $('pFoot').textContent   = $('fNote').value.trim() || qrData;
+    var go=function(){ setTimeout(function(){ window.print(); }, 700); };
+    if($('pQr').complete) go(); else $('pQr').onload=go;
+  };
+
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+})();
+</script>
+</body>
+</html>
