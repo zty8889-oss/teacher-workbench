@@ -198,7 +198,7 @@
     [/^(总分|合计|总成绩|总分数)$/,'t'],
     [/^(班级排名|班名|班排|班内排名)$/,'tr'],
     [/^(年级排名|级名|年排|年级名次|级排)$/,'gr'],
-    [/^(查询码|学号|考号|准考证号|学籍号)$/,'_sid'],
+    [/^(查询码|学号|考号|准考证号|学籍号|智学网账号|智学网|账号|帐号)$/,'_sid'],
     [/^(评语|备注|教师评语|班主任评语)$/,'cm'],
     [/^(平均分|均分)$/,'avg']
   ];
@@ -229,6 +229,11 @@
       if(KEYMAP[i][0].test(clean)) return {k:KEYMAP[i][1], label:clean, full:full};
     }
     return {k:null, label:clean, full:full};
+  }
+
+  function normClass(s){
+    if(!s) return s;
+    return /^\d+$/.test(s) ? s+'班' : s;
   }
 
   function toVal(v){
@@ -267,11 +272,18 @@
       return;
     }
 
-    var cols=[], meta={};
+    var cols=[], meta={}, last=null;
     hs.forEach(function(h,i){
       if(!h||!h.label) return;
-      if(h.k){ meta[h.k]=i; }
-      else cols.push({k:h.label, full:h.full||SUBJ_DEFAULT_FULL, idx:i});
+      // 「等级」列：跟着前面那一列走（学科 → 学科等级，总分 → 总分等级）
+      if(/^(等级|等第)$/.test(h.label)){
+        if(last && last.type==='subj') last.c.gi=i;
+        else if(last && last.type==='meta' && last.k==='t') meta.tv=i;
+        return;
+      }
+      if(h.k){ meta[h.k]=i; last={type:'meta',k:h.k}; return; }
+      var c={k:h.label, full:h.full||SUBJ_DEFAULT_FULL, idx:i, gi:null, exp:!!h.full};
+      cols.push(c); last={type:'subj',c:c};
     });
     if(!cols.length) warns.push('没有识别到学科列，只会显示总分。');
 
@@ -281,18 +293,21 @@
       var n = (cells[nameIdx]||'').trim();
       if(!n) continue;
       var st = {n:n};
-      if(meta.c!=null && cells[meta.c]) st.c = cells[meta.c].trim();
+      if(meta.c!=null && cells[meta.c]) st.c = normClass(cells[meta.c].trim());
       if(meta.t!=null) { var t=toVal(cells[meta.t]); if(t!=='') st.t=t; }
       if(meta.tr!=null){ var tr=toVal(cells[meta.tr]); if(tr!=='') st.tr=tr; }
       if(meta.gr!=null){ var gr=toVal(cells[meta.gr]); if(gr!=='') st.gr=gr; }
       if(meta.avg!=null){ var av=toVal(cells[meta.avg]); if(av!=='') st.avg=av; }
       if(meta.cm!=null && cells[meta.cm]) st.cm=cells[meta.cm].trim();
-      var s={};
+      if(meta.tv!=null){ var tv=(cells[meta.tv]||'').trim(); if(tv) st.tv=tv; }
+      var s={}, g={};
       cols.forEach(function(c){
         var v=toVal(cells[c.idx]);
         if(v!=='') s[c.k]=v;
+        if(c.gi!=null){ var gv=(cells[c.gi]||'').trim(); if(gv) g[c.k]=gv; }
       });
       st.s=s;
+      if(Object.keys(g).length) st.g=g;
       if(st.t===undefined){
         // 自动求和
         var sum=0, ok=false;
@@ -311,6 +326,14 @@
       warnBox.textContent='没有解析到任何学生数据，请检查是否从第二行开始是数据。';
       return;
     }
+
+    // 满分自动推测：表头没写满分的，按该科最高分猜（>100→150，>150→200）
+    cols.forEach(function(c){
+      if(c.exp) return;
+      var mx=0;
+      rows.forEach(function(st){ var v=st.s[c.k]; if(typeof v==='number' && v>mx) mx=v; });
+      c.full = mx>150 ? 200 : (mx>100 ? 150 : SUBJ_DEFAULT_FULL);
+    });
 
     parsed = {cols:cols.map(function(c){return {k:c.k, full:c.full}}), rows:rows, warns:warns};
 
@@ -370,7 +393,9 @@
       if(st.gr!=null) o.gr=st.gr;
       if(st.avg!=null) o.avg=st.avg;
       if(st.cm) o.cm=st.cm;
+      if(st.tv) o.tv=st.tv;
       o.s=st.s;
+      if(st.g) o.g=st.g;
       if(needCode){
         var code='';
         if(st._sid) code=String(st._sid).replace(/\D/g,'').slice(-4);
