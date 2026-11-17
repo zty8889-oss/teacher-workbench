@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f766e">
+<meta name="robots" content="noindex,nofollow">
+<title>成绩查询</title>
+<style>
+  :root{
+    --bg:#f2f6f5; --card:#fff; --ink:#12211f; --sub:#5b6b68; --line:#e3ebe9;
+    --brand:#0f766e; --brand2:#14b8a6; --warn:#b45309;
+    --shadow:0 8px 28px rgba(15,118,110,.10), 0 1px 3px rgba(0,0,0,.04);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:system-ui,-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    background:
+      radial-gradient(1100px 460px at 50% -220px, #d8f3ee 0%, rgba(255,255,255,0) 70%),
+      var(--bg);
+    color:var(--ink);
+    min-height:100vh;
+    -webkit-text-size-adjust:100%;
+  }
+  .wrap{max-width:560px;margin:0 auto;padding:18px 16px calc(28px + env(safe-area-inset-bottom))}
+  header{text-align:center;padding:10px 0 16px}
+  .school{font-size:13px;letter-spacing:.14em;color:var(--brand);font-weight:600;opacity:.9}
+  h1{font-size:24px;line-height:1.28;margin:8px 0 6px;font-weight:800;letter-spacing:-.01em}
+  .exam{font-size:13px;color:var(--sub)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:20px 18px}
+  label{display:block;font-size:13px;font-weight:600;color:var(--sub);margin:0 0 8px 2px}
+  input{
+    width:100%;font-size:20px;padding:15px 16px;border-radius:14px;border:1.5px solid var(--line);
+    background:#fafcfc;color:var(--ink);outline:none;transition:.18s;font-family:inherit;
+  }
+  input::placeholder{color:#a9b7b4;font-size:17px}
+  input:focus{border-color:var(--brand2);background:#fff;box-shadow:0 0 0 4px rgba(20,184,166,.13)}
+  .field{margin-bottom:16px}
+  button{
+    width:100%;border:0;border-radius:14px;padding:16px;font-size:18px;font-weight:700;color:#fff;
+    background:linear-gradient(135deg,var(--brand) 0%,var(--brand2) 100%);
+    font-family:inherit;cursor:pointer;transition:.15s;
+    box-shadow:0 6px 18px rgba(15,118,110,.28);
+  }
+  button:active{transform:scale(.985)}
+  button:disabled{opacity:.55;box-shadow:none}
+  .hint{font-size:12.5px;color:var(--sub);text-align:center;margin:14px 0 0;line-height:1.6}
+  .msg{margin-top:16px;font-size:14.5px;line-height:1.7;padding:14px 16px;border-radius:14px;display:none}
+  .msg.err{display:block;background:#fff7ed;border:1px solid #fed7aa;color:var(--warn)}
+  .msg.ok{display:block;background:#f0fdfa;border:1px solid #99f6e4;color:#0f766e}
+
+  /* 结果卡 */
+  #resultPanel{margin-top:18px;display:none}
+  .rhead{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding-bottom:14px;border-bottom:1px dashed var(--line)}
+  .rname{font-size:22px;font-weight:800;letter-spacing:-.01em}
+  .rclass{font-size:13px;color:var(--sub);margin-top:4px}
+  .rtotal{text-align:right;line-height:1}
+  .rtotal b{font-size:40px;font-weight:800;color:var(--brand);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .rtotal small{font-size:12px;color:var(--sub);display:block;margin-top:6px}
+  .pills{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 4px}
+  .pill{font-size:12.5px;background:#f0f7f5;border:1px solid var(--line);color:#0f766e;
+    padding:6px 11px;border-radius:999px;font-weight:600}
+  .subj{margin-top:16px}
+  .subj h3{font-size:13px;color:var(--sub);font-weight:700;margin:0 0 10px 2px}
+  .srow{display:grid;grid-template-columns:1fr auto;gap:8px;padding:11px 0;border-bottom:1px solid #f2f7f6;align-items:center}
+  .srow:last-child{border-bottom:0}
+  .sname{font-size:15.5px;font-weight:600}
+  .sval{font-variant-numeric:tabular-nums;font-size:16px;font-weight:700}
+  .sval i{font-style:normal;font-size:12px;color:var(--sub);font-weight:500;margin-left:3px}
+  .bar{grid-column:1/-1;height:5px;border-radius:99px;background:#eef4f3;overflow:hidden;margin-top:-3px}
+  .bar>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#14b8a6,#0f766e);width:0;transition:width .7s cubic-bezier(.2,.8,.2,1)}
+  .comment{margin-top:16px;background:#f8fbfa;border:1px solid var(--line);border-left:3px solid var(--brand2);
+    border-radius:12px;padding:13px 14px;font-size:14.5px;line-height:1.75;color:#2a3b39;white-space:pre-wrap}
+  .comment b{display:block;font-size:12px;color:var(--sub);margin-bottom:6px;letter-spacing:.05em}
+  .again{margin-top:16px}
+  .again button{background:#fff;color:var(--brand);border:1.5px solid var(--line);box-shadow:none;font-size:16px;padding:14px}
+  /* 同名选择 */
+  .pick{display:block;width:100%;text-align:left;background:#fff;border:1.5px solid var(--line);color:var(--ink);
+    border-radius:14px;padding:14px 16px;margin-top:10px;font-size:16px;font-weight:600;box-shadow:none}
+  .pick small{display:block;font-size:12.5px;color:var(--sub);font-weight:500;margin-top:3px}
+  footer{text-align:center;font-size:11.5px;color:#9aa8a5;line-height:1.8;margin-top:22px}
+  .fade{animation:fade .35s ease both}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="school" id="school">&nbsp;</div>
+    <h1 id="title">成绩查询</h1>
+    <div class="exam" id="exam"></div>
+  </header>
+
+  <section class="card" id="queryPanel">
+    <div class="field">
+      <label for="nameInput">学生姓名</label>
+      <input id="nameInput" type="text" placeholder="请输入学生姓名" autocomplete="off"
+             autocapitalize="off" spellcheck="false" enterkeyhint="search">
+    </div>
+    <div class="field" id="codeRow" style="display:none">
+      <label for="codeInput">查询码</label>
+      <input id="codeInput" type="text" inputmode="numeric" placeholder="请输入老师告知的查询码"
+             autocomplete="off" enterkeyhint="search">
+    </div>
+    <button id="queryBtn">查 询 成 绩</button>
+    <p class="hint" id="hint">请输入学生的完整姓名，与班主任登记一致</p>
+  </section>
+
+  <div class="msg" id="msg"></div>
+  <section class="card fade" id="resultPanel" style="display:none"></section>
+
+  <footer id="footer"></footer>
+</div>
+
+<script src="data.js"></script>
+<script>
+(function(){
+  'use strict';
+
+  /* ---------- 读取数据（支持明文 / base64 编码两种格式） ---------- */
+  function unpackB64(b64){
+    try{
+      var bin = atob(b64);
+      var bytes = new Uint8Array(bin.length);
+      for(var i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+      return JSON.parse(new TextDecoder('utf-8').decode(bytes));
+    }catch(e){ return null; }
+  }
+  var DATA = null;
+  try{
+    var raw = window.SCORE_DATA;
+    if(raw && typeof raw === 'object' && typeof raw.d === 'string') DATA = unpackB64(raw.d);
+    else DATA = raw;
+  }catch(e){ DATA = null; }
+
+  var $ = function(id){ return document.getElementById(id); };
+
+  if(!DATA || !Array.isArray(DATA.students) || !DATA.students.length){
+    $('queryPanel').style.display='none';
+    var m=$('msg'); m.className='msg err';
+    m.innerHTML='成绩数据还没录入或页面未更新。<br>请联系班主任确认。';
+    return;
+  }
+
+  var meta = DATA.meta || {};
+  var STUDENTS = DATA.students;
+
+  /* ---------- 头部信息 ---------- */
+  if(meta.school) $('school').textContent = meta.school;
+  if(meta.title)  $('title').textContent  = meta.title;
+  if(meta.exam)   $('exam').textContent   = meta.exam;
+  if(meta.note)   $('footer').textContent = meta.note;
+  else $('footer').textContent = '成绩仅本人可见 · 如有疑问请联系班主任';
+
+  var needCode = !!meta.code;
+  if(needCode){
+    $('codeRow').style.display='block';
+    $('hint').textContent = '请输入学生姓名 + 查询码（老师已单独告知）';
+  }
+
+  /* ---------- 姓名归一化 ---------- */
+  function norm(s){
+    return String(s||'')
+      .replace(/[\u3000\s\u00a0]/g,'')
+      .replace(/[Ａ-Ｚａ-ｚ０-９]/g,function(ch){ return String.fromCharCode(ch.charCodeAt(0)-0xFEE0); })
+      .toLowerCase();
+  }
+
+  /* ---------- 学科列 ---------- */
+  var COLS = Array.isArray(meta.cols) && meta.cols.length ? meta.cols : null;
+
+  /* ---------- 简易防刷 ---------- */
+  var fails = 0, lockUntil = 0;
+
+  function showMsg(txt, cls){
+    var m=$('msg');
+    if(!txt){ m.className='msg'; m.textContent=''; return; }
+    m.className='msg '+(cls||'err');
+    m.innerHTML=txt;
+    if((cls||'err')==='err'){        // 报错时收起上一份结果，避免看串行
+      $('resultPanel').style.display='none';
+      $('queryPanel').style.display='block';
+    }
+  }
+
+  /* ---------- 渲染结果 ---------- */
+  function render(st){
+    var cols = COLS;
+    var keys = cols ? cols : Object.keys(st.s||{}).map(function(k){return {k:k,full:100};});
+
+    var rows = '';
+    keys.forEach(function(c){
+      var k = c.k || c, full = c.full || 100;
+      var v = (st.s||{})[k];
+      if(v===undefined || v===null || v==='') return;
+      var pct = full ? Math.max(0, Math.min(100, v/full*100)) : 0;
+      rows += '<div class="srow"><span class="sname">'+esc(k)+'</span>'+
+              '<span class="sval">'+esc(v)+'<i>/'+full+'</i></span>'+
+              '<span class="bar"><i data-w="'+pct.toFixed(1)+'"></i></span></div>';
+    });
+
+    var pills = '';
+    if(meta.rank !== false){
+      if(st.tr!=null && st.tr!=='') pills += '<span class="pill">班级排名 第 '+esc(st.tr)+' 名</span>';
+      if(st.gr!=null && st.gr!=='') pills += '<span class="pill">年级排名 第 '+esc(st.gr)+' 名</span>';
+    }
+    if(st.avg!=null) pills += '<span class="pill">平均分 '+esc(st.avg)+'</span>';
+
+    var totalTxt = (st.t===undefined||st.t===null||st.t==='') ? '—' : st.t;
+
+    var html =
+      '<div class="rhead">'+
+        '<div><div class="rname">'+esc(st.n)+'</div>'+
+        (st.c?'<div class="rclass">'+esc(st.c)+'</div>':'')+'</div>'+
+        '<div class="rtotal"><b>'+esc(totalTxt)+'</b><small>总分</small></div>'+
+      '</div>'+
+      (pills?'<div class="pills">'+pills+'</div>':'')+
+      (rows?'<div class="subj"><h3>各科成绩</h3>'+rows+'</div>':'')+
+      (st.cm?'<div class="comment"><b>班主任评语</b>'+esc(st.cm)+'</div>':'')+
+      '<div class="again"><button id="againBtn">查询其他学生</button></div>';
+
+    var p=$('resultPanel');
+    p.innerHTML=html; p.style.display='block';
+    p.classList.remove('fade'); void p.offsetWidth; p.classList.add('fade');
+    $('queryPanel').style.display='none';
+    showMsg('');
+
+    // 进度条动画
+    setTimeout(function(){
+      var bars=p.querySelectorAll('.bar>i');
+      for(var i=0;i<bars.length;i++) bars[i].style.width = bars[i].getAttribute('data-w')+'%';
+    },60);
+
+    $('againBtn').onclick=function(){
+      p.style.display='none';
+      $('queryPanel').style.display='block';
+      $('nameInput').value=''; if(needCode) $('codeInput').value='';
+      $('nameInput').focus();
+      window.scrollTo({top:0,behavior:'smooth'});
+    };
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  /* ---------- 同名选择 ---------- */
+  function renderPick(list){
+    var html='<div class="rhead" style="border:0;padding-bottom:6px"><div class="rname" style="font-size:17px">找到 '+list.length+' 位同名学生</div></div>'+
+             '<div style="font-size:13px;color:var(--sub);margin:4px 0 6px">请选择自己孩子所在的班级：</div>';
+    list.forEach(function(st,i){
+      html+='<button class="pick" data-i="'+i+'">'+esc(st.n)+
+            '<small>'+esc(st.c||'（未标注班级）')+'</small></button>';
+    });
+    html+='<div class="again"><button id="againBtn2">返回重新输入</button></div>';
+    var p=$('resultPanel');
+    p.innerHTML=html; p.style.display='block';
+    $('queryPanel').style.display='none';
+    showMsg('');
+    p.querySelectorAll('.pick').forEach(function(b){
+      b.onclick=function(){
+        var st=list[+b.getAttribute('data-i')];
+        if(needCode){
+          // 需要查询码时，回到输入页带上班级
+          showMsg('该姓名有多位学生，请输入查询码后再查询。','err');
+          p.style.display='none'; $('queryPanel').style.display='block';
+          return;
+        }
+        render(st);
+      };
+    });
+    $('againBtn2').onclick=function(){
+      p.style.display='none'; $('queryPanel').style.display='block'; $('nameInput').focus();
+    };
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  function esc(s){
+    return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  /* ---------- 查询主流程 ---------- */
+  function query(){
+    var now = Date.now();
+    if(now < lockUntil){
+      showMsg('查询过于频繁，请 '+Math.ceil((lockUntil-now)/1000)+' 秒后再试。','err');
+      return;
+    }
+    var q = norm($('nameInput').value);
+    var code = norm($('codeInput').value);
+
+    if(!q){ showMsg('请先输入学生姓名。','err'); $('nameInput').focus(); return; }
+    if(needCode && !code){ showMsg('请输入查询码（老师已单独告知）。','err'); $('codeInput').focus(); return; }
+
+    var exact = STUDENTS.filter(function(st){ return norm(st.n)===q; });
+
+    // 需要查询码：用查询码过滤
+    if(needCode){
+      var byName = exact.length;
+      exact = exact.filter(function(st){ return norm(st.code)===code; });
+      if(!exact.length && byName){
+        tallyFail();
+        showMsg('姓名与查询码不匹配。<br>请核对查询码（老师单独告知的 4 位数字）后重试。','err');
+        return;
+      }
+    }
+
+    if(exact.length===1){ fails=0; render(exact[0]); return; }
+    if(exact.length>1){
+      if(needCode){ showMsg('姓名与查询码不匹配，请核对后重试。','err'); tallyFail(); return; }
+      renderPick(exact); return;
+    }
+
+    // 模糊：唯一包含匹配（至少 2 个字，避免单字乱猜）
+    if(!needCode && q.length>=2){
+      var fuzzy = STUDENTS.filter(function(st){ return norm(st.n).indexOf(q)>=0; });
+      if(fuzzy.length===1){ fails=0; render(fuzzy[0]); return; }
+      if(fuzzy.length>1){ renderPick(fuzzy); return; }
+    }
+
+    tallyFail();
+    if(needCode){
+      showMsg('没有找到对应的成绩记录。<br>请检查<b>姓名</b>与<b>查询码</b>是否与老师告知的一致。','err');
+      return;
+    }
+    showMsg('没有找到「'+esc($('nameInput').value.trim())+'」的成绩。<br>请检查姓名是否与老师登记的一致（不要加空格/班级），或联系班主任核对。','err');
+  }
+
+  function tallyFail(){
+    fails++;
+    if(fails>=5){ lockUntil = Date.now()+60000; fails=0; }
+  }
+
+  $('queryBtn').onclick = query;
+  $('nameInput').addEventListener('keydown', function(e){ if(e.key==='Enter'){ if(needCode) $('codeInput').focus(); else query(); } });
+  $('codeInput').addEventListener('keydown', function(e){ if(e.key==='Enter') query(); });
+  setTimeout(function(){ if(!needCode) $('nameInput').focus(); }, 300);
+})();
+</script>
+</body>
+</html>
